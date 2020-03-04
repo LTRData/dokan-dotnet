@@ -8,7 +8,7 @@ using System.Security.AccessControl;
 using DokanNet;
 using DokanNet.Logging;
 using static DokanNet.FormatProviders;
-using FileAccess = DokanNet.FileAccess;
+using NativeFileAccess = DokanNet.NativeFileAccess;
 
 namespace DokanNetMirror
 {
@@ -16,16 +16,16 @@ namespace DokanNetMirror
     {
         private readonly string path;
 
-        private const FileAccess DataAccess = FileAccess.ReadData | FileAccess.WriteData | FileAccess.AppendData |
-                                              FileAccess.Execute |
-                                              FileAccess.GenericExecute | FileAccess.GenericWrite |
-                                              FileAccess.GenericRead;
+        private const NativeFileAccess DataAccess = NativeFileAccess.ReadData | NativeFileAccess.WriteData | NativeFileAccess.AppendData |
+                                              NativeFileAccess.Execute |
+                                              NativeFileAccess.GenericExecute | NativeFileAccess.GenericWrite |
+                                              NativeFileAccess.GenericRead;
 
-        private const FileAccess DataWriteAccess = FileAccess.WriteData | FileAccess.AppendData |
-                                                   FileAccess.Delete |
-                                                   FileAccess.GenericWrite;
+        private const NativeFileAccess DataWriteAccess = NativeFileAccess.WriteData | NativeFileAccess.AppendData |
+                                                   NativeFileAccess.Delete |
+                                                   NativeFileAccess.GenericWrite;
 
-        private ConsoleLogger logger = new ConsoleLogger("[Mirror] ");
+        private readonly ConsoleLogger logger = new ConsoleLogger("[Mirror] ");
 
         public Mirror(string path)
         {
@@ -54,7 +54,7 @@ namespace DokanNetMirror
         }
 
         private NtStatus Trace(string method, string fileName, IDokanFileInfo info,
-            FileAccess access, FileShare share, FileMode mode, FileOptions options, FileAttributes attributes,
+            NativeFileAccess access, FileShare share, FileMode mode, FileOptions options, FileAttributes attributes,
             NtStatus result)
         {
 #if TRACE
@@ -68,7 +68,7 @@ namespace DokanNetMirror
 
         #region Implementation of IDokanOperations
 
-        public NtStatus CreateFile(string fileName, FileAccess access, FileShare share, FileMode mode,
+        public NtStatus CreateFile(string fileName, NativeFileAccess access, FileShare share, FileMode mode,
             FileOptions options, FileAttributes attributes, IDokanFileInfo info)
         {
             var result = DokanResult.Success;
@@ -153,8 +153,8 @@ namespace DokanNetMirror
                             // check if driver only wants to read attributes, security info, or open directory
                             if (readWriteAttributes || pathIsDirectory)
                             {
-                                if (pathIsDirectory && (access & FileAccess.Delete) == FileAccess.Delete
-                                    && (access & FileAccess.Synchronize) != FileAccess.Synchronize)
+                                if (pathIsDirectory && (access & NativeFileAccess.Delete) == NativeFileAccess.Delete
+                                    && (access & NativeFileAccess.Synchronize) != NativeFileAccess.Synchronize)
                                     //It is a DeleteFile request on a directory
                                     return Trace(nameof(CreateFile), fileName, info, access, share, mode, options,
                                         attributes, DokanResult.AccessDenied);
@@ -352,7 +352,7 @@ namespace DokanNetMirror
             return Trace(nameof(GetFileInformation), fileName, info, DokanResult.Success);
         }
 
-        public NtStatus FindFiles(string fileName, out IList<FileInformation> files, IDokanFileInfo info)
+        public NtStatus FindFiles(string fileName, out ICollection<FileInformation> files, IDokanFileInfo info)
         {
             // This function is not called because FindFilesWithPattern is implemented
             // Return DokanResult.NotImplemented in FindFilesWithPattern to make FindFiles called
@@ -580,7 +580,7 @@ namespace DokanNetMirror
         }
 
         public NtStatus GetVolumeInformation(out string volumeLabel, out FileSystemFeatures features,
-            out string fileSystemName, out uint maximumComponentLength, IDokanFileInfo info)
+            out string fileSystemName, out uint maximumComponentLength, ref uint volumeSerialNumber, IDokanFileInfo info)
         {
             volumeLabel = "DOKAN";
             fileSystemName = "NTFS";
@@ -662,15 +662,15 @@ namespace DokanNetMirror
                 "out " + streamName, "out " + streamSize.ToString());
         }
 
-        public NtStatus FindStreams(string fileName, out IList<FileInformation> streams, IDokanFileInfo info)
+        public NtStatus FindStreams(string fileName, out ICollection<FileInformation> streams, IDokanFileInfo info)
         {
             streams = new FileInformation[0];
             return Trace(nameof(FindStreams), fileName, info, DokanResult.NotImplemented);
         }
 
-        public IList<FileInformation> FindFilesHelper(string fileName, string searchPattern)
+        public ICollection<FileInformation> FindFilesHelper(string fileName, string searchPattern)
         {
-            IList<FileInformation> files = new DirectoryInfo(GetPath(fileName))
+            ICollection<FileInformation> files = new DirectoryInfo(GetPath(fileName))
                 .EnumerateFileSystemInfos()
                 .Where(finfo => DokanHelper.DokanIsNameInExpression(searchPattern, finfo.Name, true))
                 .Select(finfo => new FileInformation
@@ -686,7 +686,7 @@ namespace DokanNetMirror
             return files;
         }
 
-        public NtStatus FindFilesWithPattern(string fileName, string searchPattern, out IList<FileInformation> files,
+        public NtStatus FindFilesWithPattern(string fileName, string searchPattern, out ICollection<FileInformation> files,
             IDokanFileInfo info)
         {
             files = FindFilesHelper(fileName, searchPattern);

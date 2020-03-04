@@ -21,7 +21,7 @@ namespace DokanNet.Logging
             string category = null,
             string loggerName = "")
         {
-            return message.FormatMessageForLogging(false, category, loggerName);
+            return message.FormatMessageForLogging(addDateTime: false, threadId: null, category, loggerName);
         }
 
         /// <summary>
@@ -35,6 +35,7 @@ namespace DokanNet.Logging
         public static string FormatMessageForLogging(
             this string message,
             bool addDateTime = false,
+            int? threadId = null,
             string category = null,
             string loggerName = "")
         {
@@ -42,6 +43,11 @@ namespace DokanNet.Logging
             if (addDateTime)
             {
                 stringBuilder.AppendFormat("{0} - ", DateTime.Now.ToString(CultureInfo.InvariantCulture));
+            }
+
+            if (threadId.HasValue)
+            {
+                stringBuilder.Append($"[{threadId.Value:###0}] ");
             }
 
             if (!string.IsNullOrEmpty(loggerName))

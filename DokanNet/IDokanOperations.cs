@@ -38,7 +38,7 @@ namespace DokanNet
         /// that can be retrieved in all other request related to the context.
         /// </summary>
         /// <param name="fileName">File path requested by the Kernel on the FileSystem.</param>
-        /// <param name="access">A <see cref="FileAccess"/> with permissions for file or directory.</param>
+        /// <param name="access">A <see cref="NativeFileAccess"/> with permissions for file or directory.</param>
         /// <param name="share">Type of share access to other threads, which is specified as
         /// <see cref="FileShare.None"/> or any combination of <see cref="FileShare"/>.
         /// Device and intermediate drivers usually set ShareAccess to zero,
@@ -51,7 +51,7 @@ namespace DokanNet
         /// \see See <a href="https://msdn.microsoft.com/en-us/library/windows/hardware/ff566424(v=vs.85).aspx">ZwCreateFile (MSDN)</a> for more information about the parameters of this callback.
         NtStatus CreateFile(
             string fileName,
-            FileAccess access,
+            NativeFileAccess access,
             FileShare share,
             FileMode mode,
             FileOptions options,
@@ -149,7 +149,7 @@ namespace DokanNet
         /// <param name="info">An <see cref="IDokanFileInfo"/> with information about the file or directory.</param>
         /// <returns><see cref="NtStatus"/> or <see cref="DokanResult"/> appropriate to the request result.</returns>
         /// <seealso cref="FindFilesWithPattern"/>
-        NtStatus FindFiles(string fileName, out IList<FileInformation> files, IDokanFileInfo info);
+        NtStatus FindFiles(string fileName, out ICollection<FileInformation> files, IDokanFileInfo info);
 
         /// <summary>
         /// Same as <see cref="FindFiles"/> but with a search pattern to filter the result.
@@ -163,7 +163,7 @@ namespace DokanNet
         NtStatus FindFilesWithPattern(
             string fileName,
             string searchPattern,
-            out IList<FileInformation> files,
+            out ICollection<FileInformation> files,
             IDokanFileInfo info);
 
         /// <summary>
@@ -345,6 +345,7 @@ namespace DokanNet
             out FileSystemFeatures features,
             out string fileSystemName,
             out uint maximumComponentLength,
+            ref uint volumeSerialNumber,
             IDokanFileInfo info);
 
         /// <summary>
@@ -417,7 +418,7 @@ namespace DokanNet
         /// <returns>Return <see cref="NtStatus"/> or <see cref="DokanResult"/> appropriate to the request result.</returns>
         /// \see <a href="https://msdn.microsoft.com/en-us/library/windows/desktop/aa364424(v=vs.85).aspx">FindFirstStreamW function (MSDN)</a>
         /// \see <a href="https://msdn.microsoft.com/en-us/library/windows/desktop/aa365993(v=vs.85).aspx">About KTM (MSDN)</a>
-        NtStatus FindStreams(string fileName, out IList<FileInformation> streams, IDokanFileInfo info);
+        NtStatus FindStreams(string fileName, out ICollection<FileInformation> streams, IDokanFileInfo info);
     }
 }
 

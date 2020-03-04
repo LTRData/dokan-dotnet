@@ -26,6 +26,7 @@ namespace DokanNet
     /// <summary>
     /// The dokan operation proxy.
     /// </summary>
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Style", "IDE0060:Remove unused parameter", Justification = "<Pending>")]
     internal sealed class DokanOperationProxy
     {
         #region Delegates
@@ -214,17 +215,17 @@ namespace DokanNet
             );
 
         /// <summary>
-        /// To be used to mask out the <see cref="FileAccess"/> flags.
+        /// To be used to mask out the <see cref="NativeFileAccess"/> flags.
         /// </summary>
-        private const long FileAccessMask =
+        private const uint FileAccessMask =
             (uint)
-            ( FileAccess.ReadData               | FileAccess.WriteData               | FileAccess.AppendData 
-            | FileAccess.ReadExtendedAttributes | FileAccess.WriteExtendedAttributes | FileAccess.Execute 
-            | FileAccess.DeleteChild            | FileAccess.ReadAttributes          | FileAccess.WriteAttributes
-            | FileAccess.Delete                 | FileAccess.ReadPermissions         | FileAccess.ChangePermissions
-            | FileAccess.SetOwnership           | FileAccess.Synchronize             | FileAccess.AccessSystemSecurity
-            | FileAccess.MaximumAllowed         | FileAccess.GenericAll              | FileAccess.GenericExecute
-            | FileAccess.GenericWrite           | FileAccess.GenericRead);
+            ( NativeFileAccess.ReadData               | NativeFileAccess.WriteData               | NativeFileAccess.AppendData 
+            | NativeFileAccess.ReadExtendedAttributes | NativeFileAccess.WriteExtendedAttributes | NativeFileAccess.Execute 
+            | NativeFileAccess.DeleteChild            | NativeFileAccess.ReadAttributes          | NativeFileAccess.WriteAttributes
+            | NativeFileAccess.Delete                 | NativeFileAccess.ReadPermissions         | NativeFileAccess.ChangePermissions
+            | NativeFileAccess.SetOwnership           | NativeFileAccess.Synchronize             | NativeFileAccess.AccessSystemSecurity
+            | NativeFileAccess.MaximumAllowed         | NativeFileAccess.GenericAll              | NativeFileAccess.GenericExecute
+            | NativeFileAccess.GenericWrite           | NativeFileAccess.GenericRead);
 
         /// <summary>
         /// To be used to mask out the <see cref="FileShare"/> flags.
@@ -249,6 +250,7 @@ namespace DokanNet
             this.logger = logger;
             serialNumber = (uint)operations.GetHashCode();
         }
+
 
         /// <summary>
         /// CreateFile is called each time a request is made on a file system object.
@@ -299,14 +301,14 @@ namespace DokanNet
                     ref fileAttributesAndFlags,
                     ref creationDisposition);
 
-                var fileAttributes = (FileAttributes)(fileAttributesAndFlags & FileAttributeMask);
-                var fileOptions    = (FileOptions   )(fileAttributesAndFlags & FileOptionsMask);
-                var desiredAccess  = (FileAccess    )(outDesiredAccess       & FileAccessMask);
-                var shareAccess    = (FileShare     )(rawShareAccess         & FileShareMask);
+                var fileAttributes = (FileAttributes  )(fileAttributesAndFlags & FileAttributeMask);
+                var fileOptions    = (FileOptions     )(fileAttributesAndFlags & FileOptionsMask);
+                var desiredAccess  = (NativeFileAccess)(outDesiredAccess       & FileAccessMask);
+                var shareAccess    = (FileShare       )(rawShareAccess         & FileShareMask);
 
                 logger.Debug("CreateFileProxy : {0}", rawFileName);
                 logger.Debug("\tCreationDisposition\t{0}", (FileMode)creationDisposition);
-                logger.Debug("\tFileAccess\t{0}", (FileAccess)rawDesiredAccess);
+                logger.Debug("\tFileAccess\t{0}", (NativeFileAccess)rawDesiredAccess);
                 logger.Debug("\tFileShare\t{0}", (FileShare)rawShareAccess);
                 logger.Debug("\tFileOptions\t{0}", fileOptions);
                 logger.Debug("\tFileAttributes\t{0}", fileAttributes);
@@ -399,7 +401,7 @@ namespace DokanNet
                 else
                 {
                     // Pool the read buffer and return it to the pool when we're done with it.
-                    byte[] buffer = BufferPool.Default.RentBuffer(rawBufferLength, logger);
+                    var buffer = BufferPool.Default.RentBuffer(rawBufferLength, logger);
                     try
                     {
                         result = operations.ReadFile(rawFileName, buffer, out rawReadLength, rawOffset, rawFileInfo);
@@ -448,7 +450,7 @@ namespace DokanNet
                 else
                 {
                     // Pool the write buffer and return it to the pool when we're done with it.
-                    byte[] buffer = BufferPool.Default.RentBuffer(rawNumberOfBytesToWrite, logger);
+                    var buffer = BufferPool.Default.RentBuffer(rawNumberOfBytesToWrite, logger);
                     try
                     {
                         Marshal.Copy(rawBuffer, buffer, 0, (int)rawNumberOfBytesToWrite);
@@ -566,7 +568,7 @@ namespace DokanNet
                 logger.Debug("FindFilesProxy : {0}", rawFileName);
                 logger.Debug("\tContext\t{0}", rawFileInfo);
 
-                var result = operations.FindFiles(rawFileName, out IList<FileInformation> files, rawFileInfo);
+                var result = operations.FindFiles(rawFileName, out var files, rawFileInfo);
 
                 Debug.Assert(files != null, "Files must not be null");
                 if (result == DokanResult.Success && files.Count != 0)
@@ -612,10 +614,10 @@ namespace DokanNet
                 logger.Debug("\trawSearchPattern\t{0}", rawSearchPattern);
                 logger.Debug("\tContext\t{0}", rawFileInfo);
 
-                var result = operations.FindFilesWithPattern(rawFileName, rawSearchPattern, out IList<FileInformation> files, rawFileInfo);
+                var result = operations.FindFilesWithPattern(rawFileName, rawSearchPattern, out var files, rawFileInfo);
 
                 Debug.Assert(files != null, "Files must not be null");
-                if (result == DokanResult.Success && files.Any())
+                if (result == DokanResult.Success && files.Count > 0)
                 {
                     foreach (var fi in files)
                     {
@@ -692,7 +694,7 @@ namespace DokanNet
                 logger.Debug("FindStreamsProxy: {0}", rawFileName);
                 logger.Debug("\tContext\t{0}", rawFileInfo);
 
-                var result = operations.FindStreams(rawFileName, out IList<FileInformation> files, rawFileInfo);
+                var result = operations.FindStreams(rawFileName, out var files, rawFileInfo);
 
                 Debug.Assert(!(result == DokanResult.NotImplemented && files == null));
                 if (result == DokanResult.Success && files.Count != 0)
@@ -1031,7 +1033,7 @@ namespace DokanNet
             {
                 logger.Debug("GetVolumeInformationProxy:");
                 logger.Debug("\tContext\t{0}", rawFileInfo);
-                var result = operations.GetVolumeInformation(out var volumeName, out rawFileSystemFlags, out var name, out var maximumComponentLength, rawFileInfo);
+                var result = operations.GetVolumeInformation(out var volumeName, out rawFileSystemFlags, out var name, out var maximumComponentLength, ref rawVolumeSerialNumber, rawFileInfo);
 
                 if (result == DokanResult.Success)
                 {

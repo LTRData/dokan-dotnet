@@ -60,14 +60,21 @@ namespace DokanNet
         /// </summary>
         public object Context
         {
-            get => _context != 0 
-                ? ((GCHandle)(IntPtr)_context).Target 
-                : null;
+            get
+            {
+                if (_context != 0)
+                {
+                    return GCHandle.FromIntPtr((IntPtr)_context).Target;
+                }
+
+                return null;
+            }
+
             set
             {
                 if (_context != 0)
                 {
-                    ((GCHandle)(IntPtr)_context).Free();
+                    GCHandle.FromIntPtr((IntPtr)_context).Free();
                     _context = 0;
                 }
 

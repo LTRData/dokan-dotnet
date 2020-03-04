@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace DokanNet.Logging
@@ -9,10 +10,10 @@ namespace DokanNet.Logging
     public class ConsoleLogger : ILogger, IDisposable
     {
         private readonly string _loggerName;
-        private readonly System.Collections.Concurrent.BlockingCollection<Tuple<String, ConsoleColor>> _PendingLogs
-            = new System.Collections.Concurrent.BlockingCollection<Tuple<String, ConsoleColor>>();
+        private readonly System.Collections.Concurrent.BlockingCollection<Tuple<int, string, ConsoleColor>> _PendingLogs
+            = new System.Collections.Concurrent.BlockingCollection<Tuple<int, string, ConsoleColor>>();
 
-        private readonly Task _WriterTask = null;
+        private readonly Thread _WriterTask = null;
         /// <summary>
         /// Initializes a new instance of the <see cref="ConsoleLogger"/> class.
         /// </summary>
@@ -20,13 +21,14 @@ namespace DokanNet.Logging
         public ConsoleLogger(string loggerName = "")
         {
             _loggerName = loggerName;
-            _WriterTask = Task.Factory.StartNew(() =>
+            _WriterTask = new Thread(o =>
             {
                 foreach (var tuple in _PendingLogs.GetConsumingEnumerable())
                 {
-                    WriteMessage(tuple.Item1, tuple.Item2);
+                    WriteMessage(tuple.Item1, tuple.Item2, tuple.Item3);
                 }
             });
+            _WriterTask.Start();
         }
 
         /// <inheritdoc />
@@ -64,15 +66,20 @@ namespace DokanNet.Logging
             if (args.Length > 0)
                 message = string.Format(message, args);
 
-            _PendingLogs.Add(Tuple.Create(message, newColor));
+            _PendingLogs.Add(Tuple.Create(Thread.CurrentThread.ManagedThreadId, message, newColor));
         }
 
-        private void WriteMessage(string message, ConsoleColor newColor)
+        private static readonly object _lock = new object();
+
+        private void WriteMessage(int threadId, string message, ConsoleColor newColor)
         {
-            var origForegroundColor = Console.ForegroundColor;
-            Console.ForegroundColor = newColor;
-            Console.WriteLine(message.FormatMessageForLogging(true, loggerName: _loggerName));
-            Console.ForegroundColor = origForegroundColor;
+            lock (_lock)
+            {
+                var origForegroundColor = Console.ForegroundColor;
+                Console.ForegroundColor = newColor;
+                Console.WriteLine(message.FormatMessageForLogging(addDateTime: true, threadId: threadId, loggerName: _loggerName));
+                Console.ForegroundColor = origForegroundColor;
+            }
         }
 
         #region IDisposable Support
@@ -86,14 +93,16 @@ namespace DokanNet.Logging
         {
             if (!disposedValue)
             {
+                _PendingLogs.CompleteAdding();
+
                 if (disposing)
                 {
                     // TODO: dispose managed state (managed objects).
-                    _PendingLogs.CompleteAdding();
-                    _WriterTask.Wait();
+                    _WriterTask?.Join();
                 }
 
                 // TODO: free unmanaged resources (unmanaged objects) and override a finalizer below.
+
                 // TODO: set large fields to null.
 
                 disposedValue = true;
@@ -101,11 +110,11 @@ namespace DokanNet.Logging
         }
 
         // TODO: override a finalizer only if Dispose(bool disposing) above has code to free unmanaged resources.
-        // ~ConsoleLogger()
-        // {
-        //   // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
-        //   Dispose(false);
-        // }
+        ~ConsoleLogger()
+        {
+            // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
+            Dispose(false);
+        }
 
         /// <summary>
         /// Dispose resources.
@@ -116,7 +125,7 @@ namespace DokanNet.Logging
             // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
             Dispose(true);
             // TODO: uncomment the following line if the finalizer is overridden above.
-            // GC.SuppressFinalize(this);
+            GC.SuppressFinalize(this);
         }
         #endregion
     }

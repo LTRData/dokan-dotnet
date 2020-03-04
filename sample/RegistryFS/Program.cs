@@ -4,7 +4,7 @@ using System.IO;
 using System.Security.AccessControl;
 using DokanNet;
 using Microsoft.Win32;
-using FileAccess = DokanNet.FileAccess;
+using NativeFileAccess = DokanNet.NativeFileAccess;
 
 namespace RegistryFS
 {
@@ -36,7 +36,7 @@ namespace RegistryFS
 
         public NtStatus CreateFile(
             string filename,
-            FileAccess access,
+            NativeFileAccess access,
             FileShare share,
             FileMode mode,
             FileOptions options,
@@ -87,7 +87,7 @@ namespace RegistryFS
 
         public NtStatus FindFiles(
             string filename,
-            out IList<FileInformation> files,
+            out ICollection<FileInformation> files,
             IDokanFileInfo info)
         {
             files = new List<FileInformation>();
@@ -265,7 +265,7 @@ namespace RegistryFS
         }
 
         public NtStatus GetVolumeInformation(out string volumeLabel, out FileSystemFeatures features,
-            out string fileSystemName, out uint maximumComponentLength, IDokanFileInfo info)
+            out string fileSystemName, out uint maximumComponentLength, ref uint volumeSerialNumber, IDokanFileInfo info)
         {
             volumeLabel = "RFS";
             features = FileSystemFeatures.None;
@@ -295,13 +295,13 @@ namespace RegistryFS
             return DokanResult.NotImplemented;
         }
 
-        public NtStatus FindStreams(string fileName, out IList<FileInformation> streams, IDokanFileInfo info)
+        public NtStatus FindStreams(string fileName, out ICollection<FileInformation> streams, IDokanFileInfo info)
         {
             streams = new FileInformation[0];
             return DokanResult.NotImplemented;
         }
 
-        public NtStatus FindFilesWithPattern(string fileName, string searchPattern, out IList<FileInformation> files,
+        public NtStatus FindFilesWithPattern(string fileName, string searchPattern, out ICollection<FileInformation> files,
             IDokanFileInfo info)
         {
             files = new FileInformation[0];

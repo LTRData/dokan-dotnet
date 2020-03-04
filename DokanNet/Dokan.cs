@@ -16,7 +16,7 @@ namespace DokanNet
         /// The %Dokan version that DokanNet is compatible with. Currently it is version 1.0.0.
         /// </summary>
         /// <see cref="DOKAN_OPTIONS.Version"/>
-        private const ushort DOKAN_VERSION = 130;
+        public const ushort DOKAN_VERSION = 130;
 
         #endregion Dokan Driver Options
 
@@ -139,6 +139,8 @@ namespace DokanNet
             int threadCount, int version, TimeSpan timeout, string uncName = null, int allocationUnitSize = 512,
             int sectorSize = 512, ILogger logger = null)
         {
+            var logger_created = false;
+
             if (logger == null)
             {
 #if TRACE
@@ -146,6 +148,8 @@ namespace DokanNet
 #else
                 logger = new NullLogger();
 #endif
+
+                logger_created = true;
             }
 
             var dokanOperationProxy = new DokanOperationProxy(operations, logger);
@@ -191,7 +195,13 @@ namespace DokanNet
                 FindStreams = dokanOperationProxy.FindStreamsProxy
             };
 
-            DokanStatus status = (DokanStatus)NativeMethods.DokanMain(ref dokanOptions, ref dokanOperations);
+            var status = (DokanStatus)NativeMethods.DokanMain(ref dokanOptions, ref dokanOperations);
+
+            if (logger_created && logger is IDisposable disposable_logger)
+            {
+                disposable_logger.Dispose();
+            }
+
             if (status != DokanStatus.Success)
             {
                 throw new DokanException(status);

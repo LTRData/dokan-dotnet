@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.26403.7
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29806.167
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "sample", "sample", "{6AF2183D-1D93-414C-8FAC-C97E60078F4C}"
 EndProject
@@ -34,9 +34,15 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DokanNet", "DokanNet\DokanN
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RegistryFS", "sample\RegistryFS\RegistryFS.csproj", "{F47199F2-DDE4-4998-8D31-F8E8D8A30DA3}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DokanNetMirror", "sample\DokanNetMirror\DokanNetMirror.csproj", "{E5F9BA3D-A37A-479E-8985-30DD661F4E72}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DokanNetMirror", "sample\DokanNetMirror\DokanNetMirror.csproj", "{E5F9BA3D-A37A-479E-8985-30DD661F4E72}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DokanNet.Tests", "DokanNet.Tests\DokanNet.Tests.csproj", "{73710F27-0C95-4D47-8A00-CB9F003E2FE7}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "DiscUtils.Dokan", "DiscUtils.Dokan", "{3D589479-DF7E-448F-9221-6DAEF9C3B08F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DiscUtilsFs", "DiscUtilsFs\DiscUtilsFs.csproj", "{34C5B46C-A59D-419F-AEF5-DFA8FC60A14F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DiscUtils.Dokan", "DiscUtils.Dokan\DiscUtils.Dokan.csproj", "{10704E56-2C70-422D-8595-9A3224773615}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -96,6 +102,30 @@ Global
 		{73710F27-0C95-4D47-8A00-CB9F003E2FE7}.Release|x64.Build.0 = Release|Any CPU
 		{73710F27-0C95-4D47-8A00-CB9F003E2FE7}.Release|x86.ActiveCfg = Release|Any CPU
 		{73710F27-0C95-4D47-8A00-CB9F003E2FE7}.Release|x86.Build.0 = Release|Any CPU
+		{34C5B46C-A59D-419F-AEF5-DFA8FC60A14F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{34C5B46C-A59D-419F-AEF5-DFA8FC60A14F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{34C5B46C-A59D-419F-AEF5-DFA8FC60A14F}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{34C5B46C-A59D-419F-AEF5-DFA8FC60A14F}.Debug|x64.Build.0 = Debug|Any CPU
+		{34C5B46C-A59D-419F-AEF5-DFA8FC60A14F}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{34C5B46C-A59D-419F-AEF5-DFA8FC60A14F}.Debug|x86.Build.0 = Debug|Any CPU
+		{34C5B46C-A59D-419F-AEF5-DFA8FC60A14F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{34C5B46C-A59D-419F-AEF5-DFA8FC60A14F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{34C5B46C-A59D-419F-AEF5-DFA8FC60A14F}.Release|x64.ActiveCfg = Release|Any CPU
+		{34C5B46C-A59D-419F-AEF5-DFA8FC60A14F}.Release|x64.Build.0 = Release|Any CPU
+		{34C5B46C-A59D-419F-AEF5-DFA8FC60A14F}.Release|x86.ActiveCfg = Release|Any CPU
+		{34C5B46C-A59D-419F-AEF5-DFA8FC60A14F}.Release|x86.Build.0 = Release|Any CPU
+		{10704E56-2C70-422D-8595-9A3224773615}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{10704E56-2C70-422D-8595-9A3224773615}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{10704E56-2C70-422D-8595-9A3224773615}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{10704E56-2C70-422D-8595-9A3224773615}.Debug|x64.Build.0 = Debug|Any CPU
+		{10704E56-2C70-422D-8595-9A3224773615}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{10704E56-2C70-422D-8595-9A3224773615}.Debug|x86.Build.0 = Debug|Any CPU
+		{10704E56-2C70-422D-8595-9A3224773615}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{10704E56-2C70-422D-8595-9A3224773615}.Release|Any CPU.Build.0 = Release|Any CPU
+		{10704E56-2C70-422D-8595-9A3224773615}.Release|x64.ActiveCfg = Release|Any CPU
+		{10704E56-2C70-422D-8595-9A3224773615}.Release|x64.Build.0 = Release|Any CPU
+		{10704E56-2C70-422D-8595-9A3224773615}.Release|x86.ActiveCfg = Release|Any CPU
+		{10704E56-2C70-422D-8595-9A3224773615}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -104,5 +134,10 @@ Global
 		{F4BC71C8-E83F-499B-8E6F-4FB9B2F5972A} = {CD7C8139-B069-4C41-86EE-8D0F8BD24191}
 		{F47199F2-DDE4-4998-8D31-F8E8D8A30DA3} = {6AF2183D-1D93-414C-8FAC-C97E60078F4C}
 		{E5F9BA3D-A37A-479E-8985-30DD661F4E72} = {6AF2183D-1D93-414C-8FAC-C97E60078F4C}
+		{34C5B46C-A59D-419F-AEF5-DFA8FC60A14F} = {3D589479-DF7E-448F-9221-6DAEF9C3B08F}
+		{10704E56-2C70-422D-8595-9A3224773615} = {3D589479-DF7E-448F-9221-6DAEF9C3B08F}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {5E34A3F2-A676-4D58-88E3-69CC9A8A37B2}
 	EndGlobalSection
 EndGlobal
