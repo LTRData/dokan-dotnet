@@ -9,6 +9,7 @@ namespace DiscUtils.Dokan
         ForceReadOnly   = 0x01,
         IgnoreSecurity  = 0x02,
         HiddenAsNormal  = 0x04,
-        LeaveFsOpen     = 0x08
+        LeaveFsOpen     = 0x08,
+        BlockExecute    = 0x10
     }
 }

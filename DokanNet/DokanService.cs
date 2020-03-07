@@ -19,6 +19,7 @@ namespace DokanNet
         public string UncName { get; }
         public int AllocationUnitSize { get; }
         public int SectorSize { get; }
+        public bool Running => _thread?.IsAlive ?? false;
 
         private Thread _thread;
 

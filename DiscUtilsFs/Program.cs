@@ -1,7 +1,9 @@
 using System;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using DiscUtils;
 using DiscUtils.Dokan;
 using DiscUtils.Streams;
@@ -38,6 +40,7 @@ namespace DiscUtilsFs
                     typeof(DiscUtils.Vdi.Disk).Assembly,
                     typeof(DiscUtils.Vhd.Disk).Assembly,
                     typeof(DiscUtils.Vhdx.Disk).Assembly,
+                    typeof(DiscUtils.VirtualFileSystem.TarFileSystem).Assembly,
                     typeof(DiscUtils.Wim.WimFileSystem).Assembly,
                     typeof(DiscUtils.Vmdk.Disk).Assembly,
                     typeof(DiscUtils.Xfs.XfsFileSystem).Assembly
@@ -151,21 +154,57 @@ namespace DiscUtilsFs
                     ntfs.NtfsOptions.HideSystemFiles = false;
                 }
 
-                var dokan_discutils = new DokanDiscUtils(file_system,
-                    DokanDiscUtilsOptions.IgnoreSecurity | DokanDiscUtilsOptions.HiddenAsNormal);
+                var discutils_options = DokanDiscUtilsOptions.BlockExecute |
+                    DokanDiscUtilsOptions.HiddenAsNormal;
 
-                DokanOptions mountOptions = default;
-                
+                var dokan_discutils = new DokanDiscUtils(file_system, discutils_options);
+
+                var mountOptions = DokanOptions.OptimizeSingleNameSearch;
+
+#if DEBUG
                 mountOptions |= DokanOptions.DebugMode;
+#endif
 
-                if (dokan_discutils.Options.HasFlag(DokanDiscUtilsOptions.ForceReadOnly))
+                if (dokan_discutils.ReadOnly)
                 {
                     mountOptions |= DokanOptions.WriteProtection;
                 }
 
-                dokan_discutils.Mount(mountPath, mountOptions, 1);
+                if (dokan_discutils.NamedStreams)
+                {
+                    mountOptions |= DokanOptions.AltStream;
+                }
 
-                Console.WriteLine("Success");
+                using (var service = new DokanService(dokan_discutils, mountPath, mountOptions))
+                {
+                    service.Start();
+
+                    while (service.Running && !new DriveInfo(mountPath).IsReady)
+                    {
+                        Thread.Sleep(200);
+                    }
+
+                    if (service.Running)
+                    {
+                        Process.Start(mountPath);
+
+                        Console.WriteLine("Success. Press Escape to dismount.");
+
+                        while (Console.ReadKey().Key != ConsoleKey.Escape)
+                        {
+                        }
+
+                        Console.WriteLine();
+
+                        Console.WriteLine("Dismounting...");
+                    }
+                    else
+                    {
+                        Console.WriteLine("Failed to mount.");
+                    }
+                }
+
+                Console.WriteLine("Success.");
             }
             catch (DokanException ex)
             {

@@ -9,14 +9,13 @@ using DokanNet.Logging;
 using NativeFileAccess = DokanNet.NativeFileAccess;
 using static DokanNet.FormatProviders;
 using System.Diagnostics;
+using System.Security.Principal;
 
 namespace DiscUtils.Dokan
 {
     public class DokanDiscUtils : IDokanOperations, IDisposable
     {
         public IFileSystem FileSystem { get; }
-
-        public DokanDiscUtilsOptions Options { get; }
 
 
         private const NativeFileAccess DataAccess = NativeFileAccess.ReadData | NativeFileAccess.WriteData | NativeFileAccess.AppendData |
@@ -34,9 +33,27 @@ namespace DiscUtils.Dokan
 
         private readonly StringComparison _comparison = StringComparison.OrdinalIgnoreCase;
 
+        private readonly List<KeyValuePair<string, string>> _transl = new List<KeyValuePair<string, string>>();
+
+        public FileSecurity FileSecurity { get; set; }
+
+        public DirectorySecurity DirectorySecurity { get; set; }
+
         public bool CaseSensitive { get; }
 
         public bool NamedStreams { get; }
+
+        public bool ReadOnly { get; }
+
+        public bool HasSecurity { get; }
+
+        public bool BlockExecute { get; }
+
+        public bool HiddenAsNormal { get; set; }
+
+        public bool LeaveFsOpen { get; set; }
+
+        public KeyValuePair<string, string>[] Translations => _transl.ToArray();
 
         private NtStatus Trace(string method, string fileName, IDokanFileInfo info, NtStatus result,
             params object[] parameters)
@@ -74,23 +91,45 @@ namespace DiscUtils.Dokan
                 options |= DokanDiscUtilsOptions.ForceReadOnly;
             }
 
-            if (filesystem is IWindowsFileSystem)
+            if (options.HasFlag(DokanDiscUtilsOptions.ForceReadOnly))
+            {
+                ReadOnly = true;
+            }
+
+            if (filesystem is IWindowsFileSystem || filesystem is IUnixFileSystem)
             {
                 NamedStreams = true;
             }
-            else if (filesystem is IUnixFileSystem)
+
+            if (filesystem is IUnixFileSystem)
             {
                 _comparison = StringComparison.Ordinal;
                 CaseSensitive = true;
-                NamedStreams = true;
             }
 
-            Options = options;
+            if (options.HasFlag(DokanDiscUtilsOptions.BlockExecute))
+            {
+                BlockExecute = true;
+            }
+            
+            if (!options.HasFlag(DokanDiscUtilsOptions.IgnoreSecurity) &&
+                filesystem is IWindowsFileSystem)
+            {
+                HasSecurity = true;
+            }
+
+            if (options.HasFlag(DokanDiscUtilsOptions.HiddenAsNormal))
+            {
+                HiddenAsNormal = true;
+            }
+
+            if (options.HasFlag(DokanDiscUtilsOptions.LeaveFsOpen))
+            {
+                LeaveFsOpen = true;
+            }
         }
 
         #region Implementation of IDokanOperations
-
-        private readonly List<KeyValuePair<string, string>> _transl = new List<KeyValuePair<string, string>>();
 
         private string TranslatePath(string path)
         {
@@ -119,7 +158,7 @@ namespace DiscUtils.Dokan
                 {
                     var newpath = transl.Value + path.Substring(transl.Key.Length);
 
-                    _transl.Add(new KeyValuePair<string, string>(string.Intern(newpath), string.Intern(path)));
+                    _transl.Add(new KeyValuePair<string, string>(string.Intern(path), string.Intern(newpath)));
 
                     Debug.WriteLine($"DokanDiscUtils: Added parent directory based translation of '{path}' to '{newpath}'");
 
@@ -130,9 +169,47 @@ namespace DiscUtils.Dokan
             return path;
         }
 
+        private string UntranslatePath(string path)
+        {
+            path = path.Trim('\\');
+
+            if (string.IsNullOrWhiteSpace(path))
+            {
+                return path;
+            }
+
+            foreach (var transl in _transl)
+            {
+                if (path.Equals(transl.Value, _comparison))
+                {
+                    var newpath = transl.Key;
+#if TRACE
+                    Debug.WriteLine($"Using translation of '{newpath}' to '{path}'");
+#endif
+
+                    return newpath;
+                }
+
+                var dirpath = transl.Value + @"\";
+
+                if (path.StartsWith(dirpath, _comparison))
+                {
+                    var newpath = transl.Key + path.Substring(transl.Value.Length);
+
+                    _transl.Add(new KeyValuePair<string, string>(string.Intern(newpath), string.Intern(path)));
+
+                    Debug.WriteLine($"DokanDiscUtils: Added parent directory based translation of '{newpath}' to '{path}'");
+
+                    return newpath;
+                }
+            }
+
+            return path;
+        }
+
         private string SanitizePath(string path)
         {
-            var newpath = TranslatePath(path);
+            var newpath = UntranslatePath(path);
 
             if (!ReferenceEquals(newpath, path))
             {
@@ -217,6 +294,14 @@ namespace DiscUtils.Dokan
                     return Trace(nameof(CreateFile), fileName, info, access, share, mode, options, attributes,
                         DokanResult.AccessDenied);
                 }
+
+                return Trace(nameof(CreateFile), fileName, info, access, share, mode, options, attributes,
+                    result);
+            }
+
+            if (BlockExecute && access.HasFlag(NativeFileAccess.Execute))
+            {
+                result = NtStatus.AccessDenied;
 
                 return Trace(nameof(CreateFile), fileName, info, access, share, mode, options, attributes,
                     result);
@@ -387,7 +472,7 @@ namespace DiscUtils.Dokan
         {
             bytesWritten = 0;
 
-            if (!FileSystem.CanWrite || Options.HasFlag(DokanDiscUtilsOptions.ForceReadOnly))
+            if (ReadOnly)
                 return Trace(nameof(WriteFile), fileName, info, DokanResult.AccessDenied);
 
             if (info.Context == null)
@@ -415,7 +500,7 @@ namespace DiscUtils.Dokan
 
         public NtStatus FlushFileBuffers(string fileName, IDokanFileInfo info)
         {
-            if (!FileSystem.CanWrite || Options.HasFlag(DokanDiscUtilsOptions.ForceReadOnly))
+            if (ReadOnly)
                 return Trace(nameof(FlushFileBuffers), fileName, info, DokanResult.AccessDenied);
 
             try
@@ -435,6 +520,12 @@ namespace DiscUtils.Dokan
 
             // may be called with info.Context == null, but usually it isn't
             var finfo = FileSystem.GetFileSystemInfo(fileName);
+
+            if (!finfo.Exists)
+            {
+                fileInfo = default;
+                return Trace(nameof(GetFileInformation), fileName, info, DokanResult.FileNotFound);
+            }
 
             fileInfo = new FileInformation
             {
@@ -460,7 +551,7 @@ namespace DiscUtils.Dokan
 
         public NtStatus SetFileAttributes(string fileName, FileAttributes attributes, IDokanFileInfo info)
         {
-            if (!FileSystem.CanWrite || Options.HasFlag(DokanDiscUtilsOptions.ForceReadOnly))
+            if (ReadOnly)
                 return Trace(nameof(SetFileAttributes), fileName, info, DokanResult.AccessDenied);
 
             try
@@ -493,7 +584,7 @@ namespace DiscUtils.Dokan
         public NtStatus SetFileTime(string fileName, DateTime? creationTime, DateTime? lastAccessTime,
             DateTime? lastWriteTime, IDokanFileInfo info)
         {
-            if (!FileSystem.CanWrite || Options.HasFlag(DokanDiscUtilsOptions.ForceReadOnly))
+            if (ReadOnly)
                 return Trace(nameof(SetFileTime), fileName, info, DokanResult.AccessDenied);
 
             fileName = TranslatePath(fileName);
@@ -526,7 +617,7 @@ namespace DiscUtils.Dokan
 
         public NtStatus DeleteFile(string fileName, IDokanFileInfo info)
         {
-            if (!FileSystem.CanWrite || Options.HasFlag(DokanDiscUtilsOptions.ForceReadOnly))
+            if (ReadOnly)
                 return Trace(nameof(DeleteFile), fileName, info, DokanResult.AccessDenied);
 
             fileName = TranslatePath(fileName);
@@ -543,7 +634,7 @@ namespace DiscUtils.Dokan
 
         public NtStatus DeleteDirectory(string fileName, IDokanFileInfo info)
         {
-            if (!FileSystem.CanWrite || Options.HasFlag(DokanDiscUtilsOptions.ForceReadOnly))
+            if (ReadOnly)
                 return Trace(nameof(DeleteDirectory), fileName, info, DokanResult.AccessDenied);
 
             fileName = TranslatePath(fileName);
@@ -564,7 +655,7 @@ namespace DiscUtils.Dokan
 
         public NtStatus MoveFile(string oldName, string newName, bool replace, IDokanFileInfo info)
         {
-            if (!FileSystem.CanWrite || Options.HasFlag(DokanDiscUtilsOptions.ForceReadOnly))
+            if (ReadOnly)
                 return Trace(nameof(MoveFile), oldName, info, DokanResult.AccessDenied);
 
             oldName = TranslatePath(oldName);
@@ -614,9 +705,7 @@ namespace DiscUtils.Dokan
 
         public NtStatus SetEndOfFile(string fileName, long length, IDokanFileInfo info)
         {
-            if (!FileSystem.CanWrite ||
-                Options.HasFlag(DokanDiscUtilsOptions.ForceReadOnly) ||
-                !(info.Context is Stream stream))
+            if (ReadOnly || !(info.Context is Stream stream))
             {
                 return Trace(nameof(SetEndOfFile), fileName, info, DokanResult.AccessDenied);
             }
@@ -637,9 +726,7 @@ namespace DiscUtils.Dokan
 
         public NtStatus SetAllocationSize(string fileName, long length, IDokanFileInfo info)
         {
-            if (!FileSystem.CanWrite ||
-                Options.HasFlag(DokanDiscUtilsOptions.ForceReadOnly) ||
-                !(info.Context is Stream stream))
+            if (ReadOnly || !(info.Context is Stream stream))
             {
                 return Trace(nameof(SetEndOfFile), fileName, info, DokanResult.AccessDenied);
             }
@@ -708,23 +795,22 @@ namespace DiscUtils.Dokan
                        FileSystemFeatures.SupportsRemoteStorage |
                        FileSystemFeatures.UnicodeOnDisk;
 
-            if (FileSystem is IWindowsFileSystem)
+            if (NamedStreams)
             {
                 features |= FileSystemFeatures.NamedStreams;
-
-                if (!Options.HasFlag(DokanDiscUtilsOptions.IgnoreSecurity))
-                {
-                    features |= FileSystemFeatures.PersistentAcls;
-                }
             }
 
-            if (FileSystem is IUnixFileSystem)
+            if (CaseSensitive)
             {
-                features |= FileSystemFeatures.CaseSensitiveSearch |
-                    FileSystemFeatures.NamedStreams;
+                features |= FileSystemFeatures.CaseSensitiveSearch;
             }
 
-            if (!FileSystem.CanWrite || Options.HasFlag(DokanDiscUtilsOptions.ForceReadOnly))
+            if (HasSecurity)
+            {
+                features |= FileSystemFeatures.PersistentAcls;
+            }
+
+            if (ReadOnly)
             {
                 features |= FileSystemFeatures.ReadOnlyVolume;
             }
@@ -743,7 +829,18 @@ namespace DiscUtils.Dokan
         {
             try
             {
-                if (!(FileSystem is IWindowsFileSystem wfs) || Options.HasFlag(DokanDiscUtilsOptions.IgnoreSecurity))
+                if (DirectorySecurity != null && info.IsDirectory)
+                {
+                    security = DirectorySecurity;
+                    return Trace(nameof(GetFileSecurity), fileName, info, DokanResult.Success);
+                }
+                else if (FileSecurity != null && !info.IsDirectory)
+                {
+                    security = FileSecurity;
+                    return Trace(nameof(GetFileSecurity), fileName, info, DokanResult.Success);
+                }
+
+                if (!HasSecurity || !(FileSystem is IWindowsFileSystem wfs))
                 {
                     security = null;
                     return Trace(nameof(GetFileSecurity), fileName, info, DokanResult.NotImplemented);
@@ -751,19 +848,23 @@ namespace DiscUtils.Dokan
 
                 fileName = TranslatePath(fileName);
 
-                var fs_security = wfs.GetSecurity(fileName);
-
-                if (fs_security == null)
-                {
-                    security = null;
-                    return Trace(nameof(GetFileSecurity), fileName, info, DokanResult.InvalidParameter);
-                }
-
-                var buffer = new byte[fs_security.BinaryLength];
-                fs_security.GetBinaryForm(buffer, 0);
-
                 security = new FileSecurity();
-                security.SetSecurityDescriptorBinaryForm(buffer, sections);
+
+                if (sections != AccessControlSections.None)
+                {
+                    var fs_security = wfs.GetSecurity(fileName);
+
+                    if (fs_security == null)
+                    {
+                        security = null;
+                        return Trace(nameof(GetFileSecurity), fileName, info, DokanResult.InvalidParameter);
+                    }
+
+                    var buffer = new byte[fs_security.BinaryLength];
+                    fs_security.GetBinaryForm(buffer, 0);
+
+                    security.SetSecurityDescriptorBinaryForm(buffer, sections);
+                }
 
                 return Trace(nameof(GetFileSecurity), fileName, info, DokanResult.Success, sections.ToString());
             }
@@ -777,12 +878,12 @@ namespace DiscUtils.Dokan
         public NtStatus SetFileSecurity(string fileName, FileSystemSecurity security, AccessControlSections sections,
             IDokanFileInfo info)
         {
-            if (!FileSystem.CanWrite || Options.HasFlag(DokanDiscUtilsOptions.ForceReadOnly))
+            if (ReadOnly)
                 return Trace(nameof(SetFileSecurity), fileName, info, DokanResult.AccessDenied);
 
             try
             {
-                if (!(FileSystem is IWindowsFileSystem wfs) || Options.HasFlag(DokanDiscUtilsOptions.IgnoreSecurity))
+                if (!(FileSystem is IWindowsFileSystem wfs) || !HasSecurity)
                 {
                     return Trace(nameof(SetFileSecurity), fileName, info, DokanResult.NotImplemented);
                 }
@@ -824,10 +925,10 @@ namespace DiscUtils.Dokan
 
         public NtStatus FindStreams(string fileName, out ICollection<FileInformation> streams, IDokanFileInfo info)
         {
+            fileName = TranslatePath(fileName);
+
             if (FileSystem is IWindowsFileSystem wfs)
             {
-                fileName = TranslatePath(fileName);
-
                 streams = Array.ConvertAll(wfs.GetAlternateDataStreams(fileName),
                 name =>
                 {
@@ -846,14 +947,16 @@ namespace DiscUtils.Dokan
 
                 return Trace(nameof(FindStreams), fileName, info, DokanResult.Success, $"Found {streams.Count} streams");
             }
-
-            streams = new FileInformation[0];
-            return Trace(nameof(FindStreams), fileName, info, DokanResult.NotImplemented);
+            else
+            {
+                streams = new FileInformation[0];
+                return Trace(nameof(FindStreams), fileName, info, DokanResult.NotImplemented);
+            }
         }
 
         private FileAttributes FilterAttributes(FileAttributes attributes)
         {
-            if (Options.HasFlag(DokanDiscUtilsOptions.HiddenAsNormal))
+            if (HiddenAsNormal)
             {
                 attributes &= ~(FileAttributes.Hidden | FileAttributes.System);
             }
@@ -861,16 +964,18 @@ namespace DiscUtils.Dokan
             return attributes;
         }
 
-        public ICollection<FileInformation> FindFilesHelper(string fileName, string searchPattern)
+        public ICollection<FileInformation> FindFilesHelper(string path, string searchPattern)
         {
-            fileName = TranslatePath(fileName);
+            path = TranslatePath(path);
 
-            var files = FileSystem.GetFileSystemEntries(fileName, searchPattern)
-                .Select(name => FileSystem.FileExists(name) ? FileSystem.GetFileInfo(name) : FileSystem.GetFileSystemInfo(name))
-                .Where(finfo => finfo.Exists)
-                .Select(finfo =>
-                {
-                    return new FileInformation
+            searchPattern = searchPattern.Replace('<', '*');
+
+            if (FileSystem is IWindowsFileSystem wfs)
+            {
+                var files = FileSystem.GetFileSystemEntries(path, searchPattern)
+                    .Select(name => FileSystem.FileExists(name) ? FileSystem.GetFileInfo(name) : FileSystem.GetFileSystemInfo(name))
+                    .Where(finfo => finfo.Exists)
+                    .SelectMany(finfo => new[]{ new FileInformation
                     {
                         Attributes = FilterAttributes(finfo.Attributes),
                         CreationTime = finfo.CreationTime,
@@ -878,11 +983,42 @@ namespace DiscUtils.Dokan
                         LastWriteTime = finfo.LastWriteTime,
                         Length = (finfo as DiscFileInfo)?.Length ?? 0,
                         FileName = SanitizePath(finfo.Name)
-                    };
-                })
-                .ToArray();
+                    } }.Concat(wfs.GetAlternateDataStreams(Path.Combine(path, finfo.Name)).Select(stream =>
+                    {
+                        var stream_path = Path.Combine(path, $"{finfo.Name}:{stream}");
 
-            return files;
+                        return new FileInformation
+                        {
+                            Attributes = FilterAttributes(FileSystem.GetAttributes(stream_path)),
+                            CreationTime = FileSystem.GetCreationTime(stream_path),
+                            LastAccessTime = FileSystem.GetLastAccessTime(stream_path),
+                            LastWriteTime = FileSystem.GetLastWriteTime(stream_path),
+                            Length = FileSystem.GetFileLength(stream_path),
+                            FileName = SanitizePath(stream_path)
+                        };
+                    })))
+                    .ToArray();
+
+                return files;
+            }
+            else
+            {
+                var files = FileSystem.GetFileSystemEntries(path, searchPattern)
+                    .Select(name => FileSystem.FileExists(name) ? FileSystem.GetFileInfo(name) : FileSystem.GetFileSystemInfo(name))
+                    .Where(finfo => finfo.Exists)
+                    .Select(finfo => new FileInformation
+                    {
+                        Attributes = FilterAttributes(finfo.Attributes),
+                        CreationTime = finfo.CreationTime,
+                        LastAccessTime = finfo.LastAccessTime,
+                        LastWriteTime = finfo.LastWriteTime,
+                        Length = (finfo as DiscFileInfo)?.Length ?? 0,
+                        FileName = SanitizePath(finfo.Name)
+                    })
+                    .ToArray();
+
+                return files;
+            }
         }
 
         public NtStatus FindFilesWithPattern(string fileName, string searchPattern, out ICollection<FileInformation> files,
@@ -902,8 +1038,7 @@ namespace DiscUtils.Dokan
             {
                 if (disposing)
                 {
-                    if (!Options.HasFlag(DokanDiscUtilsOptions.LeaveFsOpen) &&
-                        FileSystem is IDisposable disposable_filesystem)
+                    if (!LeaveFsOpen && FileSystem is IDisposable disposable_filesystem)
                     {
                         disposable_filesystem.Dispose();
                     }
