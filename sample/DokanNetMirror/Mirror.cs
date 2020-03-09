@@ -332,7 +332,7 @@ namespace DokanNetMirror
             }
         }
 
-        public NtStatus GetFileInformation(string fileName, out FileInformation fileInfo, IDokanFileInfo info)
+        public NtStatus GetFileInformation(string fileName, out ByHandleFileInformation fileInfo, IDokanFileInfo info)
         {
             // may be called with info.Context == null, but usually it isn't
             var filePath = GetPath(fileName);
@@ -340,9 +340,8 @@ namespace DokanNetMirror
             if (!finfo.Exists)
                 finfo = new DirectoryInfo(filePath);
 
-            fileInfo = new FileInformation
+            fileInfo = new ByHandleFileInformation
             {
-                FileName = fileName,
                 Attributes = finfo.Attributes,
                 CreationTime = finfo.CreationTime,
                 LastAccessTime = finfo.LastAccessTime,
@@ -352,7 +351,7 @@ namespace DokanNetMirror
             return Trace(nameof(GetFileInformation), fileName, info, DokanResult.Success);
         }
 
-        public NtStatus FindFiles(string fileName, out ICollection<FileInformation> files, IDokanFileInfo info)
+        public NtStatus FindFiles(string fileName, out IEnumerable<FindFileInformation> files, IDokanFileInfo info)
         {
             // This function is not called because FindFilesWithPattern is implemented
             // Return DokanResult.NotImplemented in FindFilesWithPattern to make FindFiles called
@@ -662,18 +661,18 @@ namespace DokanNetMirror
                 "out " + streamName, "out " + streamSize.ToString());
         }
 
-        public NtStatus FindStreams(string fileName, out ICollection<FileInformation> streams, IDokanFileInfo info)
+        public NtStatus FindStreams(string fileName, out IEnumerable<FindFileInformation> streams, IDokanFileInfo info)
         {
-            streams = new FileInformation[0];
+            streams = new FindFileInformation[0];
             return Trace(nameof(FindStreams), fileName, info, DokanResult.NotImplemented);
         }
 
-        public ICollection<FileInformation> FindFilesHelper(string fileName, string searchPattern)
+        public IEnumerable<FindFileInformation> FindFilesHelper(string fileName, string searchPattern)
         {
-            ICollection<FileInformation> files = new DirectoryInfo(GetPath(fileName))
+            var files = new DirectoryInfo(GetPath(fileName))
                 .EnumerateFileSystemInfos()
                 .Where(finfo => DokanHelper.DokanIsNameInExpression(searchPattern, finfo.Name, true))
-                .Select(finfo => new FileInformation
+                .Select(finfo => new FindFileInformation
                 {
                     Attributes = finfo.Attributes,
                     CreationTime = finfo.CreationTime,
@@ -681,12 +680,12 @@ namespace DokanNetMirror
                     LastWriteTime = finfo.LastWriteTime,
                     Length = (finfo as FileInfo)?.Length ?? 0,
                     FileName = finfo.Name
-                }).ToArray();
+                });
 
             return files;
         }
 
-        public NtStatus FindFilesWithPattern(string fileName, string searchPattern, out ICollection<FileInformation> files,
+        public NtStatus FindFilesWithPattern(string fileName, string searchPattern, out IEnumerable<FindFileInformation> files,
             IDokanFileInfo info)
         {
             files = FindFilesHelper(fileName, searchPattern);

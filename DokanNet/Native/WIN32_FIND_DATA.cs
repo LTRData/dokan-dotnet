@@ -104,6 +104,6 @@ namespace DokanNet.Native
         /// This name is in the classic 8.3 file name format.
         /// </summary>
         [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 14)]
-        private readonly string cAlternateFileName;
+        public string cAlternateFileName;
     }
 }

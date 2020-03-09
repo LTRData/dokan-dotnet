@@ -14,7 +14,7 @@ namespace DokanNet
     /// </summary>
     [StructLayout(LayoutKind.Auto)]
     [DebuggerDisplay("{FileName}, {Length}, {CreationTime}, {LastWriteTime}, {LastAccessTime}, {Attributes}")]
-    public struct FileInformation
+    public sealed class FindFileInformation
     {
         /// <summary>
         /// Gets or sets the name of the file or directory.
@@ -50,5 +50,9 @@ namespace DokanNet
         /// Gets or sets the length of the file.
         /// </summary>
         public long Length { get; set; }
+
+        public string ShortFileName { get; set; }
+
+        public override string ToString() => FileName;
     }
 }

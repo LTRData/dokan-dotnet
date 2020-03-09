@@ -183,7 +183,7 @@ namespace DokanNet
 
         private readonly ILogger logger;
 
-        private readonly uint serialNumber;
+        private uint serialNumber;
 
         #region Enum masks
         /// <summary>
@@ -386,10 +386,10 @@ namespace DokanNet
         {
             try
             {
-                logger.Debug("ReadFileProxy : " + rawFileName);
-                logger.Debug("\tBufferLength\t" + rawBufferLength);
-                logger.Debug("\tOffset\t" + rawOffset);
-                logger.Debug("\tContext\t" + rawFileInfo);
+                logger.Debug("ReadFileProxy : {0}", rawFileName);
+                logger.Debug("\tBufferLength\t{0}", rawBufferLength);
+                logger.Debug("\tOffset\t{0}", rawOffset);
+                logger.Debug("\tContext\t{0}", rawFileInfo);
 
                 // Check if the file system has implemented the unsafe Dokan interface.
                 // If so, pass the raw IntPtr through instead of marshalling.
@@ -413,7 +413,7 @@ namespace DokanNet
                     }
                 }
 
-                logger.Debug("ReadFileProxy : " + rawFileName + " Return : " + result + " ReadLength : " + rawReadLength);
+                logger.Debug($"ReadFileProxy : {rawFileName} Return : {result} ReadLength : {rawReadLength}");
                 return result;
             }
             catch (Exception ex)
@@ -518,8 +518,7 @@ namespace DokanNet
 
                 if (result == DokanResult.Success)
                 {
-                    Debug.Assert(fi.FileName != null, "FileName must not be null");
-                    logger.Debug("\tFileName\t{0}", fi.FileName);
+                    logger.Debug("\tFileName\t{0}", rawFileName);
                     logger.Debug("\tAttributes\t{0}", fi.Attributes);
                     logger.Debug("\tCreationTime\t{0}", fi.CreationTime);
                     logger.Debug("\tLastAccessTime\t{0}", fi.LastAccessTime);
@@ -529,14 +528,14 @@ namespace DokanNet
                     rawHandleFileInformation.dwFileAttributes = (uint)fi.Attributes /* + FILE_ATTRIBUTE_VIRTUAL*/;
 
                     var ctime = ToFileTime(fi.CreationTime);
-                    var atime = ToFileTime(fi.LastAccessTime);
-                    var mtime = ToFileTime(fi.LastWriteTime);
                     rawHandleFileInformation.ftCreationTime.dwHighDateTime = (int)(ctime >> 32);
                     rawHandleFileInformation.ftCreationTime.dwLowDateTime = (int)(ctime & 0xffffffff);
 
+                    var atime = ToFileTime(fi.LastAccessTime);
                     rawHandleFileInformation.ftLastAccessTime.dwHighDateTime = (int)(atime >> 32);
                     rawHandleFileInformation.ftLastAccessTime.dwLowDateTime = (int)(atime & 0xffffffff);
 
+                    var mtime = ToFileTime(fi.LastWriteTime);
                     rawHandleFileInformation.ftLastWriteTime.dwHighDateTime = (int)(mtime >> 32);
                     rawHandleFileInformation.ftLastWriteTime.dwLowDateTime = (int)(mtime & 0xffffffff);
 
@@ -544,9 +543,16 @@ namespace DokanNet
 
                     rawHandleFileInformation.nFileSizeLow = (uint)(fi.Length & 0xffffffff);
                     rawHandleFileInformation.nFileSizeHigh = (uint)(fi.Length >> 32);
-                    rawHandleFileInformation.dwNumberOfLinks = 1;
-                    rawHandleFileInformation.nFileIndexHigh = 0;
-                    rawHandleFileInformation.nFileIndexLow = (uint)(fi.FileName?.GetHashCode() ?? 0);
+
+                    rawHandleFileInformation.dwNumberOfLinks = fi.NumberOfLinks;
+
+                    var index = fi.FileIndex;
+                    if (index == 0)
+                    {
+                        index = rawFileName?.GetHashCode() ?? 0;
+                    }
+                    rawHandleFileInformation.nFileIndexHigh = (uint)(index >> 32);
+                    rawHandleFileInformation.nFileIndexLow = (uint)(index & 0xffffffff);
                 }
 
                 logger.Debug("GetFileInformationProxy : {0} Return : {1}", rawFileName, result);
@@ -571,8 +577,12 @@ namespace DokanNet
                 var result = operations.FindFiles(rawFileName, out var files, rawFileInfo);
 
                 Debug.Assert(files != null, "Files must not be null");
-                if (result == DokanResult.Success && files.Count != 0)
+                
+                if (result == DokanResult.Success)
                 {
+                    var fill = GetDataFromPointer<FILL_FIND_FILE_DATA>(rawFillFindData);
+
+                    // used a single entry call to speed up the "enumeration" of the list
                     foreach (var fi in files)
                     {
                         logger.Debug("\tFileName\t{0}", fi.FileName);
@@ -581,14 +591,8 @@ namespace DokanNet
                         logger.Debug("\t\tLastAccessTime\t{0}", fi.LastAccessTime);
                         logger.Debug("\t\tLastWriteTime\t{0}", fi.LastWriteTime);
                         logger.Debug("\t\tLength\t{0}", fi.Length);
-                    }
 
-                    var fill = GetDataFromPointer<FILL_FIND_FILE_DATA>(rawFillFindData);
-
-                    // used a single entry call to speed up the "enumeration" of the list
-                    foreach (var t in files)
-                    {
-                        AddTo(fill, rawFileInfo, t);
+                        AddTo(fill, rawFileInfo, fi);
                     }
                 }
 
@@ -617,8 +621,11 @@ namespace DokanNet
                 var result = operations.FindFilesWithPattern(rawFileName, rawSearchPattern, out var files, rawFileInfo);
 
                 Debug.Assert(files != null, "Files must not be null");
-                if (result == DokanResult.Success && files.Count > 0)
+                if (result == DokanResult.Success)
                 {
+                    var fill = GetDataFromPointer<FILL_FIND_FILE_DATA>(rawFillFindData);
+
+                    // used a single entry call to speed up the "enumeration" of the list
                     foreach (var fi in files)
                     {
                         logger.Debug("\tFileName\t{0}", fi.FileName);
@@ -627,14 +634,8 @@ namespace DokanNet
                         logger.Debug("\t\tLastAccessTime\t{0}", fi.LastAccessTime);
                         logger.Debug("\t\tLastWriteTime\t{0}", fi.LastWriteTime);
                         logger.Debug("\t\tLength\t{0}", fi.Length);
-                    }
 
-                    var fill = GetDataFromPointer<FILL_FIND_FILE_DATA>(rawFillFindData);
-
-                    // used a single entry call to speed up the "enumeration" of the list
-                    foreach (var t in files)
-                    {
-                        AddTo(fill, rawFileInfo, t);
+                        AddTo(fill, rawFileInfo, fi);
                     }
                 }
 
@@ -653,8 +654,8 @@ namespace DokanNet
         /// </summary>
         /// <param name="fill">The delegate of type <see cref="FILL_FIND_FILE_DATA"/> to be called.</param>
         /// <param name="rawFileInfo">A <see cref="DokanFileInfo"/> to be used when calling <paramref name="fill"/>.</param>
-        /// <param name="fi">A <see cref="FileInformation"/> with information to be used when calling <paramref name="fill"/>.</param>
-        private static void AddTo(FILL_FIND_FILE_DATA fill, DokanFileInfo rawFileInfo, FileInformation fi)
+        /// <param name="fi">A <see cref="ByHandleFileInformation"/> with information to be used when calling <paramref name="fill"/>.</param>
+        private static void AddTo(FILL_FIND_FILE_DATA fill, DokanFileInfo rawFileInfo, FindFileInformation fi)
         {
             Debug.Assert(!string.IsNullOrEmpty(fi.FileName), "FileName must not be empty or null");
             var ctime = ToFileTime(fi.CreationTime);
@@ -680,7 +681,8 @@ namespace DokanNet
                 },
                 nFileSizeLow = (uint)(fi.Length & 0xffffffff),
                 nFileSizeHigh = (uint)(fi.Length >> 32),
-                cFileName = fi.FileName
+                cFileName = fi.FileName,
+                cAlternateFileName = fi.ShortFileName
             };
             //ZeroMemory(&data, sizeof(WIN32_FIND_DATAW));
 
@@ -697,20 +699,17 @@ namespace DokanNet
                 var result = operations.FindStreams(rawFileName, out var files, rawFileInfo);
 
                 Debug.Assert(!(result == DokanResult.NotImplemented && files == null));
-                if (result == DokanResult.Success && files.Count != 0)
+                if (result == DokanResult.Success)
                 {
+                    var fill = GetDataFromPointer<FILL_FIND_STREAM_DATA>(rawFillFindData);
+
+                    // used a single entry call to speed up the "enumeration" of the list
                     foreach (var fi in files)
                     {
                         logger.Debug("\tFileName\t{0}", fi.FileName);
                         logger.Debug("\t\tLength\t{0}", fi.Length);
-                    }
 
-                    var fill = GetDataFromPointer<FILL_FIND_STREAM_DATA>(rawFillFindData);
-
-                    // used a single entry call to speed up the "enumeration" of the list
-                    foreach (var t in files)
-                    {
-                        AddTo(fill, rawFileInfo, t);
+                        AddTo(fill, rawFileInfo, fi);
                     }
                 }
 
@@ -744,8 +743,8 @@ namespace DokanNet
         /// </summary>
         /// <param name="fill">The delegate of type <see cref="FILL_FIND_STREAM_DATA"/> to be called.</param>
         /// <param name="rawFileInfo">A <see cref="DokanFileInfo"/> to be used when calling <paramref name="fill"/>.</param>
-        /// <param name="fi">A <see cref="FileInformation"/> with information to be used when calling <paramref name="fill"/>.</param>
-        private static void AddTo(FILL_FIND_STREAM_DATA fill, DokanFileInfo rawFileInfo, FileInformation fi)
+        /// <param name="fi">A <see cref="ByHandleFileInformation"/> with information to be used when calling <paramref name="fill"/>.</param>
+        private static void AddTo(FILL_FIND_STREAM_DATA fill, DokanFileInfo rawFileInfo, FindFileInformation fi)
         {
             Debug.Assert(!string.IsNullOrEmpty(fi.FileName), "FileName must not be empty or null");
             var data = new WIN32_FIND_STREAM_DATA
@@ -1042,6 +1041,7 @@ namespace DokanNet
                     rawVolumeNameBuffer.Append(volumeName);
                     rawFileSystemNameBuffer.Append(name);
                     rawMaximumComponentLength = maximumComponentLength;
+                    serialNumber = rawVolumeSerialNumber;
 
                     logger.Debug("\tVolumeNameBuffer\t{0}", rawVolumeNameBuffer);
                     logger.Debug("\tFileSystemNameBuffer\t{0}", rawFileSystemNameBuffer);

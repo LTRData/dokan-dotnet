@@ -133,10 +133,10 @@ namespace DokanNet
         /// Get specific informations on a file.
         /// </summary>
         /// <param name="fileName">File path requested by the Kernel on the FileSystem.</param>
-        /// <param name="fileInfo"><see cref="FileInformation"/> struct to fill</param>
+        /// <param name="fileInfo"><see cref="ByHandleFileInformation"/> struct to fill</param>
         /// <param name="info">An <see cref="IDokanFileInfo"/> with information about the file or directory.</param>
         /// <returns><see cref="NtStatus"/> or <see cref="DokanResult"/> appropriate to the request result.</returns>
-        NtStatus GetFileInformation(string fileName, out FileInformation fileInfo, IDokanFileInfo info);
+        NtStatus GetFileInformation(string fileName, out ByHandleFileInformation fileInfo, IDokanFileInfo info);
 
         /// <summary>
         /// List all files in the path requested
@@ -145,25 +145,25 @@ namespace DokanNet
         /// returns <see cref="NtStatus.NotImplemented"/>, then FindFiles is called.
         /// </summary>
         /// <param name="fileName">File path requested by the Kernel on the FileSystem.</param>
-        /// <param name="files">A list of <see cref="FileInformation"/> to return.</param>
+        /// <param name="files">A list of <see cref="ByHandleFileInformation"/> to return.</param>
         /// <param name="info">An <see cref="IDokanFileInfo"/> with information about the file or directory.</param>
         /// <returns><see cref="NtStatus"/> or <see cref="DokanResult"/> appropriate to the request result.</returns>
         /// <seealso cref="FindFilesWithPattern"/>
-        NtStatus FindFiles(string fileName, out ICollection<FileInformation> files, IDokanFileInfo info);
+        NtStatus FindFiles(string fileName, out IEnumerable<FindFileInformation> files, IDokanFileInfo info);
 
         /// <summary>
         /// Same as <see cref="FindFiles"/> but with a search pattern to filter the result.
         /// </summary>
         /// <param name="fileName">Path requested by the Kernel on the FileSystem.</param>
         /// <param name="searchPattern">Search pattern</param>
-        /// <param name="files">A list of <see cref="FileInformation"/> to return.</param>
+        /// <param name="files">A list of <see cref="ByHandleFileInformation"/> to return.</param>
         /// <param name="info">An <see cref="IDokanFileInfo"/> with information about the file or directory.</param>
         /// <returns><see cref="NtStatus"/> or <see cref="DokanResult"/> appropriate to the request result.</returns>
         /// <seealso cref="FindFiles"/>
         NtStatus FindFilesWithPattern(
             string fileName,
             string searchPattern,
-            out ICollection<FileInformation> files,
+            out IEnumerable<FindFileInformation> files,
             IDokanFileInfo info);
 
         /// <summary>
@@ -413,12 +413,12 @@ namespace DokanNet
         /// \since Supported since version 0.8.0. You must specify the version in <see cref="Dokan.Mount(IDokanOperations, string, DokanOptions,int, int, TimeSpan, string, int,int, Logging.ILogger)"/>.
         /// 
         /// <param name="fileName">File path requested by the Kernel on the FileSystem.</param>
-        /// <param name="streams">List of <see cref="FileInformation"/> for each streams present on the file.</param>
+        /// <param name="streams">List of <see cref="ByHandleFileInformation"/> for each streams present on the file.</param>
         /// <param name="info">An <see cref="IDokanFileInfo"/> with information about the file or directory.</param>
         /// <returns>Return <see cref="NtStatus"/> or <see cref="DokanResult"/> appropriate to the request result.</returns>
         /// \see <a href="https://msdn.microsoft.com/en-us/library/windows/desktop/aa364424(v=vs.85).aspx">FindFirstStreamW function (MSDN)</a>
         /// \see <a href="https://msdn.microsoft.com/en-us/library/windows/desktop/aa365993(v=vs.85).aspx">About KTM (MSDN)</a>
-        NtStatus FindStreams(string fileName, out ICollection<FileInformation> streams, IDokanFileInfo info);
+        NtStatus FindStreams(string fileName, out IEnumerable<FindFileInformation> streams, IDokanFileInfo info);
     }
 }
 

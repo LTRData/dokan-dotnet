@@ -61,7 +61,7 @@ namespace DokanNet.Native
         /// <summary>
         /// The serial number of the volume that contains a file.
         /// </summary>
-        internal uint dwVolumeSerialNumber;
+        public uint dwVolumeSerialNumber;
 
         /// <summary>
         /// The high-order part of the file size.
@@ -78,13 +78,13 @@ namespace DokanNet.Native
         /// For the FAT file system this member is always 1. 
         /// For the NTFS file system, it can be more than 1.
         /// </summary>
-        internal uint dwNumberOfLinks;
+        public int dwNumberOfLinks;
 
         /// <summary>
         /// The high-order part of a unique identifier that is associated with a file. 
         /// For more information, see <see cref="nFileIndexLow"/>.
         /// </summary>
-        internal uint nFileIndexHigh;
+        public uint nFileIndexHigh;
 
         /// <summary>
         /// The low-order part of a unique identifier that is associated with a file.
@@ -100,6 +100,6 @@ namespace DokanNet.Native
         /// the FILE_ID_INFO structure. The 64-bit identifier in this structure is not 
         /// guaranteed to be unique on ReFS.
         /// </summary>
-        internal uint nFileIndexLow;
+        public uint nFileIndexLow;
     }
 }

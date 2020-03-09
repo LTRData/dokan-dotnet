@@ -157,7 +157,7 @@ namespace DiscUtilsFs
                 var discutils_options = DokanDiscUtilsOptions.BlockExecute |
                     DokanDiscUtilsOptions.HiddenAsNormal;
 
-                var dokan_discutils = new DokanDiscUtils(file_system, discutils_options);
+                using var dokan_discutils = new DokanDiscUtils(file_system, discutils_options);
 
                 var mountOptions = DokanOptions.OptimizeSingleNameSearch;
 
@@ -175,36 +175,38 @@ namespace DiscUtilsFs
                     mountOptions |= DokanOptions.AltStream;
                 }
 
-                using (var service = new DokanService(dokan_discutils, mountPath, mountOptions))
-                {
-                    service.Start();
+                var drive = new DriveInfo(mountPath);
 
-                    while (service.Running && !new DriveInfo(mountPath).IsReady)
+                Console.CancelKeyPress += (sender, e) =>
+                {
+                    if (!dokan_discutils.IsDisposed && drive.IsReady)
+                    {
+                        e.Cancel = true;
+
+                        Console.WriteLine("Dismounting...");
+
+                        Dokan.RemoveMountPoint(mountPath);
+                    }
+                };
+
+                ThreadPool.QueueUserWorkItem(o =>
+                {
+                    while (!dokan_discutils.IsDisposed && !drive.IsReady)
                     {
                         Thread.Sleep(200);
                     }
 
-                    if (service.Running)
+                    if (drive.IsReady)
                     {
                         Process.Start(mountPath);
-
-                        Console.WriteLine("Success. Press Escape to dismount.");
-
-                        while (Console.ReadKey().Key != ConsoleKey.Escape)
-                        {
-                        }
-
-                        Console.WriteLine();
-
-                        Console.WriteLine("Dismounting...");
                     }
-                    else
-                    {
-                        Console.WriteLine("Failed to mount.");
-                    }
-                }
+                });
 
-                Console.WriteLine("Success.");
+                Console.WriteLine("Press Ctrl+C to dismount.");
+
+                dokan_discutils.Mount(mountPath, mountOptions);
+
+                Console.WriteLine("Dismounted.");
             }
             catch (DokanException ex)
             {

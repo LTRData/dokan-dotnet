@@ -10,6 +10,8 @@ using NativeFileAccess = DokanNet.NativeFileAccess;
 using static DokanNet.FormatProviders;
 using System.Diagnostics;
 using System.Security.Principal;
+using System.Collections;
+using System.Security.Permissions;
 
 namespace DiscUtils.Dokan
 {
@@ -44,8 +46,6 @@ namespace DiscUtils.Dokan
         public bool NamedStreams { get; }
 
         public bool ReadOnly { get; }
-
-        public bool HasSecurity { get; }
 
         public bool BlockExecute { get; }
 
@@ -112,10 +112,10 @@ namespace DiscUtils.Dokan
                 BlockExecute = true;
             }
             
-            if (!options.HasFlag(DokanDiscUtilsOptions.IgnoreSecurity) &&
-                filesystem is IWindowsFileSystem)
+            if (options.HasFlag(DokanDiscUtilsOptions.AcessCheck))
             {
-                HasSecurity = true;
+                throw new NotImplementedException("Access check not implemented");
+                //AccessCheck = true;
             }
 
             if (options.HasFlag(DokanDiscUtilsOptions.HiddenAsNormal))
@@ -514,7 +514,7 @@ namespace DiscUtils.Dokan
             }
         }
 
-        public NtStatus GetFileInformation(string fileName, out FileInformation fileInfo, IDokanFileInfo info)
+        public NtStatus GetFileInformation(string fileName, out ByHandleFileInformation fileInfo, IDokanFileInfo info)
         {
             fileName = TranslatePath(fileName);
 
@@ -523,24 +523,46 @@ namespace DiscUtils.Dokan
 
             if (!finfo.Exists)
             {
-                fileInfo = default;
+                fileInfo = null;
                 return Trace(nameof(GetFileInformation), fileName, info, DokanResult.FileNotFound);
             }
 
-            fileInfo = new FileInformation
+            fileInfo = new ByHandleFileInformation
             {
-                FileName = finfo.Name,
-                Attributes = FilterAttributes(finfo.Attributes),
-                CreationTime = finfo.CreationTime,
-                LastAccessTime = finfo.LastAccessTime,
-                LastWriteTime = finfo.LastWriteTime,
-                Length = FileSystem.FileExists(fileName) ? FileSystem.GetFileLength(fileName) : 0,
+                Length = FileSystem.FileExists(fileName) ?
+                    FileSystem.GetFileLength(fileName) : 0,
             };
+
+            if (FileSystem is IWindowsFileSystem wfs)
+            {
+                fileInfo.FileIndex = wfs.GetFileId(fileName);
+                fileInfo.NumberOfLinks = wfs.GetHardLinkCount(fileName);
+
+                var wfsinfo = wfs.GetFileStandardInformation(fileName);
+                fileInfo.Attributes = FilterAttributes(wfsinfo.FileAttributes);
+                fileInfo.CreationTime = wfsinfo.CreationTime;
+                fileInfo.LastAccessTime = wfsinfo.LastAccessTime;
+                fileInfo.LastWriteTime = wfsinfo.LastWriteTime;
+            }
+            else
+            {
+                fileInfo.Attributes = FilterAttributes(finfo.Attributes);
+                fileInfo.CreationTime = finfo.CreationTime;
+                fileInfo.LastAccessTime = finfo.LastAccessTime;
+                fileInfo.LastWriteTime = finfo.LastWriteTime;
+            }
+
+            if (FileSystem is IUnixFileSystem ufs)
+            {
+                var ufi = ufs.GetUnixFileInfo(fileName);
+                fileInfo.FileIndex = ufi.Inode;
+                fileInfo.NumberOfLinks = ufi.LinkCount;
+            }
 
             return Trace(nameof(GetFileInformation), fileName, info, DokanResult.Success);
         }
 
-        public NtStatus FindFiles(string fileName, out ICollection<FileInformation> files, IDokanFileInfo info)
+        public NtStatus FindFiles(string fileName, out IEnumerable<FindFileInformation> files, IDokanFileInfo info)
         {
             // This function is not called because FindFilesWithPattern is implemented
             // Return DokanResult.NotImplemented in FindFilesWithPattern to make FindFiles called
@@ -805,7 +827,7 @@ namespace DiscUtils.Dokan
                 features |= FileSystemFeatures.CaseSensitiveSearch;
             }
 
-            if (HasSecurity)
+            if (FileSystem is IWindowsFileSystem)
             {
                 features |= FileSystemFeatures.PersistentAcls;
             }
@@ -840,7 +862,7 @@ namespace DiscUtils.Dokan
                     return Trace(nameof(GetFileSecurity), fileName, info, DokanResult.Success);
                 }
 
-                if (!HasSecurity || !(FileSystem is IWindowsFileSystem wfs))
+                if (!(FileSystem is IWindowsFileSystem wfs))
                 {
                     security = null;
                     return Trace(nameof(GetFileSecurity), fileName, info, DokanResult.NotImplemented);
@@ -883,7 +905,7 @@ namespace DiscUtils.Dokan
 
             try
             {
-                if (!(FileSystem is IWindowsFileSystem wfs) || !HasSecurity)
+                if (!(FileSystem is IWindowsFileSystem wfs))
                 {
                     return Trace(nameof(SetFileSecurity), fileName, info, DokanResult.NotImplemented);
                 }
@@ -923,7 +945,7 @@ namespace DiscUtils.Dokan
         }
 #endif
 
-        public NtStatus FindStreams(string fileName, out ICollection<FileInformation> streams, IDokanFileInfo info)
+        public NtStatus FindStreams(string fileName, out IEnumerable<FindFileInformation> streams, IDokanFileInfo info)
         {
             fileName = TranslatePath(fileName);
 
@@ -934,7 +956,7 @@ namespace DiscUtils.Dokan
                 {
                     var finfo = FileSystem.GetFileInfo(name);
 
-                    return new FileInformation
+                    return new FindFileInformation
                     {
                         Attributes = FilterAttributes(finfo.Attributes),
                         CreationTime = finfo.CreationTime,
@@ -945,11 +967,11 @@ namespace DiscUtils.Dokan
                     };
                 });
 
-                return Trace(nameof(FindStreams), fileName, info, DokanResult.Success, $"Found {streams.Count} streams");
+                return Trace(nameof(FindStreams), fileName, info, DokanResult.Success, $"Found {(streams as ICollection).Count} streams");
             }
             else
             {
-                streams = new FileInformation[0];
+                streams = new FindFileInformation[0];
                 return Trace(nameof(FindStreams), fileName, info, DokanResult.NotImplemented);
             }
         }
@@ -964,7 +986,7 @@ namespace DiscUtils.Dokan
             return attributes;
         }
 
-        public ICollection<FileInformation> FindFilesHelper(string path, string searchPattern)
+        public IEnumerable<FindFileInformation> FindFilesHelper(string path, string searchPattern)
         {
             path = TranslatePath(path);
 
@@ -975,29 +997,36 @@ namespace DiscUtils.Dokan
                 var files = FileSystem.GetFileSystemEntries(path, searchPattern)
                     .Select(name => FileSystem.FileExists(name) ? FileSystem.GetFileInfo(name) : FileSystem.GetFileSystemInfo(name))
                     .Where(finfo => finfo.Exists)
-                    .SelectMany(finfo => new[]{ new FileInformation
+                    .SelectMany(finfo =>
                     {
-                        Attributes = FilterAttributes(finfo.Attributes),
-                        CreationTime = finfo.CreationTime,
-                        LastAccessTime = finfo.LastAccessTime,
-                        LastWriteTime = finfo.LastWriteTime,
-                        Length = (finfo as DiscFileInfo)?.Length ?? 0,
-                        FileName = SanitizePath(finfo.Name)
-                    } }.Concat(wfs.GetAlternateDataStreams(Path.Combine(path, finfo.Name)).Select(stream =>
-                    {
-                        var stream_path = Path.Combine(path, $"{finfo.Name}:{stream}");
-
-                        return new FileInformation
+                        var info = new FindFileInformation
                         {
-                            Attributes = FilterAttributes(FileSystem.GetAttributes(stream_path)),
-                            CreationTime = FileSystem.GetCreationTime(stream_path),
-                            LastAccessTime = FileSystem.GetLastAccessTime(stream_path),
-                            LastWriteTime = FileSystem.GetLastWriteTime(stream_path),
-                            Length = FileSystem.GetFileLength(stream_path),
-                            FileName = SanitizePath(stream_path)
+                            Length = (finfo as DiscFileInfo)?.Length ?? 0,
+                            FileName = SanitizePath(finfo.Name)
                         };
-                    })))
-                    .ToArray();
+
+                        var wfsinfo = wfs.GetFileStandardInformation(finfo.FullName);
+                        info.Attributes = FilterAttributes(finfo.Attributes);
+                        info.CreationTime = wfsinfo.CreationTime;
+                        info.LastAccessTime = wfsinfo.LastAccessTime;
+                        info.LastWriteTime = wfsinfo.LastWriteTime;
+                        info.ShortFileName = wfs.GetShortName(finfo.FullName);
+
+                        return new[] { info }.Concat(wfs.GetAlternateDataStreams(finfo.FullName).Select(stream =>
+                        {
+                            var stream_path = $"{finfo.FullName}:{stream}";
+
+                            return new FindFileInformation
+                            {
+                                Attributes = FilterAttributes(FileSystem.GetAttributes(stream_path)),
+                                CreationTime = FileSystem.GetCreationTime(stream_path),
+                                LastAccessTime = FileSystem.GetLastAccessTime(stream_path),
+                                LastWriteTime = FileSystem.GetLastWriteTime(stream_path),
+                                Length = FileSystem.GetFileLength(stream_path),
+                                FileName = SanitizePath(stream_path)
+                            };
+                        }));
+                    });
 
                 return files;
             }
@@ -1006,22 +1035,31 @@ namespace DiscUtils.Dokan
                 var files = FileSystem.GetFileSystemEntries(path, searchPattern)
                     .Select(name => FileSystem.FileExists(name) ? FileSystem.GetFileInfo(name) : FileSystem.GetFileSystemInfo(name))
                     .Where(finfo => finfo.Exists)
-                    .Select(finfo => new FileInformation
+                    .Select(finfo =>
                     {
-                        Attributes = FilterAttributes(finfo.Attributes),
-                        CreationTime = finfo.CreationTime,
-                        LastAccessTime = finfo.LastAccessTime,
-                        LastWriteTime = finfo.LastWriteTime,
-                        Length = (finfo as DiscFileInfo)?.Length ?? 0,
-                        FileName = SanitizePath(finfo.Name)
-                    })
-                    .ToArray();
+                        var info = new FindFileInformation
+                        {
+                            Attributes = FilterAttributes(finfo.Attributes),
+                            CreationTime = finfo.CreationTime,
+                            LastAccessTime = finfo.LastAccessTime,
+                            LastWriteTime = finfo.LastWriteTime,
+                            Length = (finfo as DiscFileInfo)?.Length ?? 0,
+                            FileName = SanitizePath(finfo.Name)
+                        };
+
+                        if (FileSystem is IDosFileSystem dfs)
+                        {
+                            info.ShortFileName = dfs.GetShortName(finfo.FullName);
+                        }
+
+                        return info;
+                    });
 
                 return files;
             }
         }
 
-        public NtStatus FindFilesWithPattern(string fileName, string searchPattern, out ICollection<FileInformation> files,
+        public NtStatus FindFilesWithPattern(string fileName, string searchPattern, out IEnumerable<FindFileInformation> files,
             IDokanFileInfo info)
         {
             files = FindFilesHelper(fileName, searchPattern);
@@ -1030,11 +1068,11 @@ namespace DiscUtils.Dokan
         }
 
         #region IDisposable Support
-        private bool disposedValue = false; // To detect redundant calls
+        public bool IsDisposed { get; private set; } // To detect redundant calls
 
         protected virtual void Dispose(bool disposing)
         {
-            if (!disposedValue)
+            if (!IsDisposed)
             {
                 if (disposing)
                 {
@@ -1054,7 +1092,7 @@ namespace DiscUtils.Dokan
                 // TODO: set large fields to null.
                 _transl.Clear();
 
-                disposedValue = true;
+                IsDisposed = true;
             }
         }
 

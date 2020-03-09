@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Security.AccessControl;
 using DokanNet;
 using Microsoft.Win32;
@@ -87,34 +88,32 @@ namespace RegistryFS
 
         public NtStatus FindFiles(
             string filename,
-            out ICollection<FileInformation> files,
+            out IEnumerable<FindFileInformation> files,
             IDokanFileInfo info)
         {
-            files = new List<FileInformation>();
             if (filename == "\\")
             {
-                foreach (var name in TopDirectory.Keys)
+                files = TopDirectory.Keys.Select(name => new FindFileInformation
                 {
-                    var finfo = new FileInformation
-                    {
-                        FileName = name,
-                        Attributes = FileAttributes.Directory,
-                        LastAccessTime = DateTime.Now,
-                        LastWriteTime = null,
-                        CreationTime = null
-                    };
-                    files.Add(finfo);
-                }
+                    FileName = name,
+                    Attributes = FileAttributes.Directory,
+                    LastAccessTime = DateTime.Now,
+                    LastWriteTime = null,
+                    CreationTime = null
+                });
                 return DokanResult.Success;
             }
             else
             {
                 var key = GetRegistoryEntry(filename);
                 if (key == null)
-                    return DokanResult.Error;
-                foreach (var name in key.GetSubKeyNames())
                 {
-                    var finfo = new FileInformation
+                    files = null;
+                    return DokanResult.Error;
+                }
+                files = key.GetSubKeyNames().Select(name =>
+                {
+                    return new FindFileInformation
                     {
                         FileName = name,
                         Attributes = FileAttributes.Directory,
@@ -122,11 +121,9 @@ namespace RegistryFS
                         LastWriteTime = null,
                         CreationTime = null
                     };
-                    files.Add(finfo);
-                }
-                foreach (var name in key.GetValueNames())
+                }).Concat(key.GetValueNames().Select(name =>
                 {
-                    var finfo = new FileInformation
+                    return new FindFileInformation
                     {
                         FileName = name,
                         Attributes = FileAttributes.Normal,
@@ -134,18 +131,17 @@ namespace RegistryFS
                         LastWriteTime = null,
                         CreationTime = null
                     };
-                    files.Add(finfo);
-                }
+                }));
                 return DokanResult.Success;
             }
         }
 
         public NtStatus GetFileInformation(
             string filename,
-            out FileInformation fileinfo,
+            out ByHandleFileInformation fileinfo,
             IDokanFileInfo info)
         {
-            fileinfo = new FileInformation {FileName = filename};
+            fileinfo = new ByHandleFileInformation();
 
             if (filename == "\\")
             {
@@ -287,24 +283,24 @@ namespace RegistryFS
             return DokanResult.Error;
         }
 
-        public NtStatus EnumerateNamedStreams(string fileName, IntPtr enumContext, out string streamName,
-            out long streamSize, IDokanFileInfo info)
+        public NtStatus EnumerateNamedStreams(string _1, IntPtr _2, out string streamName,
+            out long streamSize, IDokanFileInfo _5)
         {
             streamName = string.Empty;
             streamSize = 0;
             return DokanResult.NotImplemented;
         }
 
-        public NtStatus FindStreams(string fileName, out ICollection<FileInformation> streams, IDokanFileInfo info)
+        public NtStatus FindStreams(string fileName, out IEnumerable<FindFileInformation> streams, IDokanFileInfo info)
         {
-            streams = new FileInformation[0];
+            streams = new FindFileInformation[0];
             return DokanResult.NotImplemented;
         }
 
-        public NtStatus FindFilesWithPattern(string fileName, string searchPattern, out ICollection<FileInformation> files,
+        public NtStatus FindFilesWithPattern(string fileName, string searchPattern, out IEnumerable<FindFileInformation> files,
             IDokanFileInfo info)
         {
-            files = new FileInformation[0];
+            files = new FindFileInformation[0];
             return DokanResult.NotImplemented;
         }
 

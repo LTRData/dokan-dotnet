@@ -55,7 +55,7 @@ namespace DokanNet
 
         /// <summary>
         /// Whether Dokan should satisfy a single-entry, name-only directory search
-        /// without dispatching to <see cref="IDokanOperations.FindFiles(string, out System.Collections.Generic.IList{FileInformation}, IDokanFileInfo)"/>,
+        /// without dispatching to <see cref="IDokanOperations.FindFiles(string, out System.Collections.Generic.IList{ByHandleFileInformation}, IDokanFileInfo)"/>,
         /// if there is already an open file from which the driver can just copy the
         /// normalized name.  These searches are frequently done inside of CreateFile
         /// calls on Windows 7.
