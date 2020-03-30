@@ -1,20 +1,21 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Security.AccessControl;
 using DokanNet;
 using DokanNet.Logging;
-using NativeFileAccess = DokanNet.NativeFileAccess;
 using static DokanNet.FormatProviders;
-using System.Diagnostics;
-using System.Security.Principal;
-using System.Collections;
-using System.Security.Permissions;
+using NativeFileAccess = DokanNet.NativeFileAccess;
 
 namespace DiscUtils.Dokan
 {
+    [SuppressMessage("Design", "CA1062:Validate arguments of public methods", Justification = "<Pending>")]
     public class DokanDiscUtils : IDokanOperations, IDisposable
     {
         public IFileSystem FileSystem { get; }
@@ -37,7 +38,7 @@ namespace DiscUtils.Dokan
 
         private readonly List<KeyValuePair<string, string>> _transl = new List<KeyValuePair<string, string>>();
 
-        public FileSecurity FileSecurity { get; set; }
+        public FileSecurity ForcedFileSecurity { get; set; }
 
         public DirectorySecurity DirectorySecurity { get; set; }
 
@@ -51,10 +52,12 @@ namespace DiscUtils.Dokan
 
         public bool HiddenAsNormal { get; set; }
 
-        public bool LeaveFsOpen { get; set; }
+        public bool LeaveFSOpen { get; set; }
 
-        public KeyValuePair<string, string>[] Translations => _transl.ToArray();
+        [SuppressMessage("Design", "CA1006")]
+        public ReadOnlyCollection<KeyValuePair<string, string>> Translations => _transl.AsReadOnly();
 
+        [SuppressMessage("Design", "CA1801"), SuppressMessage("Design", "CA1822")]
         private NtStatus Trace(string method, string fileName, IDokanFileInfo info, NtStatus result,
             params object[] parameters)
         {
@@ -69,6 +72,7 @@ namespace DiscUtils.Dokan
             return result;
         }
 
+        [SuppressMessage("Design", "CA1801"), SuppressMessage("Design", "CA1822")]
         private NtStatus Trace(string method, string fileName, IDokanFileInfo info,
             NativeFileAccess access, FileShare share, FileMode mode, FileOptions options, FileAttributes attributes,
             NtStatus result)
@@ -82,11 +86,11 @@ namespace DiscUtils.Dokan
             return result;
         }
 
-        public DokanDiscUtils(IFileSystem filesystem, DokanDiscUtilsOptions options)
+        public DokanDiscUtils(IFileSystem fileSystem, DokanDiscUtilsOptions options)
         {
-            FileSystem = filesystem ?? throw new ArgumentNullException(nameof(filesystem));
+            FileSystem = fileSystem ?? throw new ArgumentNullException(nameof(fileSystem));
 
-            if (!filesystem.CanWrite)
+            if (!fileSystem.CanWrite)
             {
                 options |= DokanDiscUtilsOptions.ForceReadOnly;
             }
@@ -96,12 +100,12 @@ namespace DiscUtils.Dokan
                 ReadOnly = true;
             }
 
-            if (filesystem is IWindowsFileSystem || filesystem is IUnixFileSystem)
+            if (fileSystem is IWindowsFileSystem || fileSystem is IUnixFileSystem)
             {
                 NamedStreams = true;
             }
 
-            if (filesystem is IUnixFileSystem)
+            if (fileSystem is IUnixFileSystem)
             {
                 _comparison = StringComparison.Ordinal;
                 CaseSensitive = true;
@@ -123,9 +127,9 @@ namespace DiscUtils.Dokan
                 HiddenAsNormal = true;
             }
 
-            if (options.HasFlag(DokanDiscUtilsOptions.LeaveFsOpen))
+            if (options.HasFlag(DokanDiscUtilsOptions.LeaveFSOpen))
             {
-                LeaveFsOpen = true;
+                LeaveFSOpen = true;
             }
         }
 
@@ -241,63 +245,14 @@ namespace DiscUtils.Dokan
         public NtStatus CreateFile(string fileName, NativeFileAccess access, FileShare share, FileMode mode,
             FileOptions options, FileAttributes attributes, IDokanFileInfo info)
         {
-            var result = DokanResult.Success;
-
             fileName = TranslatePath(fileName);
 
             if (info.IsDirectory)
             {
-                try
-                {
-                    switch (mode)
-                    {
-                        case FileMode.Open:
-
-                            if (!FileSystem.DirectoryExists(fileName))
-                            {
-                                if (FileSystem.Exists(fileName))
-                                    return Trace(nameof(CreateFile), fileName, info, access, share, mode, options,
-                                        attributes, DokanResult.NotADirectory);
-
-                                return Trace(nameof(CreateFile), fileName, info, access, share, mode, options,
-                                    attributes, DokanResult.PathNotFound);
-                            }
-
-                            break;
-
-                        case FileMode.OpenOrCreate:
-                        case FileMode.Create:
-                            if (FileSystem.FileExists(fileName))
-                                return Trace(nameof(CreateFile), fileName, info, access, share, mode, options,
-                                    attributes, DokanResult.NotADirectory);
-
-                            if (!FileSystem.DirectoryExists(fileName))
-                                FileSystem.CreateDirectory(fileName);
-
-                            break;
-
-                        case FileMode.CreateNew:
-                            if (FileSystem.FileExists(fileName))
-                                return Trace(nameof(CreateFile), fileName, info, access, share, mode, options,
-                                    attributes, DokanResult.FileExists);
-
-                            if (FileSystem.DirectoryExists(fileName))
-                                return Trace(nameof(CreateFile), fileName, info, access, share, mode, options,
-                                    attributes, DokanResult.AlreadyExists);
-
-                            FileSystem.CreateDirectory(fileName);
-                            break;
-                    }
-                }
-                catch (UnauthorizedAccessException)
-                {
-                    return Trace(nameof(CreateFile), fileName, info, access, share, mode, options, attributes,
-                        DokanResult.AccessDenied);
-                }
-
-                return Trace(nameof(CreateFile), fileName, info, access, share, mode, options, attributes,
-                    result);
+                return CreateDirectory(fileName, access, share, mode, options, attributes, info);
             }
+
+            var result = DokanResult.Success;
 
             if (BlockExecute && access.HasFlag(NativeFileAccess.Execute))
             {
@@ -406,6 +361,62 @@ namespace DiscUtils.Dokan
                 result);
         }
 
+        private NtStatus CreateDirectory(string fileName, NativeFileAccess access, FileShare share, FileMode mode, FileOptions options, FileAttributes attributes, IDokanFileInfo info)
+        {
+            var result = DokanResult.Success;
+
+            try
+            {
+                switch (mode)
+                {
+                    case FileMode.Open:
+
+                        if (!FileSystem.DirectoryExists(fileName))
+                        {
+                            if (FileSystem.Exists(fileName))
+                                return Trace(nameof(CreateFile), fileName, info, access, share, mode, options,
+                                    attributes, DokanResult.NotADirectory);
+
+                            return Trace(nameof(CreateFile), fileName, info, access, share, mode, options,
+                                attributes, DokanResult.PathNotFound);
+                        }
+
+                        break;
+
+                    case FileMode.OpenOrCreate:
+                    case FileMode.Create:
+                        if (FileSystem.FileExists(fileName))
+                            return Trace(nameof(CreateFile), fileName, info, access, share, mode, options,
+                                attributes, DokanResult.NotADirectory);
+
+                        if (!FileSystem.DirectoryExists(fileName))
+                            FileSystem.CreateDirectory(fileName);
+
+                        break;
+
+                    case FileMode.CreateNew:
+                        if (FileSystem.FileExists(fileName))
+                            return Trace(nameof(CreateFile), fileName, info, access, share, mode, options,
+                                attributes, DokanResult.FileExists);
+
+                        if (FileSystem.DirectoryExists(fileName))
+                            return Trace(nameof(CreateFile), fileName, info, access, share, mode, options,
+                                attributes, DokanResult.AlreadyExists);
+
+                        FileSystem.CreateDirectory(fileName);
+                        break;
+                }
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return Trace(nameof(CreateFile), fileName, info, access, share, mode, options, attributes,
+                    DokanResult.AccessDenied);
+            }
+
+            return Trace(nameof(CreateFile), fileName, info, access, share, mode, options, attributes,
+                result);
+        }
+
         public void Cleanup(string fileName, IDokanFileInfo info)
         {
 #if TRACE
@@ -445,6 +456,7 @@ namespace DiscUtils.Dokan
             // could recreate cleanup code here but this is not called sometimes
         }
 
+        [SuppressMessage("Design", "CA2002")]
         public NtStatus ReadFile(string fileName, byte[] buffer, out int bytesRead, long offset, IDokanFileInfo info)
         {
             if (info.Context == null) // memory mapped read
@@ -458,6 +470,7 @@ namespace DiscUtils.Dokan
             else // normal read
             {
                 var stream = info.Context as Stream;
+                
                 lock (stream) //Protect from overlapped read
                 {
                     stream.Position = offset;
@@ -468,6 +481,7 @@ namespace DiscUtils.Dokan
                 offset.ToString(CultureInfo.InvariantCulture));
         }
 
+        [SuppressMessage("Design", "CA2002")]
         public NtStatus WriteFile(string fileName, byte[] buffer, out int bytesWritten, long offset, IDokanFileInfo info)
         {
             bytesWritten = 0;
@@ -487,6 +501,7 @@ namespace DiscUtils.Dokan
             else
             {
                 var stream = info.Context as Stream;
+                
                 lock (stream) //Protect from overlapped write
                 {
                     stream.Position = offset;
@@ -856,9 +871,9 @@ namespace DiscUtils.Dokan
                     security = DirectorySecurity;
                     return Trace(nameof(GetFileSecurity), fileName, info, DokanResult.Success);
                 }
-                else if (FileSecurity != null && !info.IsDirectory)
+                else if (ForcedFileSecurity != null && !info.IsDirectory)
                 {
-                    security = FileSecurity;
+                    security = ForcedFileSecurity;
                     return Trace(nameof(GetFileSecurity), fileName, info, DokanResult.Success);
                 }
 
@@ -1076,7 +1091,7 @@ namespace DiscUtils.Dokan
             {
                 if (disposing)
                 {
-                    if (!LeaveFsOpen && FileSystem is IDisposable disposable_filesystem)
+                    if (!LeaveFSOpen && FileSystem is IDisposable disposable_filesystem)
                     {
                         disposable_filesystem.Dispose();
                     }
@@ -1097,11 +1112,11 @@ namespace DiscUtils.Dokan
         }
 
         // TODO: override a finalizer only if Dispose(bool disposing) above has code to free unmanaged resources.
-        // ~DokanDiscUtils()
-        // {
-        //   // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
-        //   Dispose(false);
-        // }
+        ~DokanDiscUtils()
+        {
+            // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
+            Dispose(false);
+        }
 
         // This code added to correctly implement the disposable pattern.
         public void Dispose()
@@ -1109,7 +1124,7 @@ namespace DiscUtils.Dokan
             // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
             Dispose(true);
             // TODO: uncomment the following line if the finalizer is overridden above.
-            // GC.SuppressFinalize(this);
+            GC.SuppressFinalize(this);
         }
 #endregion
 

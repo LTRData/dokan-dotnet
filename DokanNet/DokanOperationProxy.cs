@@ -727,8 +727,8 @@ namespace DokanNet
         /// <returns>A instance of the specified delegate type.</returns>
         /// <param name="rawDelegate">The unmanaged function pointer to convert. </param>
         /// <typeparam name="TDelegate">The type of the delegate to return. </typeparam>
-        /// <exception cref="T:System.ArgumentException">The <typeparam name="TDelegate" /> generic parameter is not a delegate, or it is an open generic type.</exception>
-        /// <exception cref="T:System.ArgumentNullException">The <paramref name="rawDelegate" /> parameter is null.</exception>
+        /// <exception cref="System.ArgumentException">The <typeparam name="TDelegate" /> generic parameter is not a delegate, or it is an open generic type.</exception>
+        /// <exception cref="System.ArgumentNullException">The <paramref name="rawDelegate" /> parameter is null.</exception>
         private static TDelegate GetDataFromPointer<TDelegate>(IntPtr rawDelegate) where TDelegate : class 
         {
 #if NET451_OR_GREATER

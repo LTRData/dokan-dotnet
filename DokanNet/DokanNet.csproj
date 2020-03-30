@@ -23,6 +23,7 @@ This is a .NET wrapper over Dokan, and allows you to create your own file system
     <SignAssembly>True</SignAssembly>
     <AssemblyOriginatorKeyFile>Dokan.snk</AssemblyOriginatorKeyFile>
     <CLSCompliant>True</CLSCompliant>
+    <LangVersion>preview</LangVersion>
   </PropertyGroup>
 
   <ItemGroup>
@@ -32,7 +33,19 @@ This is a .NET wrapper over Dokan, and allows you to create your own file system
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Remove="MockDokanFileInfo.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <None Include="..\dokan_logo.png" Pack="true" PackagePath="\" />
+    <None Include="MockDokanFileInfo.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.CodeAnalysis.FxCopAnalyzers" Version="2.9.6">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
   </ItemGroup>
 
   <ItemGroup>

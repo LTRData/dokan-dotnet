@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -61,6 +62,7 @@ namespace DokanNet.Logging
             EnqueueMessage(ConsoleColor.Red, message, args);
         }
 
+        [SuppressMessage("Globalization", "CA1305:Specify IFormatProvider", Justification = "<Pending>")]
         private void EnqueueMessage(ConsoleColor newColor, string message, params object[] args)
         {
             if (args.Length > 0)
@@ -100,6 +102,8 @@ namespace DokanNet.Logging
                     // TODO: dispose managed state (managed objects).
                     _WriterTask?.Join();
                 }
+
+                _PendingLogs.Dispose();
 
                 // TODO: free unmanaged resources (unmanaged objects) and override a finalizer below.
 

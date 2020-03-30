@@ -40,7 +40,7 @@ namespace DokanNet
         /// </summary>
         /// <returns>An instance of the object specified by 
         /// <paramref name="formatType" />, if the 
-        /// <see cref="T:System.IFormatProvider" /> implementation can supply
+        /// <see cref="System.IFormatProvider" /> implementation can supply
         /// that type of object; otherwise, <c>null</c>.</returns>
         /// <param name="formatType">An object that specifies the type of format
         /// object to return. </param>

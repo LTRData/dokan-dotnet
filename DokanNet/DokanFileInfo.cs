@@ -37,13 +37,13 @@ namespace DokanNet
 
         [MarshalAs(UnmanagedType.U1)] private bool _deleteOnClose;
 
-        [MarshalAs(UnmanagedType.U1)] private bool _pagingIo;
+        [MarshalAs(UnmanagedType.U1)] private readonly bool _pagingIo;
 
-        [MarshalAs(UnmanagedType.U1)] private bool _synchronousIo;
+        [MarshalAs(UnmanagedType.U1)] private readonly bool _synchronousIo;
 
-        [MarshalAs(UnmanagedType.U1)] private bool _noCache;
+        [MarshalAs(UnmanagedType.U1)] private readonly bool _noCache;
 
-        [MarshalAs(UnmanagedType.U1)] private bool _writeToEndOfFile;
+        [MarshalAs(UnmanagedType.U1)] private readonly bool _writeToEndOfFile;
 
         /// <summary>
         /// Prevents a default instance of the <see cref="DokanFileInfo"/> class from being created. 

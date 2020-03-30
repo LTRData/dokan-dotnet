@@ -1,5 +1,5 @@
 using System;
-using System.Text;
+using System.Diagnostics.CodeAnalysis;
 using DokanNet.Logging;
 using DokanNet.Native;
 
@@ -242,6 +242,7 @@ namespace DokanNet
         /// <returns>Return native dokan driver version supported.</returns>
         public static int DriverVersion => (int)NativeMethods.DokanDriverVersion();
 
+
         /// <summary>
         /// Dokan User FS file-change notifications
         /// </summary>
@@ -260,7 +261,8 @@ namespace DokanNet
         /// These functions SHOULD NOT be called from within the implemented
         /// file system and thus be independent of any Dokan file system operation.
         ///</remarks>
-        public class Notify
+        [SuppressMessage("Design", "CA1034:Nested types should not be visible", Justification = "<Pending>")]
+        public static class Notify
         {
             /// <summary>
             /// Notify Dokan that a file or directory has been created.

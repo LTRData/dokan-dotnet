@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Runtime.Serialization;
 using DokanNet.Properties;
 
 namespace DokanNet
@@ -34,32 +35,39 @@ namespace DokanNet
             HResult = (int)status;
         }
 
-        private static string GetStatusErrorMessage(DokanStatus status)
+        private static string GetStatusErrorMessage(DokanStatus status) => status switch
         {
-            switch (status)
-            {
-                case DokanStatus.Error:
-                    return Resources.ErrorDokan;
-                case DokanStatus.DriveLetterError:
-                    return Resources.ErrorBadDriveLetter;
-                case DokanStatus.DriverInstallError:
-                    return Resources.ErrorDriverInstall;
-                case DokanStatus.MountError:
-                    return Resources.ErrorAssignDriveLetter;
-                case DokanStatus.StartError:
-                    return Resources.ErrorStart;
-                case DokanStatus.MountPointError:
-                    return Resources.ErrorMountPointInvalid;
-                case DokanStatus.VersionError:
-                    return Resources.ErrorVersion;
-                default:
-                    return Resources.ErrorUnknown;
-            }
-        }
+            DokanStatus.Error => Resources.ErrorDokan,
+            DokanStatus.DriveLetterError => Resources.ErrorBadDriveLetter,
+            DokanStatus.DriverInstallError => Resources.ErrorDriverInstall,
+            DokanStatus.MountError => Resources.ErrorAssignDriveLetter,
+            DokanStatus.StartError => Resources.ErrorStart,
+            DokanStatus.MountPointError => Resources.ErrorMountPointInvalid,
+            DokanStatus.VersionError => Resources.ErrorVersion,
+            _ => Resources.ErrorUnknown,
+        };
 
         /// <summary>
         /// Dokan error status <see cref="DokanStatus"/>.
         /// </summary>
         public DokanStatus ErrorStatus { get; private set; }
+
+        public DokanException()
+        {
+        }
+
+        public DokanException(string message) : base(message)
+        {
+        }
+
+        public DokanException(string message, Exception innerException) : base(message, innerException)
+        {
+        }
+
+        protected DokanException(SerializationInfo serializationInfo, StreamingContext streamingContext)
+            : base(serializationInfo, streamingContext)
+        {
+            ErrorStatus = (DokanStatus)serializationInfo.GetValue("ErrorStatus", typeof(DokanStatus));
+        }
     }
 }

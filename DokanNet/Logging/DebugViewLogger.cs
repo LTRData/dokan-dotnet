@@ -1,4 +1,6 @@
-﻿using System.Runtime.InteropServices;
+﻿using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
+using System.Runtime.InteropServices;
 
 namespace DokanNet.Logging
 {
@@ -52,14 +54,13 @@ namespace DokanNet.Logging
             WriteMessageToDebugView("fatal", message, args);
         }
 
-        [DllImport("kernel32.dll", CharSet = CharSet.Unicode)]
-        private static extern void OutputDebugString(string message);
-
+        [SuppressMessage("Globalization", "CA1305:Specify IFormatProvider", Justification = "<Pending>")]
         private void WriteMessageToDebugView(string category, string message, params object[] args)
         {
             if (args?.Length > 0)
                 message = string.Format(message, args);
-            OutputDebugString(message.FormatMessageForLogging(category, _loggerName));
+
+            Trace.WriteLine(message.FormatMessageForLogging(category, _loggerName));
         }
     }
 }
