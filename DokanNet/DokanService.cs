@@ -73,11 +73,13 @@ namespace DokanNet
         protected virtual void OnDismounted(EventArgs e) => Stopped?.Invoke(this, e);
 
         #region IDisposable Support
-        public bool IsDisposed { get; private set; } = false; // To detect redundant calls
+        public bool IsDisposed => is_disposed != 0;
+
+        int is_disposed;
 
         protected virtual void Dispose(bool disposing)
         {
-            if (!IsDisposed)
+            if (Interlocked.Exchange(ref is_disposed, 1) == 0)
             {
                 if (disposing)
                 {
@@ -88,11 +90,14 @@ namespace DokanNet
 
                         Dokan.RemoveMountPoint(MountPoint);
 
-                        Trace.WriteLine($"Waiting for Dokan file system '{MountPoint}' service thread to stop");
+                        if (_thread.ManagedThreadId != Thread.CurrentThread.ManagedThreadId)
+                        {
+                            Trace.WriteLine($"Waiting for Dokan file system '{MountPoint}' service thread to stop");
 
-                        _thread.Join();
+                            _thread.Join();
 
-                        Trace.WriteLine($"Dokan file system '{MountPoint}' service thread stopped.");
+                            Trace.WriteLine($"Dokan file system '{MountPoint}' service thread stopped.");
+                        }
                     }
 
                     (Operations as IDisposable)?.Dispose();
@@ -102,8 +107,6 @@ namespace DokanNet
 
                 // TODO: set large fields to null.
                 _thread = null;
-
-                IsDisposed = true;
             }
         }
 
