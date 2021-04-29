@@ -21,7 +21,11 @@ namespace DokanNet
     internal class BufferPool
     {
         // An empty array does not contain data and can be statically cached.
+#if NET40
         private static readonly byte[] _emptyArray = new byte[0];
+#else
+        private static readonly byte[] _emptyArray = Array.Empty<byte>();
+#endif
 
         private readonly uint _maxBuffersPerPool; // Max buffers to cache per buffer size.
 

@@ -138,7 +138,7 @@ namespace DiscUtilsFs
 
                 using var dokan_discutils = new DokanDiscUtils(file_system, discutils_options);
 
-                var mountOptions = DokanOptions.OptimizeSingleNameSearch;
+                var mountOptions = DokanOptions.EnableFCBGC;
 
 #if DEBUG
                 mountOptions |= DokanOptions.DebugMode;

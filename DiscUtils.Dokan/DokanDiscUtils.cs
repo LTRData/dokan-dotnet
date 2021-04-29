@@ -116,7 +116,7 @@ namespace DiscUtils.Dokan
                 BlockExecute = true;
             }
             
-            if (options.HasFlag(DokanDiscUtilsOptions.AcessCheck))
+            if (options.HasFlag(DokanDiscUtilsOptions.AccessCheck))
             {
                 throw new NotImplementedException("Access check not implemented");
                 //AccessCheck = true;
@@ -321,7 +321,7 @@ namespace DiscUtils.Dokan
             try
             {
                 info.Context = FileSystem.OpenFile(fileName, mode,
-                    readAccess ? System.IO.FileAccess.Read : System.IO.FileAccess.ReadWrite);
+                    readAccess ? FileAccess.Read : FileAccess.ReadWrite);
 
                 if (pathExists && (mode == FileMode.OpenOrCreate
                                    || mode == FileMode.Create))
@@ -463,7 +463,7 @@ namespace DiscUtils.Dokan
             {
                 fileName = TranslatePath(fileName);
 
-                using var stream = FileSystem.OpenFile(fileName, FileMode.Open, System.IO.FileAccess.Read);
+                using var stream = FileSystem.OpenFile(fileName, FileMode.Open, FileAccess.Read);
                 stream.Position = offset;
                 bytesRead = stream.Read(buffer, 0, buffer.Length);
             }
@@ -493,7 +493,7 @@ namespace DiscUtils.Dokan
             {
                 fileName = TranslatePath(fileName);
 
-                using var stream = FileSystem.OpenFile(fileName, FileMode.Open, System.IO.FileAccess.Write);
+                using var stream = FileSystem.OpenFile(fileName, FileMode.Open, FileAccess.Write);
                 stream.Position = offset;
                 stream.Write(buffer, 0, buffer.Length);
                 bytesWritten = buffer.Length;

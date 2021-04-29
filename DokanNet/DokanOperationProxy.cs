@@ -392,7 +392,7 @@ namespace DokanNet
                 logger.Debug("\tContext\t{0}", rawFileInfo);
 
                 // Check if the file system has implemented the unsafe Dokan interface.
-                // If so, pass the raw IntPtr through instead of marshalling.
+                // If so, pass the raw IntPtr through instead of marshaling.
                 NtStatus result;
                 if (operations is IDokanOperationsUnsafe unsafeOperations)
                 {

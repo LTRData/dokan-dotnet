@@ -19,9 +19,9 @@ namespace DokanNet
         public string UncName { get; }
         public int AllocationUnitSize { get; }
         public int SectorSize { get; }
-        public bool Running => _thread?.IsAlive ?? false;
+        public bool Running => ServiceThread?.IsAlive ?? false;
 
-        private Thread _thread;
+        protected Thread ServiceThread { get; private set; }
 
         public DokanService(IDokanOperations operations, string mountPoint, DokanOptions mountOptions = 0,
             int threadCount = 1, int version = Dokan.DOKAN_VERSION, TimeSpan? timeout = null, string uncName = null,
@@ -45,12 +45,12 @@ namespace DokanNet
                 throw new ObjectDisposedException(GetType().Name);
             }
 
-            _thread = new Thread(ServiceThread);
+            ServiceThread = new Thread(ServiceThreadProcedure);
 
-            _thread.Start();
+            ServiceThread.Start();
         }
 
-        private void ServiceThread()
+        private void ServiceThreadProcedure()
         {
             try
             {
@@ -66,6 +66,17 @@ namespace DokanNet
             {
                 (Operations as IDisposable)?.Dispose();
             }
+        }
+
+        public void WaitExit()
+        {
+            if (ServiceThread == null ||
+                ServiceThread.ManagedThreadId == Thread.CurrentThread.ManagedThreadId)
+            {
+                return;
+            }
+
+            ServiceThread.Join();
         }
 
         protected virtual void OnError(ThreadExceptionEventArgs e) => Error?.Invoke(this, e);
@@ -84,17 +95,17 @@ namespace DokanNet
                 if (disposing)
                 {
                     // TODO: dispose managed state (managed objects).
-                    if (_thread != null && _thread.IsAlive)
+                    if (ServiceThread != null && ServiceThread.IsAlive)
                     {
                         Trace.WriteLine($"Requesting dismount for Dokan file system '{MountPoint}'");
 
                         Dokan.RemoveMountPoint(MountPoint);
 
-                        if (_thread.ManagedThreadId != Thread.CurrentThread.ManagedThreadId)
+                        if (ServiceThread.ManagedThreadId != Thread.CurrentThread.ManagedThreadId)
                         {
                             Trace.WriteLine($"Waiting for Dokan file system '{MountPoint}' service thread to stop");
 
-                            _thread.Join();
+                            ServiceThread.Join();
 
                             Trace.WriteLine($"Dokan file system '{MountPoint}' service thread stopped.");
                         }
@@ -106,7 +117,7 @@ namespace DokanNet
                 // TODO: free unmanaged resources (unmanaged objects) and override a finalizer below.
 
                 // TODO: set large fields to null.
-                _thread = null;
+                ServiceThread = null;
             }
         }
 
