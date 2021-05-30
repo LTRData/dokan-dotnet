@@ -32,6 +32,9 @@ namespace DokanNet.Logging
             _WriterTask.Start();
         }
 
+        /// <inheritdoc />        
+        public bool DebugEnabled => true;
+
         /// <inheritdoc />
         public void Debug(string message, params object[] args)
         {
