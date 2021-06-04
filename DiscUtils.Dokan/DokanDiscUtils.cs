@@ -36,7 +36,7 @@ namespace DiscUtils.Dokan
 
         private readonly StringComparison _comparison = StringComparison.OrdinalIgnoreCase;
 
-        private readonly List<KeyValuePair<string, string>> _transl = new List<KeyValuePair<string, string>>();
+        private readonly List<KeyValuePair<string, string>> _transl = new();
 
         public FileSecurity ForcedFileSecurity { get; set; }
 
@@ -54,10 +54,8 @@ namespace DiscUtils.Dokan
 
         public bool LeaveFSOpen { get; set; }
 
-        [SuppressMessage("Design", "CA1006")]
         public ReadOnlyCollection<KeyValuePair<string, string>> Translations => _transl.AsReadOnly();
 
-        [SuppressMessage("Design", "CA1801"), SuppressMessage("Design", "CA1822")]
         private NtStatus Trace(string method, string fileName, IDokanFileInfo info, NtStatus result,
             params object[] parameters)
         {
@@ -72,7 +70,6 @@ namespace DiscUtils.Dokan
             return result;
         }
 
-        [SuppressMessage("Design", "CA1801"), SuppressMessage("Design", "CA1822")]
         private NtStatus Trace(string method, string fileName, IDokanFileInfo info,
             NativeFileAccess access, FileShare share, FileMode mode, FileOptions options, FileAttributes attributes,
             NtStatus result)
@@ -742,7 +739,7 @@ namespace DiscUtils.Dokan
 
         public NtStatus SetEndOfFile(string fileName, long length, IDokanFileInfo info)
         {
-            if (ReadOnly || !(info.Context is Stream stream))
+            if (ReadOnly || info.Context is not Stream stream)
             {
                 return Trace(nameof(SetEndOfFile), fileName, info, DokanResult.AccessDenied);
             }
@@ -763,7 +760,7 @@ namespace DiscUtils.Dokan
 
         public NtStatus SetAllocationSize(string fileName, long length, IDokanFileInfo info)
         {
-            if (ReadOnly || !(info.Context is Stream stream))
+            if (ReadOnly || info.Context is not Stream stream)
             {
                 return Trace(nameof(SetEndOfFile), fileName, info, DokanResult.AccessDenied);
             }
@@ -877,7 +874,7 @@ namespace DiscUtils.Dokan
                     return Trace(nameof(GetFileSecurity), fileName, info, DokanResult.Success);
                 }
 
-                if (!(FileSystem is IWindowsFileSystem wfs))
+                if (FileSystem is not IWindowsFileSystem wfs)
                 {
                     security = null;
                     return Trace(nameof(GetFileSecurity), fileName, info, DokanResult.NotImplemented);
@@ -920,7 +917,7 @@ namespace DiscUtils.Dokan
 
             try
             {
-                if (!(FileSystem is IWindowsFileSystem wfs))
+                if (FileSystem is not IWindowsFileSystem wfs)
                 {
                     return Trace(nameof(SetFileSecurity), fileName, info, DokanResult.NotImplemented);
                 }

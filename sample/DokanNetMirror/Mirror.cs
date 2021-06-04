@@ -138,7 +138,7 @@ namespace DokanNetMirror
                 try
                 {
                     pathExists = (Directory.Exists(filePath) || File.Exists(filePath));
-                    pathIsDirectory = pathExists ? File.GetAttributes(filePath).HasFlag(FileAttributes.Directory) : false;
+                    pathIsDirectory = pathExists && File.GetAttributes(filePath).HasFlag(FileAttributes.Directory);
                 }
                 catch (IOException)
                 {
@@ -196,10 +196,10 @@ namespace DokanNetMirror
                                        || mode == FileMode.Create))
                         result = DokanResult.AlreadyExists;
 
-                    bool fileCreated = mode == FileMode.CreateNew || mode == FileMode.Create || (!pathExists && mode == FileMode.OpenOrCreate);
+                    var fileCreated = mode == FileMode.CreateNew || mode == FileMode.Create || (!pathExists && mode == FileMode.OpenOrCreate);
                     if (fileCreated)
                     {
-                        FileAttributes new_attributes = attributes;
+                        var new_attributes = attributes;
                         new_attributes |= FileAttributes.Archive; // Files are always created as Archive
                         // FILE_ATTRIBUTE_NORMAL is override if any other attribute is set.
                         new_attributes &= ~FileAttributes.Normal;

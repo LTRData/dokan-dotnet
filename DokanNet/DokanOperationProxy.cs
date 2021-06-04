@@ -544,10 +544,10 @@ namespace DokanNet
 
                 if (result == DokanResult.Success)
                 {
-                    Debug.Assert(fi.FileName != null, "FileName must not be null");
+                    //Debug.Assert(fi.FileName != null, "FileName must not be null");
                     if (logger.DebugEnabled)
                     {
-                        logger.Debug("\tFileName\t{0}", fi.FileName);
+                        logger.Debug("\tFileName\t{0}", rawFileName);
                         logger.Debug("\tAttributes\t{0}", fi.Attributes);
                         logger.Debug("\tCreationTime\t{0}", fi.CreationTime);
                         logger.Debug("\tLastAccessTime\t{0}", fi.LastAccessTime);
@@ -1118,7 +1118,7 @@ namespace DokanNet
                     logger.Debug("\tContext\t{0}", rawFileInfo);
                 }
 
-                var result = operations.GetVolumeInformation(out var volumeName, out rawFileSystemFlags, out var name, out var maximumComponentLength, rawFileInfo);
+                var result = operations.GetVolumeInformation(out var volumeName, out rawFileSystemFlags, out var name, out var maximumComponentLength, ref rawVolumeSerialNumber, rawFileInfo);
 
                 if (result == DokanResult.Success)
                 {
