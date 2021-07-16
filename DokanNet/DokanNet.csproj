@@ -24,6 +24,7 @@ This is a .NET wrapper over Dokan, and allows you to create your own file system
     <AssemblyOriginatorKeyFile>Dokan.snk</AssemblyOriginatorKeyFile>
     <CLSCompliant>True</CLSCompliant>
     <LangVersion>preview</LangVersion>
+    <RunAnalyzersDuringBuild>false</RunAnalyzersDuringBuild>
   </PropertyGroup>
 
   <ItemGroup>
