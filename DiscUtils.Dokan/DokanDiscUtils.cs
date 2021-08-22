@@ -13,6 +13,8 @@ using DokanNet.Logging;
 using static DokanNet.FormatProviders;
 using NativeFileAccess = DokanNet.NativeFileAccess;
 
+#pragma warning disable CA1021 // Avoid out parameters
+
 namespace DiscUtils.Dokan
 {
     [SuppressMessage("Design", "CA1062:Validate arguments of public methods", Justification = "<Pending>")]
@@ -453,7 +455,6 @@ namespace DiscUtils.Dokan
             // could recreate cleanup code here but this is not called sometimes
         }
 
-        [SuppressMessage("Design", "CA2002")]
         public NtStatus ReadFile(string fileName, byte[] buffer, out int bytesRead, long offset, IDokanFileInfo info)
         {
             if (info.Context == null) // memory mapped read

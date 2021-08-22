@@ -4,6 +4,7 @@
     <OutputType>Exe</OutputType>
     <TargetFrameworks>net46;net40</TargetFrameworks>
     <RuntimeIdentifier>win</RuntimeIdentifier>
+    <OutputPath>..\$(Configuration)\</OutputPath>
   </PropertyGroup>
  
   <ItemGroup>
