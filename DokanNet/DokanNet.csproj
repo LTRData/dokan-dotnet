@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>netstandard2.0;net48;net40</TargetFrameworks>
+    <TargetFrameworks>netstandard2.0;net48;net46;net40</TargetFrameworks>
     <AssemblyName>DokanNet</AssemblyName>
     <RootNamespace>DokanNet</RootNamespace>
     <Description>A user mode file system for windows. 
@@ -92,7 +92,14 @@ This is a .NET wrapper over Dokan, and allows you to create your own file system
     <DefineConstants />
   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-    <DefineConstants />
+  <PropertyGroup Condition="'$(Configuration)'=='Release'">
+    <DefineTrace>false</DefineTrace>
+    <DefineDebug>false</DefineDebug>
   </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)'=='Debug'">
+    <DefineTrace>true</DefineTrace>
+    <DefineDebug>true</DefineDebug>
+  </PropertyGroup>
+
 </Project>

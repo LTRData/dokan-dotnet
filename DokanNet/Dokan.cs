@@ -143,7 +143,7 @@ namespace DokanNet
 
             if (logger == null)
             {
-#if TRACE
+#if DEBUG
                 logger = new ConsoleLogger("[DokanNet] ");
 #else
                 logger = new NullLogger();

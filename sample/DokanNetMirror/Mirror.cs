@@ -42,7 +42,7 @@ namespace DokanNetMirror
         protected NtStatus Trace(string method, string fileName, IDokanFileInfo info, NtStatus result,
             params object[] parameters)
         {
-#if TRACE
+#if DEBUG
             var extraParameters = parameters != null && parameters.Length > 0
                 ? ", " + string.Join(", ", parameters.Select(x => string.Format(DefaultFormatProvider, "{0}", x)))
                 : string.Empty;
@@ -57,7 +57,7 @@ namespace DokanNetMirror
             NativeFileAccess access, FileShare share, FileMode mode, FileOptions options, FileAttributes attributes,
             NtStatus result)
         {
-#if TRACE
+#if DEBUG
             logger.Debug(
                 DokanFormat(
                     $"{method}('{fileName}', {info}, [{access}], [{share}], [{mode}], [{options}], [{attributes}]) -> {result}"));
@@ -242,7 +242,7 @@ namespace DokanNetMirror
 
         public void Cleanup(string fileName, IDokanFileInfo info)
         {
-#if TRACE
+#if DEBUG
             if (info.Context != null)
                 Console.WriteLine(DokanFormat($"{nameof(Cleanup)}('{fileName}', {info} - entering"));
 #endif
@@ -266,7 +266,7 @@ namespace DokanNetMirror
 
         public void CloseFile(string fileName, IDokanFileInfo info)
         {
-#if TRACE
+#if DEBUG
             if (info.Context != null)
                 Console.WriteLine(DokanFormat($"{nameof(CloseFile)}('{fileName}', {info} - entering"));
 #endif

@@ -32,7 +32,7 @@ namespace DiscUtils.Dokan
                                                    NativeFileAccess.Delete |
                                                    NativeFileAccess.GenericWrite;
 
-#if TRACE
+#if DEBUG
         private readonly ConsoleLogger logger = new ConsoleLogger("[DokanDiscUtils] ");
 #endif
 
@@ -61,7 +61,7 @@ namespace DiscUtils.Dokan
         private NtStatus Trace(string method, string fileName, IDokanFileInfo info, NtStatus result,
             params object[] parameters)
         {
-#if TRACE
+#if DEBUG
             var extraParameters = parameters != null && parameters.Length > 0
                 ? ", " + string.Join(", ", parameters.Select(x => string.Format(DefaultFormatProvider, "{0}", x)))
                 : string.Empty;
@@ -76,7 +76,7 @@ namespace DiscUtils.Dokan
             NativeFileAccess access, FileShare share, FileMode mode, FileOptions options, FileAttributes attributes,
             NtStatus result)
         {
-#if TRACE
+#if DEBUG
             logger.Debug(
                 DokanFormat(
                     $"{method}('{fileName}', {info}, [{access}], [{share}], [{mode}], [{options}], [{attributes}]) -> {result}"));
@@ -99,7 +99,7 @@ namespace DiscUtils.Dokan
                 ReadOnly = true;
             }
 
-            if (fileSystem is IWindowsFileSystem || fileSystem is IUnixFileSystem)
+            if (fileSystem is IWindowsFileSystem or IUnixFileSystem)
             {
                 NamedStreams = true;
             }
@@ -148,7 +148,7 @@ namespace DiscUtils.Dokan
                 if (path.Equals(transl.Key, _comparison))
                 {
                     var newpath = transl.Value;
-#if TRACE
+#if DEBUG
                     Debug.WriteLine($"Using translation of '{path}' to '{newpath}'");
 #endif
 
@@ -186,7 +186,7 @@ namespace DiscUtils.Dokan
                 if (path.Equals(transl.Value, _comparison))
                 {
                     var newpath = transl.Key;
-#if TRACE
+#if DEBUG
                     Debug.WriteLine($"Using translation of '{newpath}' to '{path}'");
 #endif
 
@@ -287,9 +287,11 @@ namespace DiscUtils.Dokan
                         {
                             if (pathIsDirectory && (access & NativeFileAccess.Delete) == NativeFileAccess.Delete
                                 && (access & NativeFileAccess.Synchronize) != NativeFileAccess.Synchronize)
+                            {
                                 //It is a DeleteFile request on a directory
                                 return Trace(nameof(CreateFile), fileName, info, access, share, mode, options,
                                     attributes, DokanResult.AccessDenied);
+                            }
 
                             info.IsDirectory = pathIsDirectory;
 
@@ -306,14 +308,20 @@ namespace DiscUtils.Dokan
 
                 case FileMode.CreateNew:
                     if (pathExists)
+                    {
                         return Trace(nameof(CreateFile), fileName, info, access, share, mode, options, attributes,
                             DokanResult.FileExists);
+                    }
+
                     break;
 
                 case FileMode.Truncate:
                     if (!pathExists)
+                    {
                         return Trace(nameof(CreateFile), fileName, info, access, share, mode, options, attributes,
                             DokanResult.FileNotFound);
+                    }
+
                     break;
             }
 
@@ -324,9 +332,11 @@ namespace DiscUtils.Dokan
 
                 if (pathExists && (mode == FileMode.OpenOrCreate
                                    || mode == FileMode.Create))
+                {
                     result = DokanResult.AlreadyExists; // Returned to caller for information, not error
+                }
 
-                if (mode == FileMode.CreateNew || mode == FileMode.Create) //Files are always created as Archive
+                if (mode is FileMode.CreateNew or FileMode.Create) //Files are always created as Archive
                 {
                     attributes |= FileAttributes.Archive;
                     FileSystem.SetAttributes(fileName, attributes);
@@ -373,8 +383,10 @@ namespace DiscUtils.Dokan
                         if (!FileSystem.DirectoryExists(fileName))
                         {
                             if (FileSystem.Exists(fileName))
+                            {
                                 return Trace(nameof(CreateFile), fileName, info, access, share, mode, options,
                                     attributes, DokanResult.NotADirectory);
+                            }
 
                             return Trace(nameof(CreateFile), fileName, info, access, share, mode, options,
                                 attributes, DokanResult.PathNotFound);
@@ -385,22 +397,30 @@ namespace DiscUtils.Dokan
                     case FileMode.OpenOrCreate:
                     case FileMode.Create:
                         if (FileSystem.FileExists(fileName))
+                        {
                             return Trace(nameof(CreateFile), fileName, info, access, share, mode, options,
                                 attributes, DokanResult.NotADirectory);
+                        }
 
                         if (!FileSystem.DirectoryExists(fileName))
+                        {
                             FileSystem.CreateDirectory(fileName);
+                        }
 
                         break;
 
                     case FileMode.CreateNew:
                         if (FileSystem.FileExists(fileName))
+                        {
                             return Trace(nameof(CreateFile), fileName, info, access, share, mode, options,
                                 attributes, DokanResult.FileExists);
+                        }
 
                         if (FileSystem.DirectoryExists(fileName))
+                        {
                             return Trace(nameof(CreateFile), fileName, info, access, share, mode, options,
                                 attributes, DokanResult.AlreadyExists);
+                        }
 
                         FileSystem.CreateDirectory(fileName);
                         break;
@@ -418,7 +438,7 @@ namespace DiscUtils.Dokan
 
         public void Cleanup(string fileName, IDokanFileInfo info)
         {
-#if TRACE
+#if DEBUG
             if (info.Context != null)
                 Console.WriteLine(DokanFormat($"{nameof(Cleanup)}('{fileName}', {info} - entering"));
 #endif
@@ -444,7 +464,7 @@ namespace DiscUtils.Dokan
 
         public void CloseFile(string fileName, IDokanFileInfo info)
         {
-#if TRACE
+#if DEBUG
             if (info.Context != null)
                 Console.WriteLine(DokanFormat($"{nameof(CloseFile)}('{fileName}', {info} - entering"));
 #endif
@@ -479,13 +499,14 @@ namespace DiscUtils.Dokan
                 offset.ToString(CultureInfo.InvariantCulture));
         }
 
-        [SuppressMessage("Design", "CA2002")]
         public NtStatus WriteFile(string fileName, byte[] buffer, out int bytesWritten, long offset, IDokanFileInfo info)
         {
             bytesWritten = 0;
 
             if (ReadOnly)
+            {
                 return Trace(nameof(WriteFile), fileName, info, DokanResult.AccessDenied);
+            }
 
             if (info.Context == null)
             {
@@ -514,7 +535,9 @@ namespace DiscUtils.Dokan
         public NtStatus FlushFileBuffers(string fileName, IDokanFileInfo info)
         {
             if (ReadOnly)
+            {
                 return Trace(nameof(FlushFileBuffers), fileName, info, DokanResult.AccessDenied);
+            }
 
             try
             {
@@ -587,7 +610,9 @@ namespace DiscUtils.Dokan
         public NtStatus SetFileAttributes(string fileName, FileAttributes attributes, IDokanFileInfo info)
         {
             if (ReadOnly)
+            {
                 return Trace(nameof(SetFileAttributes), fileName, info, DokanResult.AccessDenied);
+            }
 
             try
             {
@@ -620,20 +645,28 @@ namespace DiscUtils.Dokan
             DateTime? lastWriteTime, IDokanFileInfo info)
         {
             if (ReadOnly)
+            {
                 return Trace(nameof(SetFileTime), fileName, info, DokanResult.AccessDenied);
+            }
 
             fileName = TranslatePath(fileName);
 
             try
             {
                 if (creationTime.HasValue)
+                {
                     FileSystem.SetCreationTime(fileName, creationTime.Value);
+                }
 
                 if (lastAccessTime.HasValue)
+                {
                     FileSystem.SetLastAccessTime(fileName, lastAccessTime.Value);
+                }
 
                 if (lastWriteTime.HasValue)
+                {
                     FileSystem.SetLastWriteTime(fileName, lastWriteTime.Value);
+                }
 
                 return Trace(nameof(SetFileTime), fileName, info, DokanResult.Success, creationTime, lastAccessTime,
                     lastWriteTime);
@@ -653,15 +686,21 @@ namespace DiscUtils.Dokan
         public NtStatus DeleteFile(string fileName, IDokanFileInfo info)
         {
             if (ReadOnly)
+            {
                 return Trace(nameof(DeleteFile), fileName, info, DokanResult.AccessDenied);
+            }
 
             fileName = TranslatePath(fileName);
 
             if (!FileSystem.Exists(fileName))
+            {
                 return Trace(nameof(DeleteFile), fileName, info, DokanResult.FileNotFound);
+            }
 
             if (FileSystem.DirectoryExists(fileName))
+            {
                 return Trace(nameof(DeleteFile), fileName, info, DokanResult.AccessDenied);
+            }
 
             return Trace(nameof(DeleteFile), fileName, info, DokanResult.Success);
             // we just check here if we could delete the file - the true deletion is in Cleanup
@@ -670,7 +709,9 @@ namespace DiscUtils.Dokan
         public NtStatus DeleteDirectory(string fileName, IDokanFileInfo info)
         {
             if (ReadOnly)
+            {
                 return Trace(nameof(DeleteDirectory), fileName, info, DokanResult.AccessDenied);
+            }
 
             fileName = TranslatePath(fileName);
 
@@ -691,7 +732,9 @@ namespace DiscUtils.Dokan
         public NtStatus MoveFile(string oldName, string newName, bool replace, IDokanFileInfo info)
         {
             if (ReadOnly)
+            {
                 return Trace(nameof(MoveFile), oldName, info, DokanResult.AccessDenied);
+            }
 
             oldName = TranslatePath(oldName);
             newName = TranslatePath(newName);
@@ -708,9 +751,13 @@ namespace DiscUtils.Dokan
                     info.Context = null;
 
                     if (info.IsDirectory)
+                    {
                         FileSystem.MoveDirectory(oldName, newName);
+                    }
                     else
+                    {
                         FileSystem.MoveFile(oldName, newName);
+                    }
 
                     return Trace(nameof(MoveFile), oldName, info, DokanResult.Success, newName,
                         replace.ToString(CultureInfo.InvariantCulture));
@@ -720,8 +767,10 @@ namespace DiscUtils.Dokan
                     info.Context = null;
 
                     if (info.IsDirectory) //Cannot replace directory destination - See MOVEFILE_REPLACE_EXISTING
+                    {
                         return Trace(nameof(MoveFile), oldName, info, DokanResult.AccessDenied, newName,
                             replace.ToString(CultureInfo.InvariantCulture));
+                    }
 
                     FileSystem.MoveFile(oldName, newName, overwrite: true);
 
@@ -780,21 +829,24 @@ namespace DiscUtils.Dokan
             }
         }
 
-        public NtStatus LockFile(string fileName, long offset, long length, IDokanFileInfo info)
-        {
-            return DokanResult.NotImplemented;
-        }
+        public NtStatus LockFile(string fileName, long offset, long length, IDokanFileInfo info) => DokanResult.NotImplemented;
 
-        public NtStatus UnlockFile(string fileName, long offset, long length, IDokanFileInfo info)
-        {
-            return DokanResult.NotImplemented;
-        }
+        public NtStatus UnlockFile(string fileName, long offset, long length, IDokanFileInfo info) => DokanResult.NotImplemented;
 
         public NtStatus GetDiskFreeSpace(out long freeBytesAvailable, out long totalNumberOfBytes, out long totalNumberOfFreeBytes, IDokanFileInfo info)
         {
-            freeBytesAvailable = FileSystem.AvailableSpace;
-            totalNumberOfBytes = FileSystem.Size;
-            totalNumberOfFreeBytes = FileSystem.AvailableSpace;
+            if (!FileSystem.SupportsUsedAvailableSpace)
+            {
+                freeBytesAvailable = 0;
+                totalNumberOfBytes = 0;
+                totalNumberOfFreeBytes = 0;
+            }
+            else
+            {
+                freeBytesAvailable = FileSystem.AvailableSpace;
+                totalNumberOfBytes = FileSystem.Size;
+                totalNumberOfFreeBytes = FileSystem.AvailableSpace;
+            }
 
             return Trace(nameof(GetDiskFreeSpace), null, info, DokanResult.Success, $"out {freeBytesAvailable}",
                 $"out {totalNumberOfBytes}", $"out {totalNumberOfFreeBytes}");
@@ -806,7 +858,9 @@ namespace DiscUtils.Dokan
             volumeLabel = (FileSystem as DiscFileSystem)?.VolumeLabel;
             
             if (string.IsNullOrWhiteSpace(volumeLabel))
+            {
                 volumeLabel = "NO NAME";
+            }
 
             fileSystemName = FileSystem.GetType().Name;
 
@@ -914,7 +968,9 @@ namespace DiscUtils.Dokan
             IDokanFileInfo info)
         {
             if (ReadOnly)
+            {
                 return Trace(nameof(SetFileSecurity), fileName, info, DokanResult.AccessDenied);
+            }
 
             try
             {
@@ -923,7 +979,7 @@ namespace DiscUtils.Dokan
                     return Trace(nameof(SetFileSecurity), fileName, info, DokanResult.NotImplemented);
                 }
 
-                var fs_security = new RawSecurityDescriptor(security.GetSecurityDescriptorBinaryForm(), 0);
+                var fs_security = new Core.WindowsSecurity.AccessControl.RawSecurityDescriptor(security.GetSecurityDescriptorBinaryForm(), 0);
 
                 fileName = TranslatePath(fileName);
 
@@ -937,15 +993,9 @@ namespace DiscUtils.Dokan
             }
         }
 
-        public NtStatus Mounted(IDokanFileInfo info)
-        {
-            return Trace(nameof(Mounted), null, info, DokanResult.Success);
-        }
+        public NtStatus Mounted(IDokanFileInfo info) => Trace(nameof(Mounted), null, info, DokanResult.Success);
 
-        public NtStatus Unmounted(IDokanFileInfo info)
-        {
-            return Trace(nameof(Unmounted), null, info, DokanResult.Success);
-        }
+        public NtStatus Unmounted(IDokanFileInfo info) => Trace(nameof(Unmounted), null, info, DokanResult.Success);
 
 #if false
         public NtStatus FindStreams(string fileName, IntPtr enumContext, out string streamName, out long streamSize,
@@ -984,7 +1034,7 @@ namespace DiscUtils.Dokan
             }
             else
             {
-                streams = new FindFileInformation[0];
+                streams = Array.Empty<FindFileInformation>();
                 return Trace(nameof(FindStreams), fileName, info, DokanResult.NotImplemented);
             }
         }
@@ -1095,7 +1145,7 @@ namespace DiscUtils.Dokan
                     }
 
                     // TODO: dispose managed state (managed objects).
-#if TRACE
+#if DEBUG
                     logger.Dispose();
 #endif
                 }

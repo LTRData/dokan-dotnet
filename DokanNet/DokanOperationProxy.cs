@@ -544,7 +544,7 @@ namespace DokanNet
 
                 if (result == DokanResult.Success)
                 {
-                    //Debug.Assert(fi.FileName != null, "FileName must not be null");
+                    //Debug.Assert(fi.FileName is not null, "FileName must not be null");
                     if (logger.DebugEnabled)
                     {
                         logger.Debug("\tFileName\t{0}", rawFileName);
@@ -609,7 +609,7 @@ namespace DokanNet
 
                 var result = operations.FindFiles(rawFileName, out var files, rawFileInfo);
 
-                Debug.Assert(files != null, "Files must not be null");
+                Debug.Assert(files is not null, "Files must not be null");
                 
                 if (result == DokanResult.Success)
                 {
@@ -659,7 +659,7 @@ namespace DokanNet
 
                 var result = operations.FindFilesWithPattern(rawFileName, rawSearchPattern, out var files, rawFileInfo);
 
-                Debug.Assert(files != null, "Files must not be null");
+                Debug.Assert(files is not null, "Files must not be null");
                 if (result == DokanResult.Success)
                 {
                     var fill = GetDataFromPointer<FILL_FIND_FILE_DATA>(rawFillFindData);
@@ -743,7 +743,7 @@ namespace DokanNet
 
                 var result = operations.FindStreams(rawFileName, out var files, rawFileInfo);
 
-                Debug.Assert(!(result == DokanResult.NotImplemented && files == null));
+                Debug.Assert(!(result == DokanResult.NotImplemented && files is null));
                 if (result == DokanResult.Success)
                 {
                     var fill = GetDataFromPointer<FILL_FIND_STREAM_DATA>(rawFillFindData);
@@ -1232,9 +1232,9 @@ namespace DokanNet
                 }
 
                 var result = operations.GetFileSecurity(rawFileName, out var sec, sect, rawFileInfo);
-                if (result == DokanResult.Success /*&& sec != null*/)
+                if (result == DokanResult.Success /*&& sec is not null*/)
                 {
-                    Debug.Assert(sec != null, $"{nameof(sec)} must not be null");
+                    Debug.Assert(sec is not null, $"{nameof(sec)} must not be null");
                     if (logger.DebugEnabled) logger.Debug("\tFileSystemSecurity Result : {0}", sec);
                     var buffer = sec.GetSecurityDescriptorBinaryForm();
                     rawSecurityDescriptorLengthNeeded = (uint)buffer.Length;

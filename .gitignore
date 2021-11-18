@@ -11,3 +11,5 @@ TestResults
 *.opendb
 .vs
 *.DotSettings
+Debug
+Release
