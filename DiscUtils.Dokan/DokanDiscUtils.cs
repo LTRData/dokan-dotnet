@@ -17,6 +17,8 @@ using NativeFileAccess = DokanNet.NativeFileAccess;
 
 namespace DiscUtils.Dokan
 {
+    using VirtualFileSystem;
+
     [SuppressMessage("Design", "CA1062:Validate arguments of public methods", Justification = "<Pending>")]
     public class DokanDiscUtils : IDokanOperations, IDisposable
     {
@@ -104,7 +106,8 @@ namespace DiscUtils.Dokan
                 NamedStreams = true;
             }
 
-            if (fileSystem is IUnixFileSystem)
+            if (fileSystem is IUnixFileSystem ||
+                (fileSystem is VirtualFileSystem vfs && vfs.Options.CaseSensitive))
             {
                 _comparison = StringComparison.Ordinal;
                 CaseSensitive = true;
