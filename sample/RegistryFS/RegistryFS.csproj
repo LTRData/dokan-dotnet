@@ -2,13 +2,24 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFrameworks>net46;net40</TargetFrameworks>
-    <RuntimeIdentifier>win</RuntimeIdentifier>
+    <TargetFrameworks>net45;net48;net40;netcoreapp3.1</TargetFrameworks>
     <OutputPath>..\$(Configuration)\</OutputPath>
   </PropertyGroup>
  
   <ItemGroup>
     <ProjectReference Include="..\..\DokanNet\DokanNet.csproj" />
+  </ItemGroup>
+ 
+  <ItemGroup Condition="'$(TargetFramework)' == 'net48'">
+    <PackageReference Include="Microsoft.Win32.Registry">
+      <Version>5.0.0</Version>
+    </PackageReference>
+  </ItemGroup>
+ 
+  <ItemGroup Condition="'$(TargetFramework)' == 'netcoreapp3.1'">
+    <PackageReference Include="Microsoft.Win32.Registry">
+      <Version>5.0.0</Version>
+    </PackageReference>
   </ItemGroup>
 
   <PropertyGroup>

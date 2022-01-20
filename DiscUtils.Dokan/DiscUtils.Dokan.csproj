@@ -9,7 +9,7 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <TargetFrameworks>netstandard2.0;net48;net46</TargetFrameworks>
+    <TargetFrameworks>netstandard2.0;netstandard2.1;net48</TargetFrameworks>
     <RunAnalyzersDuringBuild>false</RunAnalyzersDuringBuild>
     <EnableNETAnalyzers>true</EnableNETAnalyzers>
     <OutputPath>..\$(Configuration)\</OutputPath>
@@ -20,7 +20,8 @@
     <GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
     <GenerateAssemblyFileVersionAttribute>false</GenerateAssemblyFileVersionAttribute>
     <GenerateAssemblyVersionAttribute>false</GenerateAssemblyVersionAttribute>
-    <LangVersion>9.0</LangVersion>
+    <LangVersion>Latest</LangVersion>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)'=='Release'">
@@ -34,73 +35,83 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="System.Memory" Version="4.5.4" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\DokanNet\DokanNet.csproj" />
   </ItemGroup>
 
   <ItemGroup>
     <Reference Include="DiscUtils.Btrfs">
-      <HintPath>..\..\..\DiscUtils\Library\DiscUtils\bin\$(Configuration)\$(TargetFramework)\DiscUtils.Btrfs.dll</HintPath>
+      <HintPath>..\..\DiscUtils\Library\DiscUtils\bin\$(Configuration)\$(TargetFramework)\DiscUtils.Btrfs.dll</HintPath>
     </Reference>
     <Reference Include="DiscUtils.Core">
-      <HintPath>..\..\..\DiscUtils\Library\DiscUtils\bin\$(Configuration)\$(TargetFramework)\DiscUtils.Core.dll</HintPath>
+      <HintPath>..\..\DiscUtils\Library\DiscUtils\bin\$(Configuration)\$(TargetFramework)\DiscUtils.Core.dll</HintPath>
     </Reference>
     <Reference Include="DiscUtils.Ext">
-      <HintPath>..\..\..\DiscUtils\Library\DiscUtils\bin\$(Configuration)\$(TargetFramework)\DiscUtils.Ext.dll</HintPath>
+      <HintPath>..\..\DiscUtils\Library\DiscUtils\bin\$(Configuration)\$(TargetFramework)\DiscUtils.Ext.dll</HintPath>
     </Reference>
     <Reference Include="DiscUtils.Fat">
-      <HintPath>..\..\..\DiscUtils\Library\DiscUtils\bin\$(Configuration)\$(TargetFramework)\DiscUtils.Fat.dll</HintPath>
+      <HintPath>..\..\DiscUtils\Library\DiscUtils\bin\$(Configuration)\$(TargetFramework)\DiscUtils.Fat.dll</HintPath>
     </Reference>
     <Reference Include="DiscUtils.HfsPlus">
-      <HintPath>..\..\..\DiscUtils\Library\DiscUtils\bin\$(Configuration)\$(TargetFramework)\DiscUtils.HfsPlus.dll</HintPath>
+      <HintPath>..\..\DiscUtils\Library\DiscUtils\bin\$(Configuration)\$(TargetFramework)\DiscUtils.HfsPlus.dll</HintPath>
     </Reference>
     <Reference Include="DiscUtils.Iso9660">
-      <HintPath>..\..\..\DiscUtils\Library\DiscUtils\bin\$(Configuration)\$(TargetFramework)\DiscUtils.Iso9660.dll</HintPath>
+      <HintPath>..\..\DiscUtils\Library\DiscUtils\bin\$(Configuration)\$(TargetFramework)\DiscUtils.Iso9660.dll</HintPath>
     </Reference>
     <Reference Include="DiscUtils.Lvm">
-      <HintPath>..\..\..\DiscUtils\Library\DiscUtils\bin\$(Configuration)\$(TargetFramework)\DiscUtils.Lvm.dll</HintPath>
+      <HintPath>..\..\DiscUtils\Library\DiscUtils\bin\$(Configuration)\$(TargetFramework)\DiscUtils.Lvm.dll</HintPath>
     </Reference>
     <Reference Include="DiscUtils.Nfs">
-      <HintPath>..\..\..\DiscUtils\Library\DiscUtils\bin\$(Configuration)\$(TargetFramework)\DiscUtils.Nfs.dll</HintPath>
+      <HintPath>..\..\DiscUtils\Library\DiscUtils\bin\$(Configuration)\$(TargetFramework)\DiscUtils.Nfs.dll</HintPath>
     </Reference>
     <Reference Include="DiscUtils.Ntfs">
-      <HintPath>..\..\..\DiscUtils\Library\DiscUtils\bin\$(Configuration)\$(TargetFramework)\DiscUtils.Ntfs.dll</HintPath>
+      <HintPath>..\..\DiscUtils\Library\DiscUtils\bin\$(Configuration)\$(TargetFramework)\DiscUtils.Ntfs.dll</HintPath>
     </Reference>
     <Reference Include="DiscUtils.Registry">
-      <HintPath>..\..\..\DiscUtils\Library\DiscUtils\bin\$(Configuration)\$(TargetFramework)\DiscUtils.Registry.dll</HintPath>
+      <HintPath>..\..\DiscUtils\Library\DiscUtils\bin\$(Configuration)\$(TargetFramework)\DiscUtils.Registry.dll</HintPath>
     </Reference>
     <Reference Include="DiscUtils.SquashFs">
-      <HintPath>..\..\..\DiscUtils\Library\DiscUtils\bin\$(Configuration)\$(TargetFramework)\DiscUtils.SquashFs.dll</HintPath>
+      <HintPath>..\..\DiscUtils\Library\DiscUtils\bin\$(Configuration)\$(TargetFramework)\DiscUtils.SquashFs.dll</HintPath>
     </Reference>
     <Reference Include="DiscUtils.Streams">
-      <HintPath>..\..\..\DiscUtils\Library\DiscUtils\bin\$(Configuration)\$(TargetFramework)\DiscUtils.Streams.dll</HintPath>
+      <HintPath>..\..\DiscUtils\Library\DiscUtils\bin\$(Configuration)\$(TargetFramework)\DiscUtils.Streams.dll</HintPath>
     </Reference>
     <Reference Include="DiscUtils.Swap">
-      <HintPath>..\..\..\DiscUtils\Library\DiscUtils\bin\$(Configuration)\$(TargetFramework)\DiscUtils.Swap.dll</HintPath>
+      <HintPath>..\..\DiscUtils\Library\DiscUtils\bin\$(Configuration)\$(TargetFramework)\DiscUtils.Swap.dll</HintPath>
     </Reference>
     <Reference Include="DiscUtils.Udf">
-      <HintPath>..\..\..\DiscUtils\Library\DiscUtils\bin\$(Configuration)\$(TargetFramework)\DiscUtils.Udf.dll</HintPath>
+      <HintPath>..\..\DiscUtils\Library\DiscUtils\bin\$(Configuration)\$(TargetFramework)\DiscUtils.Udf.dll</HintPath>
     </Reference>
     <Reference Include="DiscUtils.Vdi">
-      <HintPath>..\..\..\DiscUtils\Library\DiscUtils\bin\$(Configuration)\$(TargetFramework)\DiscUtils.Vdi.dll</HintPath>
+      <HintPath>..\..\DiscUtils\Library\DiscUtils\bin\$(Configuration)\$(TargetFramework)\DiscUtils.Vdi.dll</HintPath>
     </Reference>
     <Reference Include="DiscUtils.Vhd">
-      <HintPath>..\..\..\DiscUtils\Library\DiscUtils\bin\$(Configuration)\$(TargetFramework)\DiscUtils.Vhd.dll</HintPath>
+      <HintPath>..\..\DiscUtils\Library\DiscUtils\bin\$(Configuration)\$(TargetFramework)\DiscUtils.Vhd.dll</HintPath>
     </Reference>
     <Reference Include="DiscUtils.Vhdx">
-      <HintPath>..\..\..\DiscUtils\Library\DiscUtils\bin\$(Configuration)\$(TargetFramework)\DiscUtils.Vhdx.dll</HintPath>
+      <HintPath>..\..\DiscUtils\Library\DiscUtils\bin\$(Configuration)\$(TargetFramework)\DiscUtils.Vhdx.dll</HintPath>
     </Reference>
     <Reference Include="DiscUtils.VirtualFileSystem">
-      <HintPath>..\..\..\DiscUtils\Library\DiscUtils\bin\$(Configuration)\$(TargetFramework)\DiscUtils.VirtualFileSystem.dll</HintPath>
+      <HintPath>..\..\DiscUtils\Library\DiscUtils\bin\$(Configuration)\$(TargetFramework)\DiscUtils.VirtualFileSystem.dll</HintPath>
     </Reference>
     <Reference Include="DiscUtils.Vmdk">
-      <HintPath>..\..\..\DiscUtils\Library\DiscUtils\bin\$(Configuration)\$(TargetFramework)\DiscUtils.Vmdk.dll</HintPath>
+      <HintPath>..\..\DiscUtils\Library\DiscUtils\bin\$(Configuration)\$(TargetFramework)\DiscUtils.Vmdk.dll</HintPath>
     </Reference>
     <Reference Include="DiscUtils.Wim">
-      <HintPath>..\..\..\DiscUtils\Library\DiscUtils\bin\$(Configuration)\$(TargetFramework)\DiscUtils.Wim.dll</HintPath>
+      <HintPath>..\..\DiscUtils\Library\DiscUtils\bin\$(Configuration)\$(TargetFramework)\DiscUtils.Wim.dll</HintPath>
     </Reference>
     <Reference Include="DiscUtils.Xfs">
-      <HintPath>..\..\..\DiscUtils\Library\DiscUtils\bin\$(Configuration)\$(TargetFramework)\DiscUtils.Xfs.dll</HintPath>
+      <HintPath>..\..\DiscUtils\Library\DiscUtils\bin\$(Configuration)\$(TargetFramework)\DiscUtils.Xfs.dll</HintPath>
     </Reference>
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.1'">
+    <PackageReference Include="System.IO.FileSystem.AccessControl">
+      <Version>4.7.0</Version>
+    </PackageReference>
   </ItemGroup>
 
 </Project>

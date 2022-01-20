@@ -12,7 +12,12 @@ using NativeFileAccess = DokanNet.NativeFileAccess;
 
 namespace DokanNetMirror
 {
-    internal class Mirror : IDokanOperations
+    internal class Mirror :
+#if NETCOREAPP || NETSTANDARD2_1_OR_GREATER
+        IDokanOperationsUnsafe
+#else
+        IDokanOperations
+#endif
     {
         private readonly string path;
 
@@ -296,9 +301,34 @@ namespace DokanNetMirror
                     bytesRead = stream.Read(buffer, 0, buffer.Length);
                 }
             }
-            return Trace(nameof(ReadFile), fileName, info, DokanResult.Success, "out " + bytesRead.ToString(),
+            return Trace(nameof(ReadFile), fileName, info, DokanResult.Success, $"out {bytesRead}",
                 offset.ToString(CultureInfo.InvariantCulture));
         }
+
+#if NETCOREAPP || NETSTANDARD2_1_OR_GREATER
+        public unsafe NtStatus ReadFile(string fileName, IntPtr buffer, uint bufferLength, out int bytesRead, long offset, IDokanFileInfo info)
+        {
+            if (info.Context == null) // memory mapped read
+            {
+                using (var stream = new FileStream(GetPath(fileName), FileMode.Open, System.IO.FileAccess.Read))
+                {
+                    stream.Position = offset;
+                    bytesRead = stream.Read(new Span<byte>(buffer.ToPointer(), (int)bufferLength));
+                }
+            }
+            else // normal read
+            {
+                var stream = info.Context as FileStream;
+                lock (stream) //Protect from overlapped read
+                {
+                    stream.Position = offset;
+                    bytesRead = stream.Read(new Span<byte>(buffer.ToPointer(), (int)bufferLength));
+                }
+            }
+            return Trace(nameof(ReadFile), fileName, info, DokanResult.Success, $"out {bytesRead}",
+                offset.ToString(CultureInfo.InvariantCulture));
+        }
+#endif
 
         public NtStatus WriteFile(string fileName, byte[] buffer, out int bytesWritten, long offset, IDokanFileInfo info)
         {
@@ -329,7 +359,7 @@ namespace DokanNetMirror
                         else
                         {
                             bytesWritten = 0;
-                            return Trace(nameof(WriteFile), fileName, info, DokanResult.Error, "out " + bytesWritten,
+                            return Trace(nameof(WriteFile), fileName, info, DokanResult.Error, $"out {bytesWritten}",
                                 offset.ToString(CultureInfo.InvariantCulture));
                         }
                     }
@@ -341,9 +371,56 @@ namespace DokanNetMirror
                 }
                 bytesWritten = buffer.Length;
             }
-            return Trace(nameof(WriteFile), fileName, info, DokanResult.Success, "out " + bytesWritten.ToString(),
+            return Trace(nameof(WriteFile), fileName, info, DokanResult.Success, $"out {bytesWritten}",
                 offset.ToString(CultureInfo.InvariantCulture));
         }
+
+#if NETCOREAPP || NETSTANDARD2_1_OR_GREATER
+        public unsafe NtStatus WriteFile(string fileName, IntPtr buffer, uint bufferLength, out int bytesWritten, long offset, IDokanFileInfo info)
+        {
+            var append = offset == -1;
+            if (info.Context == null)
+            {
+                using (var stream = new FileStream(GetPath(fileName), append ? FileMode.Append : FileMode.Open, System.IO.FileAccess.Write))
+                {
+                    if (!append) // Offset of -1 is an APPEND: https://docs.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-writefile
+                    {
+                        stream.Position = offset;
+                    }
+                    stream.Write(new ReadOnlySpan<byte>(buffer.ToPointer(), (int)bufferLength));
+                    bytesWritten = (int)bufferLength;
+                }
+            }
+            else
+            {
+                var stream = info.Context as FileStream;
+                lock (stream) //Protect from overlapped write
+                {
+                    if (append)
+                    {
+                        if (stream.CanSeek)
+                        {
+                            stream.Seek(0, SeekOrigin.End);
+                        }
+                        else
+                        {
+                            bytesWritten = 0;
+                            return Trace(nameof(WriteFile), fileName, info, DokanResult.Error, $"out {bytesWritten}",
+                                offset.ToString(CultureInfo.InvariantCulture));
+                        }
+                    }
+                    else
+                    {
+                        stream.Position = offset;
+                    }
+                    stream.Write(new ReadOnlySpan<byte>(buffer.ToPointer(), (int)bufferLength));
+                }
+                bytesWritten = (int)bufferLength;
+            }
+            return Trace(nameof(WriteFile), fileName, info, DokanResult.Success, $"out {bytesWritten}",
+                offset.ToString(CultureInfo.InvariantCulture));
+        }
+#endif
 
         public NtStatus FlushFileBuffers(string fileName, IDokanFileInfo info)
         {
@@ -542,7 +619,7 @@ namespace DokanNetMirror
         {
             try
             {
-                ((FileStream)(info.Context)).SetLength(length);
+                ((FileStream)info.Context).SetLength(length);
                 return Trace(nameof(SetAllocationSize), fileName, info, DokanResult.Success,
                     length.ToString(CultureInfo.InvariantCulture));
             }
@@ -555,10 +632,9 @@ namespace DokanNetMirror
 
         public NtStatus LockFile(string fileName, long offset, long length, IDokanFileInfo info)
         {
-#if !NETCOREAPP1_0
             try
             {
-                ((FileStream)(info.Context)).Lock(offset, length);
+                ((FileStream)info.Context).Lock(offset, length);
                 return Trace(nameof(LockFile), fileName, info, DokanResult.Success,
                     offset.ToString(CultureInfo.InvariantCulture), length.ToString(CultureInfo.InvariantCulture));
             }
@@ -567,15 +643,10 @@ namespace DokanNetMirror
                 return Trace(nameof(LockFile), fileName, info, DokanResult.AccessDenied,
                     offset.ToString(CultureInfo.InvariantCulture), length.ToString(CultureInfo.InvariantCulture));
             }
-#else
-// .NET Core 1.0 do not have support for FileStream.Lock
-            return DokanResult.NotImplemented;
-#endif
         }
 
         public NtStatus UnlockFile(string fileName, long offset, long length, IDokanFileInfo info)
         {
-#if !NETCOREAPP1_0
             try
             {
                 ((FileStream)(info.Context)).Unlock(offset, length);
@@ -587,10 +658,6 @@ namespace DokanNetMirror
                 return Trace(nameof(UnlockFile), fileName, info, DokanResult.AccessDenied,
                     offset.ToString(CultureInfo.InvariantCulture), length.ToString(CultureInfo.InvariantCulture));
             }
-#else
-// .NET Core 1.0 do not have support for FileStream.Unlock
-            return DokanResult.NotImplemented;
-#endif
         }
 
         public NtStatus GetDiskFreeSpace(out long freeBytesAvailable, out long totalNumberOfBytes, out long totalNumberOfFreeBytes, IDokanFileInfo info)
@@ -600,8 +667,8 @@ namespace DokanNetMirror
             freeBytesAvailable = dinfo.TotalFreeSpace;
             totalNumberOfBytes = dinfo.TotalSize;
             totalNumberOfFreeBytes = dinfo.AvailableFreeSpace;
-            return Trace(nameof(GetDiskFreeSpace), null, info, DokanResult.Success, "out " + freeBytesAvailable.ToString(),
-                "out " + totalNumberOfBytes.ToString(), "out " + totalNumberOfFreeBytes.ToString());
+            return Trace(nameof(GetDiskFreeSpace), null, info, DokanResult.Success, $"out {freeBytesAvailable}",
+                $"out {totalNumberOfBytes}", $"out {totalNumberOfFreeBytes}");
         }
 
         public NtStatus GetVolumeInformation(out string volumeLabel, out FileSystemFeatures features,
@@ -615,19 +682,18 @@ namespace DokanNetMirror
                        FileSystemFeatures.PersistentAcls | FileSystemFeatures.SupportsRemoteStorage |
                        FileSystemFeatures.UnicodeOnDisk;
 
-            return Trace(nameof(GetVolumeInformation), null, info, DokanResult.Success, "out " + volumeLabel,
-                "out " + features.ToString(), "out " + fileSystemName);
+            return Trace(nameof(GetVolumeInformation), null, info, DokanResult.Success, $"out {volumeLabel}",
+                $"out {features}", $"out {fileSystemName}");
         }
 
         public NtStatus GetFileSecurity(string fileName, out FileSystemSecurity security, AccessControlSections sections,
             IDokanFileInfo info)
         {
-#if !NETCOREAPP1_0
             try
             {
                 security = info.IsDirectory
-                    ? (FileSystemSecurity)Directory.GetAccessControl(GetPath(fileName))
-                    : File.GetAccessControl(GetPath(fileName));
+                    ? new DirectoryInfo(GetPath(fileName)).GetAccessControl() as FileSystemSecurity
+                    : new FileInfo(GetPath(fileName)).GetAccessControl();
                 return Trace(nameof(GetFileSecurity), fileName, info, DokanResult.Success, sections.ToString());
             }
             catch (UnauthorizedAccessException)
@@ -635,26 +701,20 @@ namespace DokanNetMirror
                 security = null;
                 return Trace(nameof(GetFileSecurity), fileName, info, DokanResult.AccessDenied, sections.ToString());
             }
-#else
-// .NET Core 1.0 do not have support for Directory.GetAccessControl
-            security = null;
-            return DokanResult.NotImplemented;
-#endif
         }
 
         public NtStatus SetFileSecurity(string fileName, FileSystemSecurity security, AccessControlSections sections,
             IDokanFileInfo info)
         {
-#if !NETCOREAPP1_0
             try
             {
                 if (info.IsDirectory)
                 {
-                    Directory.SetAccessControl(GetPath(fileName), (DirectorySecurity)security);
+                    new DirectoryInfo(GetPath(fileName)).SetAccessControl((DirectorySecurity)security);
                 }
                 else
                 {
-                    File.SetAccessControl(GetPath(fileName), (FileSecurity)security);
+                    new FileInfo(GetPath(fileName)).SetAccessControl((FileSecurity)security);
                 }
                 return Trace(nameof(SetFileSecurity), fileName, info, DokanResult.Success, sections.ToString());
             }
@@ -662,10 +722,6 @@ namespace DokanNetMirror
             {
                 return Trace(nameof(SetFileSecurity), fileName, info, DokanResult.AccessDenied, sections.ToString());
             }
-#else
-// .NET Core 1.0 do not have support for Directory.SetAccessControl
-            return DokanResult.NotImplemented;
-#endif
         }
 
         public NtStatus Mounted(IDokanFileInfo info)
@@ -684,7 +740,7 @@ namespace DokanNetMirror
             streamName = string.Empty;
             streamSize = 0;
             return Trace(nameof(FindStreams), fileName, info, DokanResult.NotImplemented, enumContext.ToString(),
-                "out " + streamName, "out " + streamSize.ToString());
+                $"out {streamName}", $"out {streamSize}");
         }
 
         public NtStatus FindStreams(string fileName, out IEnumerable<FindFileInformation> streams, IDokanFileInfo info)
