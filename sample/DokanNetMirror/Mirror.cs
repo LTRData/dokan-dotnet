@@ -764,7 +764,10 @@ internal class Mirror :
         }
     }
 
-    public NtStatus Mounted(IDokanFileInfo info) => Trace(nameof(Mounted), null, info, DokanResult.Success);
+        public NtStatus Mounted(string mountPoint, IDokanFileInfo info)
+        {
+            return Trace(nameof(Mounted), null, info, DokanResult.Success);
+        }
 
     public NtStatus Unmounted(IDokanFileInfo info) => Trace(nameof(Unmounted), null, info, DokanResult.Success);
 

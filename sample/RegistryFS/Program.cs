@@ -205,7 +205,10 @@ internal class RFS : IDokanOperations
 
     public NtStatus UnlockFile(string filename, long offset, long length, IDokanFileInfo info) => DokanResult.Success;
 
-    public NtStatus Mounted(IDokanFileInfo info) => DokanResult.Success;
+        public NtStatus Mounted(string mountPoint, IDokanFileInfo info)
+        {
+            return DokanResult.Success;
+        }
 
     public NtStatus Unmounted(IDokanFileInfo info) => DokanResult.Success;
 
@@ -276,19 +279,22 @@ internal class RFS : IDokanOperations
     #endregion DokanOperations member
 }
 
-internal class Program
-{
-    private static void Main()
+    internal class Program
     {
-        try
+        private static void Main()
         {
-            var rfs = new RFS();
-            rfs.Mount("r:\\", DokanOptions.DebugMode | DokanOptions.StderrOutput);
-            Console.WriteLine(@"Success");
-        }
-        catch (DokanException ex)
-        {
-            Console.WriteLine(@"Error: " + ex.Message);
+            try
+            {
+                var rfs = new RFS();
+                Dokan.Init();
+                rfs.Mount("r:\\", DokanOptions.DebugMode | DokanOptions.StderrOutput);
+                Dokan.Shutdown();
+                Console.WriteLine(@"Success");
+            }
+            catch (DokanException ex)
+            {
+                Console.WriteLine(@"Error: " + ex.Message);
+            }
         }
     }
 }

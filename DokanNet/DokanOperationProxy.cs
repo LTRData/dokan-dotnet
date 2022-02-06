@@ -156,23 +156,25 @@ internal sealed class DokanOperationProxy
         uint rawSecurityDescriptorLength,
         [MarshalAs(UnmanagedType.LPStruct), In /*, Out*/] DokanFileInfo rawFileInfo);
 
-    /// <summary>
-    /// Retrieve all FileStreams informations on the file.
-    /// This is only called if <see cref="DokanOptions.AltStream"/> is enabled.
-    /// </summary>
-    /// <remarks>Supported since 0.8.0. 
-    /// You must specify the version at <see cref="DOKAN_OPTIONS.Version"/>.</remarks>
-    /// <param name="rawFileName">Filename</param>
-    /// <param name="rawFillFindData">A <see cref="IntPtr"/> to a <see cref="FILL_FIND_STREAM_DATA"/>.</param>
-    /// <param name="rawFileInfo">A <see cref="DokanFileInfo"/>.</param>
-    /// <returns></returns>
-    public delegate NtStatus FindStreamsDelegate(
-        [MarshalAs(UnmanagedType.LPWStr)] string rawFileName,
-        IntPtr rawFillFindData,
-        [MarshalAs(UnmanagedType.LPStruct), In /*, Out*/] DokanFileInfo rawFileInfo);
+        /// <summary>
+        /// Retrieve all FileStreams informations on the file.
+        /// This is only called if <see cref="DokanOptions.AltStream"/> is enabled.
+        /// </summary>
+        /// <remarks>Supported since 0.8.0. 
+        /// You must specify the version at <see cref="DOKAN_OPTIONS.Version"/>.</remarks>
+        /// <param name="rawFileName">Filename</param>
+        /// <param name="rawFillFindData">A <see cref="IntPtr"/> to a <see cref="FILL_FIND_STREAM_DATA"/>.</param>
+        /// <param name="rawFileInfo">A <see cref="DokanFileInfo"/>.</param>
+        /// <returns></returns>
+        public delegate NtStatus FindStreamsDelegate(
+            [MarshalAs(UnmanagedType.LPWStr)] string rawFileName,
+            IntPtr rawFillFindData,
+            IntPtr findStreamContext,
+            [MarshalAs(UnmanagedType.LPStruct), In /*, Out*/] DokanFileInfo rawFileInfo);
 
-    public delegate NtStatus MountedDelegate(
-        [MarshalAs(UnmanagedType.LPStruct), In] DokanFileInfo rawFileInfo);
+        public delegate NtStatus MountedDelegate(
+            [MarshalAs(UnmanagedType.LPWStr)] string rawFileName,
+            [MarshalAs(UnmanagedType.LPStruct), In] DokanFileInfo rawFileInfo);
 
     public delegate NtStatus UnmountedDelegate(
         [MarshalAs(UnmanagedType.LPStruct), In] DokanFileInfo rawFileInfo);
@@ -683,7 +685,8 @@ internal sealed class DokanOperationProxy
                 logger.Debug("\tContext\t{0}", rawFileInfo);
             }
 
-            var result = operations.FindFilesWithPattern(rawFileName, rawSearchPattern, out var files, rawFileInfo);
+                // TODO(someone): Allow userland FS to set FindFiles preference at mount time and nullify the callback not used.
+                var result = operations.FindFilesWithPattern(rawFileName, rawSearchPattern, out IList<FileInformation> files, rawFileInfo);
 
             Debug.Assert(files is not null, "Files must not be null");
             if (result == DokanResult.Success)
@@ -761,15 +764,15 @@ internal sealed class DokanOperationProxy
         fill(ref data, rawFileInfo);
     }
 
-    public NtStatus FindStreamsProxy(string rawFileName, IntPtr rawFillFindData, DokanFileInfo rawFileInfo)
-    {
-        try
+        public NtStatus FindStreamsProxy(string rawFileName, IntPtr rawFillFindData, IntPtr findStreamContext, DokanFileInfo rawFileInfo)
         {
-            if (logger.DebugEnabled)
+            try
             {
-                logger.Debug("FindStreamsProxy: {0}", rawFileName);
-                logger.Debug("\tContext\t{0}", rawFileInfo);
-            }
+                if (logger.DebugEnabled)
+                {
+                    logger.Debug("FindStreamsProxy: {0}", rawFileName);
+                    logger.Debug("\tContext\t{0}", rawFileInfo);
+                }
 
             var result = operations.FindStreams(rawFileName, out var files, rawFileInfo);
 
@@ -1222,17 +1225,18 @@ internal sealed class DokanOperationProxy
         }
     }
 
-    public NtStatus MountedProxy(DokanFileInfo rawFileInfo)
-    {
-        try
+        public NtStatus MountedProxy(string mountPoint, DokanFileInfo rawFileInfo)
         {
-            if (logger.DebugEnabled)
+            try
             {
-                logger.Debug("MountedProxy:");
-                logger.Debug("\tContext\t{0}", rawFileInfo);
-            }
+                if (logger.DebugEnabled)
+                {
+                    logger.Debug("MountedProxy:");
+                    logger.Debug("\tMountPoint\t{0}", mountPoint);
+                    logger.Debug("\tContext\t{0}", rawFileInfo);
+                }
 
-            var result = operations.Mounted(rawFileInfo);
+                var result = operations.Mounted(mountPoint, rawFileInfo);
 
             if (logger.DebugEnabled)
             {

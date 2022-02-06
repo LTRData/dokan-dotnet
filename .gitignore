@@ -10,6 +10,7 @@ TestResults
 *.db
 *.opendb
 .vs
-*.DotSettings
 Debug
 Release
+*.DotSettings
+**/launchSettings.json

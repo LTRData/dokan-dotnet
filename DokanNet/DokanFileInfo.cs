@@ -7,19 +7,19 @@ using static DokanNet.FormatProviders;
 
 #pragma warning disable 649,169
 
-namespace DokanNet;
-
-/// <summary>
-/// %Dokan file information on the current operation.
-/// </summary>
-/// <remarks>
-/// This class cannot be instantiated in C#, it is created by the kernel %Dokan driver.
-/// This is the same structure as <c>_DOKAN_FILE_INFO</c> (dokan.h) in the C++ version of Dokan.
-/// </remarks>
-[StructLayout(LayoutKind.Sequential, Pack = 4)]
-public sealed class DokanFileInfo : IDokanFileInfo
+namespace DokanNet
 {
-    private ulong _context;
+    /// <summary>
+    /// %Dokan file information on the current operation.
+    /// </summary>
+    /// <remarks>
+    /// This class cannot be instantiated in C#, it is created by the kernel %Dokan driver.
+    /// This is the same structure as <c>_DOKAN_FILE_INFO</c> (dokan.h) in the C version of Dokan.
+    /// </remarks>
+    [StructLayout(LayoutKind.Sequential, Pack = 4)]
+    public sealed class DokanFileInfo : IDokanFileInfo
+    {
+        private ulong _context;
 
     /// <summary>
     /// Used internally, never modify.
@@ -31,7 +31,14 @@ public sealed class DokanFileInfo : IDokanFileInfo
     /// </summary>
     private readonly IntPtr _dokanOptions;
 
-    private readonly uint _processId;
+        /// <summary>
+        /// Reserved. Used internally by Dokan library. Never modify.
+        /// If the processing for the event requires extra data to be associated with it
+        /// then a pointer to that data can be placed here
+        /// </summary>
+        private readonly IntPtr _processingContext;
+
+        private readonly uint _processId;
 
     [MarshalAs(UnmanagedType.U1)] private bool _isDirectory;
 

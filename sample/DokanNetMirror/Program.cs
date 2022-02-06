@@ -28,13 +28,21 @@ internal class Program
 
             var unsafeReadWrite = arguments.ContainsKey(UseUnsafeKey);
 
-            Notify.Start(mirrorPath, mountPath);
+                Console.WriteLine($"Using unsafe methods: {unsafeReadWrite}");
+                var mirror = unsafeReadWrite 
+                    ? new UnsafeMirror(mirrorPath) 
+                    : new Mirror(mirrorPath);
 
-            Console.WriteLine($"Using unsafe methods: {unsafeReadWrite}");
-            var mirror = unsafeReadWrite
-                ? new UnsafeMirror(mirrorPath)
-                : new Mirror(mirrorPath);
-            mirror.Mount(mountPath, DokanOptions.DebugMode | DokanOptions.EnableNotificationAPI, /*threadCount=*/5);
+                Dokan.Init();
+
+                using (DokanInstance dokanInstance = mirror.CreateFileSystem(mountPath, DokanOptions.DebugMode | DokanOptions.EnableNotificationAPI))
+                {
+                    var notify = new Notify();
+                    notify.Start(mirrorPath, mountPath, dokanInstance);
+                    dokanInstance.WaitForFileSystemClosed(uint.MaxValue);
+                }
+
+                Dokan.Shutdown();
 
             Console.WriteLine(@"Success");
         }
