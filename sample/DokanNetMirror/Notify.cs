@@ -1,109 +1,108 @@
 ﻿using System.IO;
 using DokanNet;
 
-namespace DokanNetMirror
+namespace DokanNetMirror;
+
+internal static class Notify
 {
-    internal static class Notify
+    private static string sourcePath;
+    private static string targetPath;
+    private static FileSystemWatcher commonFsWatcher;
+    private static FileSystemWatcher fileFsWatcher;
+    private static FileSystemWatcher dirFsWatcher;
+
+    public static void Start(string mirrorPath, string mountPath)
     {
-        private static string sourcePath;
-        private static string targetPath;
-        private static FileSystemWatcher commonFsWatcher;
-        private static FileSystemWatcher fileFsWatcher;
-        private static FileSystemWatcher dirFsWatcher;
+        sourcePath = mirrorPath;
+        targetPath = mountPath;
 
-        public static void Start(string mirrorPath, string mountPath)
+        commonFsWatcher = new FileSystemWatcher(mirrorPath)
         {
-            sourcePath = mirrorPath;
-            targetPath = mountPath;
+            IncludeSubdirectories = true,
+            NotifyFilter = NotifyFilters.Attributes |
+                NotifyFilters.CreationTime |
+                NotifyFilters.DirectoryName |
+                NotifyFilters.FileName |
+                NotifyFilters.LastAccess |
+                NotifyFilters.LastWrite |
+                NotifyFilters.Security |
+                NotifyFilters.Size
+        };
 
-            commonFsWatcher = new FileSystemWatcher(mirrorPath)
-            {
-                IncludeSubdirectories = true,
-                NotifyFilter = NotifyFilters.Attributes |
-                    NotifyFilters.CreationTime |
-                    NotifyFilters.DirectoryName |
-                    NotifyFilters.FileName |
-                    NotifyFilters.LastAccess |
-                    NotifyFilters.LastWrite |
-                    NotifyFilters.Security |
-                    NotifyFilters.Size
-            };
+        commonFsWatcher.Changed += OnCommonFileSystemWatcherChanged;
+        commonFsWatcher.Created += OnCommonFileSystemWatcherCreated;
+        commonFsWatcher.Renamed += OnCommonFileSystemWatcherRenamed;
 
-            commonFsWatcher.Changed += OnCommonFileSystemWatcherChanged;
-            commonFsWatcher.Created += OnCommonFileSystemWatcherCreated;
-            commonFsWatcher.Renamed += OnCommonFileSystemWatcherRenamed;
+        commonFsWatcher.EnableRaisingEvents = true;
 
-            commonFsWatcher.EnableRaisingEvents = true;
-
-            fileFsWatcher = new FileSystemWatcher(mirrorPath)
-            {
-                IncludeSubdirectories = true,
-                NotifyFilter = NotifyFilters.FileName
-            };
-
-            fileFsWatcher.Deleted += OnCommonFileSystemWatcherFileDeleted;
-
-            fileFsWatcher.EnableRaisingEvents = true;
-
-            dirFsWatcher = new FileSystemWatcher(mirrorPath)
-            {
-                IncludeSubdirectories = true,
-                NotifyFilter = NotifyFilters.DirectoryName
-            };
-
-            dirFsWatcher.Deleted += OnCommonFileSystemWatcherDirectoryDeleted;
-
-            dirFsWatcher.EnableRaisingEvents = true;
-        }
-
-        private static string AlterPathToMountPath(string path)
+        fileFsWatcher = new FileSystemWatcher(mirrorPath)
         {
-            var relativeMirrorPath = path.Substring(sourcePath.Length).TrimStart('\\');
+            IncludeSubdirectories = true,
+            NotifyFilter = NotifyFilters.FileName
+        };
 
-            return Path.Combine(targetPath, relativeMirrorPath);
-        }
+        fileFsWatcher.Deleted += OnCommonFileSystemWatcherFileDeleted;
 
-        private static void OnCommonFileSystemWatcherFileDeleted(object sender, FileSystemEventArgs e)
+        fileFsWatcher.EnableRaisingEvents = true;
+
+        dirFsWatcher = new FileSystemWatcher(mirrorPath)
         {
-            var fullPath = AlterPathToMountPath(e.FullPath);
+            IncludeSubdirectories = true,
+            NotifyFilter = NotifyFilters.DirectoryName
+        };
 
-            Dokan.Notify.Delete(fullPath, false);
-        }
+        dirFsWatcher.Deleted += OnCommonFileSystemWatcherDirectoryDeleted;
 
-        private static void OnCommonFileSystemWatcherDirectoryDeleted(object sender, FileSystemEventArgs e)
-        {
-            var fullPath = AlterPathToMountPath(e.FullPath);
+        dirFsWatcher.EnableRaisingEvents = true;
+    }
 
-            Dokan.Notify.Delete(fullPath, true);
-        }
+    private static string AlterPathToMountPath(string path)
+    {
+        var relativeMirrorPath = path.Substring(sourcePath.Length).TrimStart('\\');
 
-        private static void OnCommonFileSystemWatcherChanged(object sender, FileSystemEventArgs e)
-        {
-            var fullPath = AlterPathToMountPath(e.FullPath);
+        return Path.Combine(targetPath, relativeMirrorPath);
+    }
 
-            Dokan.Notify.Update(fullPath);
-        }
+    private static void OnCommonFileSystemWatcherFileDeleted(object sender, FileSystemEventArgs e)
+    {
+        var fullPath = AlterPathToMountPath(e.FullPath);
 
-        private static void OnCommonFileSystemWatcherCreated(object sender, FileSystemEventArgs e)
-        {
-            var fullPath = AlterPathToMountPath(e.FullPath);
-            var isDirectory = Directory.Exists(fullPath);
+        Dokan.Notify.Delete(fullPath, false);
+    }
 
-            Dokan.Notify.Create(fullPath, isDirectory);
-        }
+    private static void OnCommonFileSystemWatcherDirectoryDeleted(object sender, FileSystemEventArgs e)
+    {
+        var fullPath = AlterPathToMountPath(e.FullPath);
 
-        private static void OnCommonFileSystemWatcherRenamed(object sender, RenamedEventArgs e)
-        {
-            var oldFullPath = AlterPathToMountPath(e.OldFullPath);
-            var oldDirectoryName = Path.GetDirectoryName(e.OldFullPath);
+        Dokan.Notify.Delete(fullPath, true);
+    }
 
-            var fullPath = AlterPathToMountPath(e.FullPath);
-            var directoryName = Path.GetDirectoryName(e.FullPath);
+    private static void OnCommonFileSystemWatcherChanged(object sender, FileSystemEventArgs e)
+    {
+        var fullPath = AlterPathToMountPath(e.FullPath);
 
-            var isDirectory = Directory.Exists(e.FullPath);
-            var isInSameDirectory = oldDirectoryName.Equals(directoryName);
+        Dokan.Notify.Update(fullPath);
+    }
 
-            Dokan.Notify.Rename(oldFullPath, fullPath, isDirectory, isInSameDirectory);
-        }
+    private static void OnCommonFileSystemWatcherCreated(object sender, FileSystemEventArgs e)
+    {
+        var fullPath = AlterPathToMountPath(e.FullPath);
+        var isDirectory = Directory.Exists(fullPath);
+
+        Dokan.Notify.Create(fullPath, isDirectory);
+    }
+
+    private static void OnCommonFileSystemWatcherRenamed(object sender, RenamedEventArgs e)
+    {
+        var oldFullPath = AlterPathToMountPath(e.OldFullPath);
+        var oldDirectoryName = Path.GetDirectoryName(e.OldFullPath);
+
+        var fullPath = AlterPathToMountPath(e.FullPath);
+        var directoryName = Path.GetDirectoryName(e.FullPath);
+
+        var isDirectory = Directory.Exists(e.FullPath);
+        var isInSameDirectory = oldDirectoryName.Equals(directoryName);
+
+        Dokan.Notify.Rename(oldFullPath, fullPath, isDirectory, isInSameDirectory);
     }
 }

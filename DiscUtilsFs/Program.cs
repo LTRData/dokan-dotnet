@@ -230,7 +230,9 @@ namespace DiscUtilsFs
         private static IFileSystem InitializeFromFsImage(string fsPath)
         {
             if (string.IsNullOrWhiteSpace(fsPath))
+            {
                 throw new ArgumentException("Missing value for argument", FsKey);
+            }
 
             var part_content = File.OpenRead(fsPath);
 

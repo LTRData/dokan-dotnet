@@ -13,7 +13,11 @@ using DokanNet.Logging;
 using static DokanNet.FormatProviders;
 using NativeFileAccess = DokanNet.NativeFileAccess;
 
+#pragma warning disable IDE0079 // Remove unnecessary suppression
 #pragma warning disable CA1021 // Avoid out parameters
+#pragma warning disable CA1822 // Mark members as static
+#pragma warning disable IDE0057 // Use range operator
+#pragma warning disable IDE0022 // Use expression body for methods
 
 namespace DiscUtils.Dokan;
 
@@ -93,7 +97,7 @@ public class DokanDiscUtils :
         return result;
     }
 
-    public DokanDiscUtils(IFileSystem fileSystem, DokanDiscUtilsOptions options)
+public DokanDiscUtils(IFileSystem fileSystem, DokanDiscUtilsOptions options)
     {
         FileSystem = fileSystem ?? throw new ArgumentNullException(nameof(fileSystem));
 
@@ -449,7 +453,9 @@ public class DokanDiscUtils :
     {
 #if DEBUG
         if (info.Context != null)
+        {
             Console.WriteLine(DokanFormat($"{nameof(Cleanup)}('{fileName}', {info} - entering"));
+        }
 #endif
 
         (info.Context as IDisposable)?.Dispose();
@@ -475,7 +481,9 @@ public class DokanDiscUtils :
     {
 #if DEBUG
         if (info.Context != null)
+        {
             Console.WriteLine(DokanFormat($"{nameof(CloseFile)}('{fileName}', {info} - entering"));
+        }
 #endif
 
         (info.Context as IDisposable)?.Dispose();
@@ -1068,14 +1076,14 @@ public class DokanDiscUtils :
     public NtStatus Unmounted(IDokanFileInfo info) => Trace(nameof(Unmounted), null, info, DokanResult.Success);
 
 #if false
-        public NtStatus FindStreams(string fileName, IntPtr enumContext, out string streamName, out long streamSize,
-            IDokanFileInfo info)
-        {
-            streamName = string.Empty;
-            streamSize = 0;
-            return Trace(nameof(FindStreams), fileName, info, DokanResult.NotImplemented, enumContext.ToString(),
-                $"out {streamName}", $"out {streamSize}");
-        }
+    public NtStatus FindStreams(string fileName, IntPtr enumContext, out string streamName, out long streamSize,
+        IDokanFileInfo info)
+    {
+        streamName = string.Empty;
+        streamSize = 0;
+        return Trace(nameof(FindStreams), fileName, info, DokanResult.NotImplemented, enumContext.ToString(),
+            $"out {streamName}", $"out {streamSize}");
+    }
 #endif
 
     public NtStatus FindStreams(string fileName, out IEnumerable<FindFileInformation> streams, IDokanFileInfo info)
@@ -1084,27 +1092,27 @@ public class DokanDiscUtils :
 
         if (FileSystem is IWindowsFileSystem wfs)
         {
-            streams = Array.ConvertAll(wfs.GetAlternateDataStreams(fileName),
-            name =>
-            {
-                var finfo = FileSystem.GetFileInfo(name);
-
-                return new FindFileInformation
+            streams = wfs.GetAlternateDataStreams(fileName)
+                .Select(name =>
                 {
-                    Attributes = FilterAttributes(finfo.Attributes),
-                    CreationTime = finfo.CreationTime,
-                    LastAccessTime = finfo.LastAccessTime,
-                    LastWriteTime = finfo.LastWriteTime,
-                    Length = finfo.Length,
-                    FileName = finfo.Name
-                };
-            });
+                    var finfo = FileSystem.GetFileInfo(name);
 
-            return Trace(nameof(FindStreams), fileName, info, DokanResult.Success, $"Found {(streams as ICollection).Count} streams");
+                    return new FindFileInformation
+                    {
+                        Attributes = FilterAttributes(finfo.Attributes),
+                        CreationTime = finfo.CreationTime,
+                        LastAccessTime = finfo.LastAccessTime,
+                        LastWriteTime = finfo.LastWriteTime,
+                        Length = finfo.Length,
+                        FileName = finfo.Name
+                    };
+                });
+
+            return Trace(nameof(FindStreams), fileName, info, DokanResult.Success, "FindStreams done");
         }
         else
         {
-            streams = Array.Empty<FindFileInformation>();
+            streams = Enumerable.Empty<FindFileInformation>();
             return Trace(nameof(FindStreams), fileName, info, DokanResult.NotImplemented);
         }
     }

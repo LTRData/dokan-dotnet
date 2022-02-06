@@ -3,137 +3,123 @@ using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace DokanNet.Logging
+namespace DokanNet.Logging;
+
+/// <summary>
+/// Log to the console.
+/// </summary>
+public class ConsoleLogger : ILogger, IDisposable
 {
+    private readonly string _loggerName;
+    private readonly System.Collections.Concurrent.BlockingCollection<Tuple<int, string, ConsoleColor>> _PendingLogs
+        = new();
+
+    private readonly Thread _WriterTask = null;
     /// <summary>
-    /// Log to the console.
+    /// Initializes a new instance of the <see cref="ConsoleLogger"/> class.
     /// </summary>
-    public class ConsoleLogger : ILogger, IDisposable
+    /// <param name="loggerName">Optional name to be added to each log line.</param>
+    public ConsoleLogger(string loggerName = "")
     {
-        private readonly string _loggerName;
-        private readonly System.Collections.Concurrent.BlockingCollection<Tuple<int, string, ConsoleColor>> _PendingLogs
-            = new System.Collections.Concurrent.BlockingCollection<Tuple<int, string, ConsoleColor>>();
-
-        private readonly Thread _WriterTask = null;
-        /// <summary>
-        /// Initializes a new instance of the <see cref="ConsoleLogger"/> class.
-        /// </summary>
-        /// <param name="loggerName">Optional name to be added to each log line.</param>
-        public ConsoleLogger(string loggerName = "")
+        _loggerName = loggerName;
+        _WriterTask = new Thread(o =>
         {
-            _loggerName = loggerName;
-            _WriterTask = new Thread(o =>
+            foreach (var tuple in _PendingLogs.GetConsumingEnumerable())
             {
-                foreach (var tuple in _PendingLogs.GetConsumingEnumerable())
-                {
-                    WriteMessage(tuple.Item1, tuple.Item2, tuple.Item3);
-                }
-            });
-            _WriterTask.Start();
-        }
-
-        /// <inheritdoc />        
-        public bool DebugEnabled => true;
-
-        /// <inheritdoc />
-        public void Debug(string message, params object[] args)
-        {
-            EnqueueMessage(Console.ForegroundColor, message, args);
-        }
-
-        /// <inheritdoc />
-        public void Info(string message, params object[] args)
-        {
-            EnqueueMessage(Console.ForegroundColor, message, args);
-        }
-
-        /// <inheritdoc />
-        public void Warn(string message, params object[] args)
-        {
-            EnqueueMessage(ConsoleColor.DarkYellow, message, args);
-        }
-
-        /// <inheritdoc />
-        public void Error(string message, params object[] args)
-        {
-            EnqueueMessage(ConsoleColor.Red, message, args);
-        }
-
-        /// <inheritdoc />
-        public void Fatal(string message, params object[] args)
-        {
-            EnqueueMessage(ConsoleColor.Red, message, args);
-        }
-
-        [SuppressMessage("Globalization", "CA1305:Specify IFormatProvider", Justification = "<Pending>")]
-        private void EnqueueMessage(ConsoleColor newColor, string message, params object[] args)
-        {
-            if (args.Length > 0)
-                message = string.Format(message, args);
-
-            _PendingLogs.Add(Tuple.Create(Thread.CurrentThread.ManagedThreadId, message, newColor));
-        }
-
-        private static readonly object _lock = new object();
-
-        private void WriteMessage(int threadId, string message, ConsoleColor newColor)
-        {
-            lock (_lock)
-            {
-                var origForegroundColor = Console.ForegroundColor;
-                Console.ForegroundColor = newColor;
-                Console.WriteLine(message.FormatMessageForLogging(addDateTime: true, threadId: threadId, loggerName: _loggerName));
-                Console.ForegroundColor = origForegroundColor;
+                WriteMessage(tuple.Item1, tuple.Item2, tuple.Item3);
             }
-        }
-
-        #region IDisposable Support
-        private bool disposedValue = false; // To detect redundant calls
-
-        /// <summary>
-        /// Wait and dispose pending log resources.
-        /// </summary>
-        /// <param name="disposing">Disposing resource.</param>
-        protected virtual void Dispose(bool disposing)
-        {
-            if (!disposedValue)
-            {
-                _PendingLogs.CompleteAdding();
-
-                if (disposing)
-                {
-                    // TODO: dispose managed state (managed objects).
-                    _WriterTask?.Join();
-                }
-
-                _PendingLogs.Dispose();
-
-                // TODO: free unmanaged resources (unmanaged objects) and override a finalizer below.
-
-                // TODO: set large fields to null.
-
-                disposedValue = true;
-            }
-        }
-
-        // TODO: override a finalizer only if Dispose(bool disposing) above has code to free unmanaged resources.
-        ~ConsoleLogger()
-        {
-            // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
-            Dispose(false);
-        }
-
-        /// <summary>
-        /// Dispose resources.
-        /// </summary>
-        /// <remarks>This code added to correctly implement the disposable pattern.</remarks>
-        public void Dispose()
-        {
-            // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
-            Dispose(true);
-            // TODO: uncomment the following line if the finalizer is overridden above.
-            GC.SuppressFinalize(this);
-        }
-        #endregion
+        });
+        _WriterTask.Start();
     }
+
+    /// <inheritdoc />        
+    public bool DebugEnabled => true;
+
+    /// <inheritdoc />
+    public void Debug(string message, params object[] args) => EnqueueMessage(Console.ForegroundColor, message, args);
+
+    /// <inheritdoc />
+    public void Info(string message, params object[] args) => EnqueueMessage(Console.ForegroundColor, message, args);
+
+    /// <inheritdoc />
+    public void Warn(string message, params object[] args) => EnqueueMessage(ConsoleColor.DarkYellow, message, args);
+
+    /// <inheritdoc />
+    public void Error(string message, params object[] args) => EnqueueMessage(ConsoleColor.Red, message, args);
+
+    /// <inheritdoc />
+    public void Fatal(string message, params object[] args) => EnqueueMessage(ConsoleColor.Red, message, args);
+
+    [SuppressMessage("Globalization", "CA1305:Specify IFormatProvider", Justification = "<Pending>")]
+    private void EnqueueMessage(ConsoleColor newColor, string message, params object[] args)
+    {
+        if (args.Length > 0)
+        {
+            message = string.Format(message, args);
+        }
+
+        _PendingLogs.Add(Tuple.Create(Thread.CurrentThread.ManagedThreadId, message, newColor));
+    }
+
+    private static readonly object _lock = new();
+
+    private void WriteMessage(int threadId, string message, ConsoleColor newColor)
+    {
+        lock (_lock)
+        {
+            var origForegroundColor = Console.ForegroundColor;
+            Console.ForegroundColor = newColor;
+            Console.WriteLine(message.FormatMessageForLogging(addDateTime: true, threadId: threadId, loggerName: _loggerName));
+            Console.ForegroundColor = origForegroundColor;
+        }
+    }
+
+    #region IDisposable Support
+    private bool disposedValue = false; // To detect redundant calls
+
+    /// <summary>
+    /// Wait and dispose pending log resources.
+    /// </summary>
+    /// <param name="disposing">Disposing resource.</param>
+    protected virtual void Dispose(bool disposing)
+    {
+        if (!disposedValue)
+        {
+            _PendingLogs.CompleteAdding();
+
+            if (disposing)
+            {
+                // TODO: dispose managed state (managed objects).
+                _WriterTask?.Join();
+            }
+
+            _PendingLogs.Dispose();
+
+            // TODO: free unmanaged resources (unmanaged objects) and override a finalizer below.
+
+            // TODO: set large fields to null.
+
+            disposedValue = true;
+        }
+    }
+
+    // TODO: override a finalizer only if Dispose(bool disposing) above has code to free unmanaged resources.
+    ~ConsoleLogger()
+    {
+        // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
+        Dispose(false);
+    }
+
+    /// <summary>
+    /// Dispose resources.
+    /// </summary>
+    /// <remarks>This code added to correctly implement the disposable pattern.</remarks>
+    public void Dispose()
+    {
+        // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
+        Dispose(true);
+        // TODO: uncomment the following line if the finalizer is overridden above.
+        GC.SuppressFinalize(this);
+    }
+    #endregion
 }
