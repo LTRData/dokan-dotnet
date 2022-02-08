@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFrameworks>net45;net48;net40;netcoreapp3.1</TargetFrameworks>
+    <TargetFrameworks>net45;net48;netcoreapp3.1</TargetFrameworks>
     <OutputPath>..\$(Configuration)\</OutputPath>
   </PropertyGroup>
  

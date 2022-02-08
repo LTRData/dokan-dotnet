@@ -70,7 +70,7 @@ public class DokanDiscUtils :
 
     public ReadOnlyCollection<KeyValuePair<string, string>> Translations => _transl.AsReadOnly();
 
-    private NtStatus Trace(string method, string fileName, IDokanFileInfo info, NtStatus result,
+    private NtStatus Trace(string method, string fileName, in DokanFileInfo info, NtStatus result,
         params object[] parameters)
     {
 #if DEBUG
@@ -84,7 +84,7 @@ public class DokanDiscUtils :
         return result;
     }
 
-    private NtStatus Trace(string method, string fileName, IDokanFileInfo info,
+    private NtStatus Trace(string method, string fileName, in DokanFileInfo info,
         NativeFileAccess access, FileShare share, FileMode mode, FileOptions options, FileAttributes attributes,
         NtStatus result)
     {
@@ -255,7 +255,7 @@ public DokanDiscUtils(IFileSystem fileSystem, DokanDiscUtilsOptions options)
     }
 
     public NtStatus CreateFile(string fileName, NativeFileAccess access, FileShare share, FileMode mode,
-        FileOptions options, FileAttributes attributes, IDokanFileInfo info)
+        FileOptions options, FileAttributes attributes, ref DokanFileInfo info)
     {
         fileName = TranslatePath(fileName);
 
@@ -383,7 +383,7 @@ public DokanDiscUtils(IFileSystem fileSystem, DokanDiscUtilsOptions options)
             result);
     }
 
-    private NtStatus CreateDirectory(string fileName, NativeFileAccess access, FileShare share, FileMode mode, FileOptions options, FileAttributes attributes, IDokanFileInfo info)
+    private NtStatus CreateDirectory(string fileName, NativeFileAccess access, FileShare share, FileMode mode, FileOptions options, FileAttributes attributes, in DokanFileInfo info)
     {
         var result = DokanResult.Success;
 
@@ -449,7 +449,7 @@ public DokanDiscUtils(IFileSystem fileSystem, DokanDiscUtilsOptions options)
             result);
     }
 
-    public void Cleanup(string fileName, IDokanFileInfo info)
+    public void Cleanup(string fileName, ref DokanFileInfo info)
     {
 #if DEBUG
         if (info.Context != null)
@@ -477,7 +477,7 @@ public DokanDiscUtils(IFileSystem fileSystem, DokanDiscUtilsOptions options)
         Trace(nameof(Cleanup), fileName, info, DokanResult.Success);
     }
 
-    public void CloseFile(string fileName, IDokanFileInfo info)
+    public void CloseFile(string fileName, ref DokanFileInfo info)
     {
 #if DEBUG
         if (info.Context != null)
@@ -492,7 +492,7 @@ public DokanDiscUtils(IFileSystem fileSystem, DokanDiscUtilsOptions options)
         // could recreate cleanup code here but this is not called sometimes
     }
 
-    public NtStatus ReadFile(string fileName, byte[] buffer, out int bytesRead, long offset, IDokanFileInfo info)
+    public NtStatus ReadFile(string fileName, byte[] buffer, out int bytesRead, long offset, in DokanFileInfo info)
     {
         if (info.Context == null) // memory mapped read
         {
@@ -517,7 +517,7 @@ public DokanDiscUtils(IFileSystem fileSystem, DokanDiscUtilsOptions options)
     }
 
 #if NETCOREAPP || NETSTANDARD2_1_OR_GREATER
-    public unsafe NtStatus ReadFile(string fileName, IntPtr buffer, uint bufferLength, out int bytesRead, long offset, IDokanFileInfo info)
+    public unsafe NtStatus ReadFile(string fileName, IntPtr buffer, uint bufferLength, out int bytesRead, long offset, in DokanFileInfo info)
     {
         if (info.Context == null) // memory mapped read
         {
@@ -542,7 +542,7 @@ public DokanDiscUtils(IFileSystem fileSystem, DokanDiscUtilsOptions options)
     }
 #endif
 
-    public NtStatus WriteFile(string fileName, byte[] buffer, out int bytesWritten, long offset, IDokanFileInfo info)
+    public NtStatus WriteFile(string fileName, byte[] buffer, out int bytesWritten, long offset, in DokanFileInfo info)
     {
         bytesWritten = 0;
 
@@ -576,7 +576,7 @@ public DokanDiscUtils(IFileSystem fileSystem, DokanDiscUtilsOptions options)
     }
 
 #if NETCOREAPP || NETSTANDARD2_1_OR_GREATER
-    public unsafe NtStatus WriteFile(string fileName, IntPtr buffer, uint bufferLength, out int bytesWritten, long offset, IDokanFileInfo info)
+    public unsafe NtStatus WriteFile(string fileName, IntPtr buffer, uint bufferLength, out int bytesWritten, long offset, in DokanFileInfo info)
     {
         bytesWritten = 0;
 
@@ -610,7 +610,7 @@ public DokanDiscUtils(IFileSystem fileSystem, DokanDiscUtilsOptions options)
     }
 #endif
 
-    public NtStatus FlushFileBuffers(string fileName, IDokanFileInfo info)
+    public NtStatus FlushFileBuffers(string fileName, in DokanFileInfo info)
     {
         if (ReadOnly)
         {
@@ -628,7 +628,7 @@ public DokanDiscUtils(IFileSystem fileSystem, DokanDiscUtilsOptions options)
         }
     }
 
-    public NtStatus GetFileInformation(string fileName, out ByHandleFileInformation fileInfo, IDokanFileInfo info)
+    public NtStatus GetFileInformation(string fileName, out ByHandleFileInformation fileInfo, in DokanFileInfo info)
     {
         fileName = TranslatePath(fileName);
 
@@ -676,7 +676,7 @@ public DokanDiscUtils(IFileSystem fileSystem, DokanDiscUtilsOptions options)
         return Trace(nameof(GetFileInformation), fileName, info, DokanResult.Success);
     }
 
-    public NtStatus FindFiles(string fileName, out IEnumerable<FindFileInformation> files, IDokanFileInfo info)
+    public NtStatus FindFiles(string fileName, out IEnumerable<FindFileInformation> files, in DokanFileInfo info)
     {
         // This function is not called because FindFilesWithPattern is implemented
         // Return DokanResult.NotImplemented in FindFilesWithPattern to make FindFiles called
@@ -685,7 +685,7 @@ public DokanDiscUtils(IFileSystem fileSystem, DokanDiscUtilsOptions options)
         return Trace(nameof(FindFiles), fileName, info, DokanResult.Success);
     }
 
-    public NtStatus SetFileAttributes(string fileName, FileAttributes attributes, IDokanFileInfo info)
+    public NtStatus SetFileAttributes(string fileName, FileAttributes attributes, in DokanFileInfo info)
     {
         if (ReadOnly)
         {
@@ -720,7 +720,7 @@ public DokanDiscUtils(IFileSystem fileSystem, DokanDiscUtilsOptions options)
     }
 
     public NtStatus SetFileTime(string fileName, DateTime? creationTime, DateTime? lastAccessTime,
-        DateTime? lastWriteTime, IDokanFileInfo info)
+        DateTime? lastWriteTime, in DokanFileInfo info)
     {
         if (ReadOnly)
         {
@@ -761,7 +761,7 @@ public DokanDiscUtils(IFileSystem fileSystem, DokanDiscUtilsOptions options)
         }
     }
 
-    public NtStatus DeleteFile(string fileName, IDokanFileInfo info)
+    public NtStatus DeleteFile(string fileName, in DokanFileInfo info)
     {
         if (ReadOnly)
         {
@@ -784,7 +784,7 @@ public DokanDiscUtils(IFileSystem fileSystem, DokanDiscUtilsOptions options)
         // we just check here if we could delete the file - the true deletion is in Cleanup
     }
 
-    public NtStatus DeleteDirectory(string fileName, IDokanFileInfo info)
+    public NtStatus DeleteDirectory(string fileName, in DokanFileInfo info)
     {
         if (ReadOnly)
         {
@@ -807,7 +807,7 @@ public DokanDiscUtils(IFileSystem fileSystem, DokanDiscUtilsOptions options)
         // if dir is not empty it can't be deleted
     }
 
-    public NtStatus MoveFile(string oldName, string newName, bool replace, IDokanFileInfo info)
+    public NtStatus MoveFile(string oldName, string newName, bool replace, ref DokanFileInfo info)
     {
         if (ReadOnly)
         {
@@ -865,7 +865,7 @@ public DokanDiscUtils(IFileSystem fileSystem, DokanDiscUtilsOptions options)
             replace.ToString(CultureInfo.InvariantCulture));
     }
 
-    public NtStatus SetEndOfFile(string fileName, long length, IDokanFileInfo info)
+    public NtStatus SetEndOfFile(string fileName, long length, in DokanFileInfo info)
     {
         if (ReadOnly || info.Context is not Stream stream)
         {
@@ -886,7 +886,7 @@ public DokanDiscUtils(IFileSystem fileSystem, DokanDiscUtilsOptions options)
         }
     }
 
-    public NtStatus SetAllocationSize(string fileName, long length, IDokanFileInfo info)
+    public NtStatus SetAllocationSize(string fileName, long length, in DokanFileInfo info)
     {
         if (ReadOnly || info.Context is not Stream stream)
         {
@@ -907,11 +907,11 @@ public DokanDiscUtils(IFileSystem fileSystem, DokanDiscUtilsOptions options)
         }
     }
 
-    public NtStatus LockFile(string fileName, long offset, long length, IDokanFileInfo info) => DokanResult.NotImplemented;
+    public NtStatus LockFile(string fileName, long offset, long length, in DokanFileInfo info) => DokanResult.NotImplemented;
 
-    public NtStatus UnlockFile(string fileName, long offset, long length, IDokanFileInfo info) => DokanResult.NotImplemented;
+    public NtStatus UnlockFile(string fileName, long offset, long length, in DokanFileInfo info) => DokanResult.NotImplemented;
 
-    public NtStatus GetDiskFreeSpace(out long freeBytesAvailable, out long totalNumberOfBytes, out long totalNumberOfFreeBytes, IDokanFileInfo info)
+    public NtStatus GetDiskFreeSpace(out long freeBytesAvailable, out long totalNumberOfBytes, out long totalNumberOfFreeBytes, in DokanFileInfo info)
     {
         if (!FileSystem.SupportsUsedAvailableSpace)
         {
@@ -931,7 +931,7 @@ public DokanDiscUtils(IFileSystem fileSystem, DokanDiscUtilsOptions options)
     }
 
     public NtStatus GetVolumeInformation(out string volumeLabel, out FileSystemFeatures features,
-        out string fileSystemName, out uint maximumComponentLength, ref uint volumeSerialNumber, IDokanFileInfo info)
+        out string fileSystemName, out uint maximumComponentLength, ref uint volumeSerialNumber, in DokanFileInfo info)
     {
         volumeLabel = (FileSystem as DiscFileSystem)?.VolumeLabel;
 
@@ -992,7 +992,7 @@ public DokanDiscUtils(IFileSystem fileSystem, DokanDiscUtilsOptions options)
     }
 
     public NtStatus GetFileSecurity(string fileName, out FileSystemSecurity security, AccessControlSections sections,
-        IDokanFileInfo info)
+        in DokanFileInfo info)
     {
         try
         {
@@ -1043,7 +1043,7 @@ public DokanDiscUtils(IFileSystem fileSystem, DokanDiscUtilsOptions options)
     }
 
     public NtStatus SetFileSecurity(string fileName, FileSystemSecurity security, AccessControlSections sections,
-        IDokanFileInfo info)
+        in DokanFileInfo info)
     {
         if (ReadOnly)
         {
@@ -1071,22 +1071,11 @@ public DokanDiscUtils(IFileSystem fileSystem, DokanDiscUtilsOptions options)
         }
     }
 
-    public NtStatus Mounted(IDokanFileInfo info) => Trace(nameof(Mounted), null, info, DokanResult.Success);
+    public NtStatus Mounted(string mountPoint, in DokanFileInfo info) => Trace(nameof(Mounted), null, info, DokanResult.Success);
 
-    public NtStatus Unmounted(IDokanFileInfo info) => Trace(nameof(Unmounted), null, info, DokanResult.Success);
+    public NtStatus Unmounted(in DokanFileInfo info) => Trace(nameof(Unmounted), null, info, DokanResult.Success);
 
-#if false
-    public NtStatus FindStreams(string fileName, IntPtr enumContext, out string streamName, out long streamSize,
-        IDokanFileInfo info)
-    {
-        streamName = string.Empty;
-        streamSize = 0;
-        return Trace(nameof(FindStreams), fileName, info, DokanResult.NotImplemented, enumContext.ToString(),
-            $"out {streamName}", $"out {streamSize}");
-    }
-#endif
-
-    public NtStatus FindStreams(string fileName, out IEnumerable<FindFileInformation> streams, IDokanFileInfo info)
+    public NtStatus FindStreams(string fileName, out IEnumerable<FindFileInformation> streams, in DokanFileInfo info)
     {
         fileName = TranslatePath(fileName);
 
@@ -1201,7 +1190,7 @@ public DokanDiscUtils(IFileSystem fileSystem, DokanDiscUtilsOptions options)
     }
 
     public NtStatus FindFilesWithPattern(string fileName, string searchPattern, out IEnumerable<FindFileInformation> files,
-        IDokanFileInfo info)
+        in DokanFileInfo info)
     {
         files = FindFilesHelper(fileName, searchPattern);
 

@@ -13,7 +13,7 @@ public class DokanService : IDisposable
     public IDokanOperations Operations { get; }
     public string MountPoint { get; }
     public DokanOptions MountOptions { get; }
-    public int ThreadCount { get; }
+    public bool SingleThread { get; }
     public int Version { get; }
     public TimeSpan Timeout { get; }
     public string UncName { get; }
@@ -24,13 +24,13 @@ public class DokanService : IDisposable
     protected Thread ServiceThread { get; private set; }
 
     public DokanService(IDokanOperations operations, string mountPoint, DokanOptions mountOptions = 0,
-        int threadCount = 1, int version = Dokan.DOKAN_VERSION, TimeSpan? timeout = null, string uncName = null,
+        bool singleThread = true, int version = Dokan.DOKAN_VERSION, TimeSpan? timeout = null, string uncName = null,
         int allocationUnitSize = 512, int sectorSize = 512)
     {
         Operations = operations;
         MountPoint = mountPoint;
         MountOptions = mountOptions;
-        ThreadCount = threadCount;
+        SingleThread = singleThread;
         Version = version;
         Timeout = timeout ?? TimeSpan.FromSeconds(20);
         UncName = uncName;
@@ -54,7 +54,7 @@ public class DokanService : IDisposable
     {
         try
         {
-            Operations.Mount(MountPoint, MountOptions, ThreadCount, Version, Timeout, UncName, AllocationUnitSize, SectorSize);
+            Operations.Mount(MountPoint, MountOptions, SingleThread, Version, Timeout, UncName, AllocationUnitSize, SectorSize);
 
             OnDismounted(EventArgs.Empty);
         }

@@ -11,7 +11,7 @@ namespace DokanNet.Logging;
 public class ConsoleLogger : ILogger, IDisposable
 {
     private readonly string _loggerName;
-    private readonly System.Collections.Concurrent.BlockingCollection<Tuple<int, string, ConsoleColor>> _PendingLogs
+    private readonly System.Collections.Concurrent.BlockingCollection<(int ThreadId, string Message, ConsoleColor Color)> _PendingLogs
         = new();
 
     private readonly Thread _WriterTask = null;
@@ -24,9 +24,9 @@ public class ConsoleLogger : ILogger, IDisposable
         _loggerName = loggerName;
         _WriterTask = new Thread(o =>
         {
-            foreach (var tuple in _PendingLogs.GetConsumingEnumerable())
+            foreach (var (ThreadId, Message, Color) in _PendingLogs.GetConsumingEnumerable())
             {
-                WriteMessage(tuple.Item1, tuple.Item2, tuple.Item3);
+                WriteMessage(ThreadId, Message, Color);
             }
         });
         _WriterTask.Start();
@@ -58,7 +58,7 @@ public class ConsoleLogger : ILogger, IDisposable
             message = string.Format(message, args);
         }
 
-        _PendingLogs.Add(Tuple.Create(Thread.CurrentThread.ManagedThreadId, message, newColor));
+        _PendingLogs.Add((Thread.CurrentThread.ManagedThreadId, message, newColor));
     }
 
     private static readonly object _lock = new();

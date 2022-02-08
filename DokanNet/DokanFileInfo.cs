@@ -7,19 +7,19 @@ using static DokanNet.FormatProviders;
 
 #pragma warning disable 649,169
 
-namespace DokanNet
+namespace DokanNet;
+
+/// <summary>
+/// %Dokan file information on the current operation.
+/// </summary>
+/// <remarks>
+/// This class cannot be instantiated in C#, it is created by the kernel %Dokan driver.
+/// This is the same structure as <c>_DOKAN_FILE_INFO</c> (dokan.h) in the C version of Dokan.
+/// </remarks>
+[StructLayout(LayoutKind.Sequential, Pack = 4)]
+public struct DokanFileInfo : IDokanFileInfo
 {
-    /// <summary>
-    /// %Dokan file information on the current operation.
-    /// </summary>
-    /// <remarks>
-    /// This class cannot be instantiated in C#, it is created by the kernel %Dokan driver.
-    /// This is the same structure as <c>_DOKAN_FILE_INFO</c> (dokan.h) in the C version of Dokan.
-    /// </remarks>
-    [StructLayout(LayoutKind.Sequential, Pack = 4)]
-    public sealed class DokanFileInfo : IDokanFileInfo
-    {
-        private ulong _context;
+    private ulong _context;
 
     /// <summary>
     /// Used internally, never modify.
@@ -31,14 +31,14 @@ namespace DokanNet
     /// </summary>
     private readonly IntPtr _dokanOptions;
 
-        /// <summary>
-        /// Reserved. Used internally by Dokan library. Never modify.
-        /// If the processing for the event requires extra data to be associated with it
-        /// then a pointer to that data can be placed here
-        /// </summary>
-        private readonly IntPtr _processingContext;
+    /// <summary>
+    /// Reserved. Used internally by Dokan library. Never modify.
+    /// If the processing for the event requires extra data to be associated with it
+    /// then a pointer to that data can be placed here
+    /// </summary>
+    private readonly IntPtr _processingContext;
 
-        private readonly uint _processId;
+    private readonly uint _processId;
 
     [MarshalAs(UnmanagedType.U1)] private bool _isDirectory;
 
@@ -51,14 +51,6 @@ namespace DokanNet
     [MarshalAs(UnmanagedType.U1)] private readonly bool _noCache;
 
     [MarshalAs(UnmanagedType.U1)] private readonly bool _writeToEndOfFile;
-
-    /// <summary>
-    /// Prevents a default instance of the <see cref="DokanFileInfo"/> class from being created. 
-    /// The class is created by the %Dokan kernel driver.
-    /// </summary>
-    private DokanFileInfo()
-    {
-    }
 
     /// <summary>
     /// Gets or sets context that can be used to carry information between operation.
@@ -147,24 +139,15 @@ namespace DokanNet
     /// -or- <c>null</c> if the operation was not successful.</returns>
     public WindowsIdentity GetRequestor()
     {
-        SafeFileHandle sfh = null;
         try
         {
-            using (sfh = new SafeFileHandle(NativeMethods.DokanOpenRequestorToken(this), true))
-            {
-                return new WindowsIdentity(sfh.DangerousGetHandle());
-            }
+            using var sfh = new SafeFileHandle(NativeMethods.DokanOpenRequestorToken(this), true);
+
+            return new(sfh.DangerousGetHandle());
         }
         catch
         {
             return null;
-        }
-        finally
-        {
-            if (sfh != null)
-            {
-                sfh.Dispose();
-            }
         }
     }
 
@@ -184,5 +167,3 @@ namespace DokanNet
                 $"{{{Context}, {DeleteOnClose}, {IsDirectory}, {NoCache}, {PagingIo}, #{ProcessId}, {SynchronousIo}, {WriteToEndOfFile}}}");
     }
 }
-
-#pragma warning restore 649, 169

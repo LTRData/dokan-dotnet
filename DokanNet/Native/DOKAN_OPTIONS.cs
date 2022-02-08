@@ -1,25 +1,25 @@
 ﻿using System.Runtime.InteropServices;
 
-namespace DokanNet.Native
+namespace DokanNet.Native;
+
+/// <summary>
+/// Dokan mount options used to describe dokan device behaviour
+/// </summary>
+/// <see cref="NativeMethods.DokanMain"/>
+/// <remarks>This is the same structure as <c>PDOKAN_OPTIONS</c> (dokan.h) in the C version of Dokan.</remarks>
+[StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode, Pack = 4)]
+internal sealed class DOKAN_OPTIONS
 {
     /// <summary>
-    /// Dokan mount options used to describe dokan device behaviour
+    /// Version of the dokan features requested (version "123" is equal to Dokan version 1.2.3).
     /// </summary>
-    /// <see cref="NativeMethods.DokanMain"/>
-    /// <remarks>This is the same structure as <c>PDOKAN_OPTIONS</c> (dokan.h) in the C version of Dokan.</remarks>
-    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode, Pack = 4)]
-    internal sealed class DOKAN_OPTIONS
-    {
-        /// <summary>
-        /// Version of the dokan features requested (version "123" is equal to Dokan version 1.2.3).
-        /// </summary>
-        public ushort Version;
+    public ushort Version;
 
-        /// <summary>
-        /// Only use a single thread to process events. This is highly not recommended as can easily create a bottleneck.
-        /// </summary>
-        [MarshalAs(UnmanagedType.U1)]
-        public bool SingleThread;
+    /// <summary>
+    /// Only use a single thread to process events. This is highly not recommended as can easily create a bottleneck.
+    /// </summary>
+    [MarshalAs(UnmanagedType.U1)]
+    public bool SingleThread;
 
     /// <summary>
     /// Features enable for the mount. See <see cref="DokanOptions"/>.
@@ -54,19 +54,18 @@ namespace DokanNet.Native
     /// </summary>
     public uint AllocationUnitSize;
 
-        /// <summary>
-        /// Sector Size of the volume. This will behave on the file size.
-        /// </summary>
-        public uint SectorSize;
-        /// <summary>
-        /// Length of the optional VolumeSecurityDescriptor provided. Set 0 will disable the option.
-        /// <summary>
-        public uint VolumeSecurityDescriptorLength;
+    /// <summary>
+    /// Sector Size of the volume. This will behave on the file size.
+    /// </summary>
+    public uint SectorSize;
+    /// <summary>
+    /// Length of the optional VolumeSecurityDescriptor provided. Set 0 will disable the option.
+    /// <summary>
+    public uint VolumeSecurityDescriptorLength;
 
-        /// <summary>
-        /// Optional Volume Security descriptor. See <a href="https://docs.microsoft.com/en-us/windows/win32/api/securitybaseapi/nf-securitybaseapi-initializesecuritydescriptor">InitializeSecurityDescriptor</a>
-        /// <summary>
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 16384, ArraySubType = UnmanagedType.U1)]
-        public byte[] VolumeSecurityDescriptor;
-    }
+    /// <summary>
+    /// Optional Volume Security descriptor. See <a href="https://docs.microsoft.com/en-us/windows/win32/api/securitybaseapi/nf-securitybaseapi-initializesecuritydescriptor">InitializeSecurityDescriptor</a>
+    /// <summary>
+    [MarshalAs(UnmanagedType.ByValArray, SizeConst = 16384, ArraySubType = UnmanagedType.U1)]
+    public byte[] VolumeSecurityDescriptor;
 }

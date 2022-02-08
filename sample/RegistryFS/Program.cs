@@ -30,11 +30,11 @@ internal class RFS : IDokanOperations
         };
     }
 
-    public void Cleanup(string filename, IDokanFileInfo info)
+    public void Cleanup(string filename, ref DokanFileInfo info)
     {
     }
 
-    public void CloseFile(string filename, IDokanFileInfo info)
+    public void CloseFile(string filename, ref DokanFileInfo info)
     {
     }
 
@@ -45,7 +45,7 @@ internal class RFS : IDokanOperations
         FileMode mode,
         FileOptions options,
         FileAttributes attributes,
-        IDokanFileInfo info)
+        ref DokanFileInfo info)
     {
         if (info.IsDirectory && mode == FileMode.CreateNew)
         {
@@ -55,9 +55,9 @@ internal class RFS : IDokanOperations
         return DokanResult.Success;
     }
 
-    public NtStatus DeleteDirectory(string filename, IDokanFileInfo info) => DokanResult.Error;
+    public NtStatus DeleteDirectory(string filename, in DokanFileInfo info) => DokanResult.Error;
 
-    public NtStatus DeleteFile(string filename, IDokanFileInfo info) => DokanResult.Error;
+    public NtStatus DeleteFile(string filename, in DokanFileInfo info) => DokanResult.Error;
 
     private RegistryKey GetRegistoryEntry(string name)
     {
@@ -87,12 +87,12 @@ internal class RFS : IDokanOperations
 
     public NtStatus FlushFileBuffers(
         string filename,
-        IDokanFileInfo info) => DokanResult.Error;
+        in DokanFileInfo info) => DokanResult.Error;
 
     public NtStatus FindFiles(
         string filename,
         out IEnumerable<FindFileInformation> files,
-        IDokanFileInfo info)
+        in DokanFileInfo info)
     {
         if (filename == "\\")
         {
@@ -122,13 +122,13 @@ internal class RFS : IDokanOperations
                 LastWriteTime = null,
                 CreationTime = null
             }).Concat(key.GetValueNames().Select(name => new FindFileInformation
-                {
-                    FileName = name,
-                    Attributes = FileAttributes.Normal,
-                    LastAccessTime = DateTime.Now,
-                    LastWriteTime = null,
-                    CreationTime = null
-                }));
+            {
+                FileName = name,
+                Attributes = FileAttributes.Normal,
+                LastAccessTime = DateTime.Now,
+                LastWriteTime = null,
+                CreationTime = null
+            }));
             return DokanResult.Success;
         }
     }
@@ -136,7 +136,7 @@ internal class RFS : IDokanOperations
     public NtStatus GetFileInformation(
         string filename,
         out ByHandleFileInformation fileinfo,
-        IDokanFileInfo info)
+        in DokanFileInfo info)
     {
         fileinfo = new ByHandleFileInformation();
 
@@ -168,55 +168,52 @@ internal class RFS : IDokanOperations
         string filename,
         long offset,
         long length,
-        IDokanFileInfo info) => DokanResult.Success;
+        in DokanFileInfo info) => DokanResult.Success;
 
     public NtStatus MoveFile(
         string filename,
         string newname,
         bool replace,
-        IDokanFileInfo info) => DokanResult.Error;
+        ref DokanFileInfo info) => DokanResult.Error;
 
     public NtStatus ReadFile(
         string filename,
         byte[] buffer,
         out int readBytes,
         long offset,
-        IDokanFileInfo info)
+        in DokanFileInfo info)
     {
         readBytes = 0;
         return DokanResult.Error;
     }
 
-    public NtStatus SetEndOfFile(string filename, long length, IDokanFileInfo info) => DokanResult.Error;
+    public NtStatus SetEndOfFile(string filename, long length, in DokanFileInfo info) => DokanResult.Error;
 
-    public NtStatus SetAllocationSize(string filename, long length, IDokanFileInfo info) => DokanResult.Error;
+    public NtStatus SetAllocationSize(string filename, long length, in DokanFileInfo info) => DokanResult.Error;
 
     public NtStatus SetFileAttributes(
         string filename,
         FileAttributes attr,
-        IDokanFileInfo info) => DokanResult.Error;
+        in DokanFileInfo info) => DokanResult.Error;
 
     public NtStatus SetFileTime(
         string filename,
         DateTime? ctime,
         DateTime? atime,
         DateTime? mtime,
-        IDokanFileInfo info) => DokanResult.Error;
+        in DokanFileInfo info) => DokanResult.Error;
 
-    public NtStatus UnlockFile(string filename, long offset, long length, IDokanFileInfo info) => DokanResult.Success;
+    public NtStatus UnlockFile(string filename, long offset, long length, in DokanFileInfo info) => DokanResult.Success;
 
-        public NtStatus Mounted(string mountPoint, IDokanFileInfo info)
-        {
-            return DokanResult.Success;
-        }
+    public NtStatus Mounted(string mountPoint, in DokanFileInfo info) => DokanResult.Success;
 
-    public NtStatus Unmounted(IDokanFileInfo info) => DokanResult.Success;
+    public NtStatus Unmounted(in DokanFileInfo info) => DokanResult.Success;
 
     public NtStatus GetDiskFreeSpace(
         out long freeBytesAvailable,
         out long totalBytes,
         out long totalFreeBytes,
-        IDokanFileInfo info)
+        in DokanFileInfo info)
     {
         freeBytesAvailable = 512 * 1024 * 1024;
         totalBytes = 1024 * 1024 * 1024;
@@ -229,14 +226,14 @@ internal class RFS : IDokanOperations
         byte[] buffer,
         out int writtenBytes,
         long offset,
-        IDokanFileInfo info)
+        in DokanFileInfo info)
     {
         writtenBytes = 0;
         return DokanResult.Error;
     }
 
     public NtStatus GetVolumeInformation(out string volumeLabel, out FileSystemFeatures features,
-        out string fileSystemName, out uint maximumComponentLength, ref uint volumeSerialNumber, IDokanFileInfo info)
+        out string fileSystemName, out uint maximumComponentLength, ref uint volumeSerialNumber, in DokanFileInfo info)
     {
         volumeLabel = "RFS";
         features = FileSystemFeatures.None;
@@ -246,31 +243,31 @@ internal class RFS : IDokanOperations
     }
 
     public NtStatus GetFileSecurity(string fileName, out FileSystemSecurity security, AccessControlSections sections,
-        IDokanFileInfo info)
+        in DokanFileInfo info)
     {
         security = null;
         return DokanResult.Error;
     }
 
     public NtStatus SetFileSecurity(string fileName, FileSystemSecurity security, AccessControlSections sections,
-        IDokanFileInfo info) => DokanResult.Error;
+        in DokanFileInfo info) => DokanResult.Error;
 
     public NtStatus EnumerateNamedStreams(string _1, IntPtr _2, out string streamName,
-        out long streamSize, IDokanFileInfo _5)
+        out long streamSize, ref DokanFileInfo _5)
     {
         streamName = string.Empty;
         streamSize = 0;
         return DokanResult.NotImplemented;
     }
 
-    public NtStatus FindStreams(string fileName, out IEnumerable<FindFileInformation> streams, IDokanFileInfo info)
+    public NtStatus FindStreams(string fileName, out IEnumerable<FindFileInformation> streams, in DokanFileInfo info)
     {
         streams = new FindFileInformation[0];
         return DokanResult.NotImplemented;
     }
 
     public NtStatus FindFilesWithPattern(string fileName, string searchPattern, out IEnumerable<FindFileInformation> files,
-        IDokanFileInfo info)
+        in DokanFileInfo info)
     {
         files = new FindFileInformation[0];
         return DokanResult.NotImplemented;
@@ -279,22 +276,21 @@ internal class RFS : IDokanOperations
     #endregion DokanOperations member
 }
 
-    internal class Program
+internal class Program
+{
+    private static void Main()
     {
-        private static void Main()
+        try
         {
-            try
-            {
-                var rfs = new RFS();
-                Dokan.Init();
-                rfs.Mount("r:\\", DokanOptions.DebugMode | DokanOptions.StderrOutput);
-                Dokan.Shutdown();
-                Console.WriteLine(@"Success");
-            }
-            catch (DokanException ex)
-            {
-                Console.WriteLine(@"Error: " + ex.Message);
-            }
+            var rfs = new RFS();
+            Dokan.Init();
+            rfs.Mount("r:\\", DokanOptions.DebugMode | DokanOptions.StderrOutput);
+            Dokan.Shutdown();
+            Console.WriteLine(@"Success");
+        }
+        catch (DokanException ex)
+        {
+            Console.WriteLine(@"Error: " + ex.Message);
         }
     }
 }

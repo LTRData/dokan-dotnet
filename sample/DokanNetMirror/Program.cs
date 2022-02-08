@@ -10,7 +10,7 @@ internal class Program
     private const string MountKey = "-where";
     private const string UseUnsafeKey = "-unsafe";
 
-    private static void Main(string[] args)
+    private static int Main(string[] args)
     {
         try
         {
@@ -28,27 +28,31 @@ internal class Program
 
             var unsafeReadWrite = arguments.ContainsKey(UseUnsafeKey);
 
-                Console.WriteLine($"Using unsafe methods: {unsafeReadWrite}");
-                var mirror = unsafeReadWrite 
-                    ? new UnsafeMirror(mirrorPath) 
-                    : new Mirror(mirrorPath);
+            Console.WriteLine($"Using unsafe methods: {unsafeReadWrite}");
+            var mirror = unsafeReadWrite 
+                ? new UnsafeMirror(mirrorPath) 
+                : new Mirror(mirrorPath);
 
-                Dokan.Init();
+            Dokan.Init();
 
-                using (DokanInstance dokanInstance = mirror.CreateFileSystem(mountPath, DokanOptions.DebugMode | DokanOptions.EnableNotificationAPI))
-                {
-                    var notify = new Notify();
-                    notify.Start(mirrorPath, mountPath, dokanInstance);
-                    dokanInstance.WaitForFileSystemClosed(uint.MaxValue);
-                }
+            using (var dokanInstance = mirror.CreateFileSystem(mountPath, DokanOptions.DebugMode | DokanOptions.EnableNotificationAPI))
+            {
+                var notify = new Notify();
+                notify.Start(mirrorPath, mountPath, dokanInstance);
+                dokanInstance.WaitForFileSystemClosed(uint.MaxValue);
+            }
 
-                Dokan.Shutdown();
+            Dokan.Shutdown();
 
             Console.WriteLine(@"Success");
+
+            return 0;
         }
         catch (DokanException ex)
         {
             Console.WriteLine(@"Error: " + ex.Message);
+
+            return ex.HResult;
         }
     }
 }

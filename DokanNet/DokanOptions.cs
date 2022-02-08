@@ -49,22 +49,22 @@ public enum DokanOptions : long
     /// </summary>
     EnableNotificationAPI = 512,
 
-        /// <summary>
-        /// Enable Case sensitive path.
-        /// By default all path are case insensitive.
-        /// For case sensitive: \\dir\\File and \\diR\\file are different files
-        /// but for case insensitive they are the same.
-        /// </summary>
-        CaseSensitive = 1024,
+    /// <summary>
+    /// Enable Case sensitive path.
+    /// By default all path are case insensitive.
+    /// For case sensitive: \\dir\\File and \\diR\\file are different files
+    /// but for case insensitive they are the same.
+    /// </summary>
+    CaseSensitive = 1024,
 
-        /// <summary>
-        /// Enables unmounting of network drives via file explorer
-        /// </summary>
-        EnableNetworkUnmount = 2048,
+    /// <summary>
+    /// Enables unmounting of network drives via file explorer
+    /// </summary>
+    EnableNetworkUnmount = 2048,
 
-        /// <summary>
-        /// Forward the kernel driver global and volume logs to the userland
-        /// </summary>
-        DispatchDriverLogs = 4096,
-    }
+    /// <summary>
+    /// Forward the kernel driver global and volume logs to the userland
+    /// </summary>
+    DispatchDriverLogs = 4096,
 }
+

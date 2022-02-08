@@ -12,12 +12,15 @@ using DiscUtils.Streams;
 using DiscUtils.VirtualFileSystem;
 using DokanNet;
 
-namespace DiscUtilsFs
+#pragma warning disable IDE0079 // Remove unnecessary suppression
+#pragma warning disable IDE0057 // Use range operator
+
+namespace DiscUtilsFs;
+
+internal static class DiscUtilsSupport
 {
-    internal static class DiscUtilsSupport
+    private static readonly Assembly[] asms =
     {
-        private static readonly Assembly[] asms =
-        {
             typeof(DiscUtils.Btrfs.BtrfsFileSystem).Assembly,
             typeof(DiscUtils.Ext.ExtFileSystem).Assembly,
             typeof(DiscUtils.Fat.FatFileSystem).Assembly,
@@ -39,136 +42,140 @@ namespace DiscUtilsFs
             typeof(DiscUtils.Xfs.XfsFileSystem).Assembly
         };
 
-        public static void RegisterAssemblies()
+    public static void RegisterAssemblies()
+    {
+        foreach (var asm in asms.Distinct())
         {
-            foreach (var asm in asms.Distinct())
-            {
-                DiscUtils.Setup.SetupHelper.RegisterAssembly(asm);
-            }
+            DiscUtils.Setup.SetupHelper.RegisterAssembly(asm);
         }
     }
+}
 
-    public static class Program
+public static class Program
+{
+    private const string VhdKey = "-vhd";
+    private const string PartKey = "-part";
+    private const string FsKey = "-fs";
+    private const string MountKey = "-where";
+    private const string TmpKey = "-tmp";
+    private const string HiddenKey = "-hidden";
+    private const string NoExecKey = "-noexec";
+
+    public static int Main(params string[] args)
     {
-        private const string VhdKey = "-vhd";
-        private const string PartKey = "-part";
-        private const string FsKey = "-fs";
-        private const string MountKey = "-where";
-        private const string TmpKey = "-tmp";
-        private const string HiddenKey = "-hidden";
-        private const string NoExecKey = "-noexec";
-
-        public static int Main(params string[] args)
+        try
         {
-            try
-            {
-                DiscUtilsSupport.RegisterAssemblies();
+            Dokan.Init();
 
-                var arguments = args
-                   .Select(x =>
+            DiscUtilsSupport.RegisterAssemblies();
+
+            var arguments = args
+               .Select(x =>
+               {
+                   var pos = x.IndexOf('=');
+
+                   if (pos < 0)
                    {
-                       var pos = x.IndexOf('=');
+                       return new KeyValuePair<string, string>(x, null);
+                   }
+                   else
+                   {
+                       return new KeyValuePair<string, string>(x.Remove(pos), x.Substring(pos + 1));
+                   }
+               })
+               .ToDictionary(x => x.Key, x => x.Value, StringComparer.OrdinalIgnoreCase);
 
-                       if (pos < 0)
-                       {
-                           return new KeyValuePair<string, string>(x, null);
-                       }
-                       else 
-                       {
-                           return new KeyValuePair<string, string>(x.Remove(pos), x.Substring(pos + 1));
-                       }
-                   })
-                   .ToDictionary(x => x.Key, x => x.Value, StringComparer.OrdinalIgnoreCase);
+            if (!arguments.TryGetValue(MountKey, out var mountPath))
+            {
+                mountPath = @"N:\";
+            }
 
-                if (!arguments.TryGetValue(MountKey, out var mountPath))
-                {
-                    mountPath = @"N:\";
-                }
+            IFileSystem file_system;
 
-                IFileSystem file_system;
+            if (arguments.TryGetValue(VhdKey, out var vhdPath))
+            {
+                file_system = InitializeFromVhd(arguments, vhdPath);
+            }
+            else if (arguments.TryGetValue(FsKey, out var fsPath))
+            {
+                file_system = InitializeFromFsImage(fsPath);
+            }
+            else if (arguments.ContainsKey(TmpKey))
+            {
+                file_system = InitializeTmpFs();
+            }
+            else
+            {
+                Console.WriteLine("Syntax:\r\n" +
+                    "DiscUtilsFs [where=drive:] -tmp\r\n" +
+                    "DiscUtilsFs [where=drive:] -vhd=image [part=number]\r\n" +
+                    "DiscUtilsFs [where=drive:] -fs=image");
 
-                if (arguments.TryGetValue(VhdKey, out var vhdPath))
-                {
-                    file_system = InitializeFromVhd(arguments, vhdPath);
-                }
-                else if (arguments.TryGetValue(FsKey, out var fsPath))
-                {
-                    file_system = InitializeFromFsImage(fsPath);
-                }
-                else if (arguments.ContainsKey(TmpKey))
-                {
-                    file_system = InitializeTmpFs();
-                }
-                else
-                {
-                    Console.WriteLine("Syntax:\r\n" +
-                        "DiscUtilsFs [where=drive:] -tmp\r\n" +
-                        "DiscUtilsFs [where=drive:] -vhd=image [part=number]\r\n" +
-                        "DiscUtilsFs [where=drive:] -fs=image");
+                return -1;
+            }
 
-                    return -1;
-                }
+            if (file_system == null)
+            {
+                Console.WriteLine($"No supported file system found.");
+                return 1;
+            }
 
-                if (file_system == null)
-                {
-                    Console.WriteLine($"No supported file system found.");
-                    return 1;
-                }
+            Console.WriteLine($"Found file system, type {file_system.GetType().Name}");
 
-                Console.WriteLine($"Found file system, type {file_system.GetType().Name}");
+            if (file_system is DiscUtils.Ntfs.NtfsFileSystem ntfs)
+            {
+                ntfs.NtfsOptions.HideHiddenFiles = false;
+                ntfs.NtfsOptions.HideMetafiles = false;
+                ntfs.NtfsOptions.HideSystemFiles = false;
+            }
 
-                if (file_system is DiscUtils.Ntfs.NtfsFileSystem ntfs)
-                {
-                    ntfs.NtfsOptions.HideHiddenFiles = false;
-                    ntfs.NtfsOptions.HideMetafiles = false;
-                    ntfs.NtfsOptions.HideSystemFiles = false;
-                }
+            DokanDiscUtilsOptions discutils_options = default;
 
-                DokanDiscUtilsOptions discutils_options = default;
+            if (arguments.ContainsKey(HiddenKey))
+            {
+                discutils_options |= DokanDiscUtilsOptions.HiddenAsNormal;
+            }
 
-                if (arguments.ContainsKey(HiddenKey))
-                {
-                    discutils_options |= DokanDiscUtilsOptions.HiddenAsNormal;
-                }
+            if (arguments.ContainsKey(NoExecKey))
+            {
+                discutils_options |= DokanDiscUtilsOptions.BlockExecute;
+            }
 
-                if (arguments.ContainsKey(NoExecKey))
-                {
-                    discutils_options |= DokanDiscUtilsOptions.BlockExecute;
-                }
+            using var dokan_discutils = new DokanDiscUtils(file_system, discutils_options);
 
-                using var dokan_discutils = new DokanDiscUtils(file_system, discutils_options);
-
-                var mountOptions = DokanOptions.EnableFCBGC;
+            var mountOptions = default(DokanOptions);
 
 #if DEBUG
                 mountOptions |= DokanOptions.DebugMode;
 #endif
 
-                if (dokan_discutils.ReadOnly)
+            if (dokan_discutils.ReadOnly)
+            {
+                mountOptions |= DokanOptions.WriteProtection;
+            }
+
+            if (dokan_discutils.NamedStreams)
+            {
+                mountOptions |= DokanOptions.AltStream;
+            }
+
+            var drive = new DriveInfo(mountPath);
+
+            Console.CancelKeyPress += (sender, e) =>
+            {
+                if (!dokan_discutils.IsDisposed && drive.IsReady)
                 {
-                    mountOptions |= DokanOptions.WriteProtection;
+                    e.Cancel = true;
+
+                    Console.WriteLine("Dismounting...");
+
+                    Dokan.RemoveMountPoint(mountPath);
                 }
+            };
 
-                if (dokan_discutils.NamedStreams)
-                {
-                    mountOptions |= DokanOptions.AltStream;
-                }
-
-                var drive = new DriveInfo(mountPath);
-
-                Console.CancelKeyPress += (sender, e) =>
-                {
-                    if (!dokan_discutils.IsDisposed && drive.IsReady)
-                    {
-                        e.Cancel = true;
-
-                        Console.WriteLine("Dismounting...");
-
-                        Dokan.RemoveMountPoint(mountPath);
-                    }
-                };
-
-                ThreadPool.QueueUserWorkItem(o =>
+            ThreadPool.QueueUserWorkItem(o =>
+            {
+                try
                 {
                     while (!dokan_discutils.IsDisposed && !drive.IsReady)
                     {
@@ -177,36 +184,45 @@ namespace DiscUtilsFs
 
                     if (drive.IsReady)
                     {
-                        Process.Start(mountPath);
+                        Process.Start(new ProcessStartInfo(mountPath) { UseShellExecute = true });
                     }
-                });
-
-                Console.WriteLine("Press Ctrl+C to dismount.");
-
-                dokan_discutils.Mount(mountPath, mountOptions);
-
-                Console.WriteLine("Dismounted.");
-
-                return 0;
-            }
-            catch (DokanException ex)
-            {
-                Console.WriteLine($@"Error: {ex.Message}");
-
-                return ex.HResult;
-            }
-        }
-
-        private static IFileSystem InitializeTmpFs()
-        {
-            IFileSystem file_system;
-            {
-                var vfs = new VirtualFileSystem(new VirtualFileSystemOptions
+                }
+                catch (Exception ex)
                 {
-                    HasSecurity = false,
-                    IsThreadSafe = false,
-                    VolumeLabel = "VirtualFs"
-                });
+                    Console.WriteLine($"Failed to open Explorer window: {ex.Message}");
+                }
+            });
+
+            Console.WriteLine("Press Ctrl+C to dismount.");
+
+            dokan_discutils.Mount(mountPath, mountOptions);
+
+            Console.WriteLine("Dismounted.");
+
+            return 0;
+        }
+        catch (DokanException ex)
+        {
+            Console.WriteLine($@"Error: {ex.Message}");
+
+            return ex.HResult;
+        }
+        finally
+        {
+            Dokan.Shutdown();
+        }
+    }
+
+    private static IFileSystem InitializeTmpFs()
+    {
+        IFileSystem file_system;
+        {
+            var vfs = new VirtualFileSystem(new VirtualFileSystemOptions
+            {
+                HasSecurity = false,
+                IsThreadSafe = false,
+                VolumeLabel = "VirtualFs"
+            });
 
 #if SAMPLE_FILE
                     var stream = new MemoryStream();
@@ -219,76 +235,75 @@ namespace DiscUtilsFs
                     vfs.UpdateUsedSpace();
 #endif
 
-                vfs.CreateFile += (sender, e) => e.Result = vfs.AddFile(e.Path, (mode, access) => Stream.Null);
+            vfs.CreateFile += (sender, e) => e.Result = vfs.AddFile(e.Path, (mode, access) => Stream.Null);
 
-                file_system = vfs;
-            }
-
-            return file_system;
+            file_system = vfs;
         }
 
-        private static IFileSystem InitializeFromFsImage(string fsPath)
+        return file_system;
+    }
+
+    private static IFileSystem InitializeFromFsImage(string fsPath)
+    {
+        if (string.IsNullOrWhiteSpace(fsPath))
         {
-            if (string.IsNullOrWhiteSpace(fsPath))
-            {
-                throw new ArgumentException("Missing value for argument", FsKey);
-            }
-
-            var part_content = File.OpenRead(fsPath);
-
-            if (Path.GetExtension(fsPath).Equals(".iso", StringComparison.OrdinalIgnoreCase))
-            {
-                return new DiscUtils.Iso9660.CDReader(part_content, joliet: true);
-            }
-            else
-            {
-                return FileSystemManager.DetectFileSystems(part_content).FirstOrDefault()?.Open(part_content);
-            }
+            throw new ArgumentException("Missing value for argument", FsKey);
         }
 
-        private static IFileSystem InitializeFromVhd(IDictionary<string, string> arguments, string vhdPath)
+        var part_content = File.OpenRead(fsPath);
+
+        if (Path.GetExtension(fsPath).Equals(".iso", StringComparison.OrdinalIgnoreCase))
         {
-            if (string.IsNullOrWhiteSpace(vhdPath))
-            {
-                throw new ArgumentException("Missing value for argument", VhdKey);
-            }
+            return new DiscUtils.Iso9660.CDReader(part_content, joliet: true);
+        }
+        else
+        {
+            return FileSystemManager.DetectFileSystems(part_content).FirstOrDefault()?.Open(part_content);
+        }
+    }
 
-            var partNo = 1;
+    private static IFileSystem InitializeFromVhd(IDictionary<string, string> arguments, string vhdPath)
+    {
+        if (string.IsNullOrWhiteSpace(vhdPath))
+        {
+            throw new ArgumentException("Missing value for argument", VhdKey);
+        }
 
-            if (arguments.TryGetValue(PartKey, out var partNoStr) && !int.TryParse(partNoStr, out partNo))
-            {
-                throw new ArgumentException("Missing value for argument", PartKey);
-            }
+        var partNo = 1;
 
-            var disk = VirtualDisk.OpenDisk(vhdPath, FileAccess.Read) ??
-                new DiscUtils.Raw.Disk(vhdPath, FileAccess.Read);
+        if (arguments.TryGetValue(PartKey, out var partNoStr) && !int.TryParse(partNoStr, out partNo))
+        {
+            throw new ArgumentException("Missing value for argument", PartKey);
+        }
 
-            Console.WriteLine($"Opened image '{vhdPath}', type {disk.DiskTypeInfo.Name}");
+        var disk = VirtualDisk.OpenDisk(vhdPath, FileAccess.Read) ??
+            new DiscUtils.Raw.Disk(vhdPath, FileAccess.Read);
 
-            var partitions = disk.Partitions;
+        Console.WriteLine($"Opened image '{vhdPath}', type {disk.DiskTypeInfo.Name}");
 
-            if (partNo > 0 && (partitions == null || partNo > partitions.Count))
-            {
-                throw new DriveNotFoundException($"Partition {partNo} not found");
-            }
+        var partitions = disk.Partitions;
 
-            if (partitions == null || partNo == 0 || partitions.Count == 0)
-            {
-                var disk_content = disk.Content;
-                return FileSystemManager.DetectFileSystems(disk_content).FirstOrDefault()?.Open(disk_content);
-            }
-            else
-            {
-                Console.WriteLine($"Found partition table, type {partitions.GetType().Name}");
+        if (partNo > 0 && (partitions == null || partNo > partitions.Count))
+        {
+            throw new DriveNotFoundException($"Partition {partNo} not found");
+        }
 
-                var part = partitions[partNo - 1];
+        if (partitions == null || partNo == 0 || partitions.Count == 0)
+        {
+            var disk_content = disk.Content;
+            return FileSystemManager.DetectFileSystems(disk_content).FirstOrDefault()?.Open(disk_content);
+        }
+        else
+        {
+            Console.WriteLine($"Found partition table, type {partitions.GetType().Name}");
 
-                Console.WriteLine($"Found partition type {part.TypeAsString}");
+            var part = partitions[partNo - 1];
 
-                var part_content = part.Open();
+            Console.WriteLine($"Found partition type {part.TypeAsString}");
 
-                return FileSystemManager.DetectFileSystems(part_content).FirstOrDefault()?.Open(part_content);
-            }
+            var part_content = part.Open();
+
+            return FileSystemManager.DetectFileSystems(part_content).FirstOrDefault()?.Open(part_content);
         }
     }
 }

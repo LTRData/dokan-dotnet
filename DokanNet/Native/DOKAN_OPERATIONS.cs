@@ -1,33 +1,33 @@
 ﻿using System.Runtime.InteropServices;
 
-namespace DokanNet.Native
+namespace DokanNet.Native;
+
+/// <summary>
+/// Dokan API callbacks interface
+/// 
+/// A struct of callbacks that describe all Dokan API operation
+/// that will be called when Windows access to the filesystem.
+/// 
+/// If an error occurs, return <see cref="NtStatus"/>.
+/// 
+/// All this callbacks can be set to <c>null</c> or return <see cref="NtStatus.NotImplemented"/>
+/// if you dont want to support one of them. Be aware that returning such value to important callbacks
+/// such <see cref="ZwCreateFile"/>/<see cref="ReadFile"/>/... would make the filesystem not working or unstable.
+/// 
+/// Se <see cref="IDokanOperations"/> for more information about the fields.
+/// </summary>
+/// <remarks>This is the same struct as <c>_DOKAN_OPERATIONS</c> (dokan.h) in the C version of Dokan.</remarks>
+[StructLayout(LayoutKind.Sequential, Pack = 4)]
+internal sealed class DOKAN_OPERATIONS
 {
-    /// <summary>
-    /// Dokan API callbacks interface
-    /// 
-    /// A struct of callbacks that describe all Dokan API operation
-    /// that will be called when Windows access to the filesystem.
-    /// 
-    /// If an error occurs, return <see cref="NtStatus"/>.
-    /// 
-    /// All this callbacks can be set to <c>null</c> or return <see cref="NtStatus.NotImplemented"/>
-    /// if you dont want to support one of them. Be aware that returning such value to important callbacks
-    /// such <see cref="ZwCreateFile"/>/<see cref="ReadFile"/>/... would make the filesystem not working or unstable.
-    /// 
-    /// Se <see cref="IDokanOperations"/> for more information about the fields.
-    /// </summary>
-    /// <remarks>This is the same struct as <c>_DOKAN_OPERATIONS</c> (dokan.h) in the C version of Dokan.</remarks>
-    [StructLayout(LayoutKind.Sequential, Pack = 4)]
-    internal sealed class DOKAN_OPERATIONS
-    {
-        public DokanOperationProxy.ZwCreateFileDelegate ZwCreateFile;
-        public DokanOperationProxy.CleanupDelegate Cleanup;
-        public DokanOperationProxy.CloseFileDelegate CloseFile;
-        public DokanOperationProxy.ReadFileDelegate ReadFile;
-        public DokanOperationProxy.WriteFileDelegate WriteFile;
-        public DokanOperationProxy.FlushFileBuffersDelegate FlushFileBuffers;
-        public DokanOperationProxy.GetFileInformationDelegate GetFileInformation;
-        public DokanOperationProxy.FindFilesDelegate FindFiles;
+    public DokanOperationProxy.ZwCreateFileDelegate ZwCreateFile;
+    public DokanOperationProxy.CleanupDelegate Cleanup;
+    public DokanOperationProxy.CloseFileDelegate CloseFile;
+    public DokanOperationProxy.ReadFileDelegate ReadFile;
+    public DokanOperationProxy.WriteFileDelegate WriteFile;
+    public DokanOperationProxy.FlushFileBuffersDelegate FlushFileBuffers;
+    public DokanOperationProxy.GetFileInformationDelegate GetFileInformation;
+    public DokanOperationProxy.FindFilesDelegate FindFiles;
 
     public DokanOperationProxy.FindFilesWithPatternDelegate FindFilesWithPattern;
 

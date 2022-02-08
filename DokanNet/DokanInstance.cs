@@ -5,53 +5,69 @@ using System.Runtime.InteropServices;
 using System.Text;
 using DokanNet.Native;
 
-namespace DokanNet
+namespace DokanNet;
+
+/// <summary>
+/// Created by <see cref="Dokan.CreateFileSystem"/>.
+/// It holds all the resources required to be alive for the time of the mount.
+/// </summary>
+public class DokanInstance : IDisposable
 {
-    /// <summary>
-    /// Created by <see cref="Dokan.CreateFileSystem"/>.
-    /// It holds all the resources required to be alive for the time of the mount.
-    /// </summary>
-    public class DokanInstance : IDisposable
+    internal NativeStructWrapper<DOKAN_OPTIONS> DokanOptions;
+    internal NativeStructWrapper<DOKAN_OPERATIONS> DokanOperations;
+    internal DokanHandle DokanHandle;
+
+    public event EventHandler Disposing;
+
+    public event EventHandler Disposed;
+
+    public bool IsDisposing { get; private set; }
+
+    public bool IsDisposed { get; private set; }
+
+    protected void OnDisposing(EventArgs e) => Disposing?.Invoke(this, e);
+
+    protected void OnDisposed(EventArgs e) => Disposed?.Invoke(this, e);
+
+    protected virtual void Dispose(bool disposing)
     {
-        internal NativeStructWrapper<DOKAN_OPTIONS> DokanOptions;
-        internal NativeStructWrapper<DOKAN_OPERATIONS> DokanOperations;
-        internal DokanHandle DokanHandle;
-        private bool disposedValue;
-
-        protected virtual void Dispose(bool disposing)
+        if (!IsDisposed)
         {
-            if (!disposedValue)
+            IsDisposing = true;
+
+            if (disposing)
             {
-                if (disposing)
-                {
-                    // Dispose managed state (managed objects)
-                    DokanHandle?.Dispose();     // This calls DokanCloseHandle and waits for dismount
-                    DokanOptions?.Dispose();    // After that, it is safe to free unmanaged memory
-                    DokanOperations?.Dispose();
-                }
+                OnDisposing(EventArgs.Empty);
 
-                // Free unmanaged resources (unmanaged objects) and override finalizer
+                // Dispose managed state (managed objects)
+                DokanHandle?.Dispose();     // This calls DokanCloseHandle and waits for dismount
+                DokanOptions?.Dispose();    // After that, it is safe to free unmanaged memory
+                DokanOperations?.Dispose();
 
-                // Set fields to null
-                DokanOptions = null;
-                DokanOperations = null;
-                DokanHandle = null;
-
-                disposedValue = true;
+                OnDisposed(EventArgs.Empty);
             }
-        }
 
-        ~DokanInstance()
-        {
-            // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
-            Dispose(disposing: false);
-        }
+            // Free unmanaged resources (unmanaged objects) and override finalizer
 
-        public void Dispose()
-        {
-            // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
-            Dispose(disposing: true);
-            GC.SuppressFinalize(this);
+            // Set fields to null
+            DokanOptions = null;
+            DokanOperations = null;
+            DokanHandle = null;
+
+            IsDisposed = true;
         }
+    }
+
+    ~DokanInstance()
+    {
+        // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
+        Dispose(disposing: false);
+    }
+
+    public void Dispose()
+    {
+        // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
+        Dispose(disposing: true);
+        GC.SuppressFinalize(this);
     }
 }
