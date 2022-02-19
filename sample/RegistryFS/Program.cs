@@ -109,26 +109,35 @@ internal class RFS : IDokanOperations
         else
         {
             var key = GetRegistoryEntry(filename);
+            
             if (key == null)
             {
                 files = null;
                 return DokanResult.Error;
             }
-            files = key.GetSubKeyNames().Select(name => new FindFileInformation
-            {
-                FileName = name,
-                Attributes = FileAttributes.Directory,
-                LastAccessTime = DateTime.Now,
-                LastWriteTime = null,
-                CreationTime = null
-            }).Concat(key.GetValueNames().Select(name => new FindFileInformation
-            {
-                FileName = name,
-                Attributes = FileAttributes.Normal,
-                LastAccessTime = DateTime.Now,
-                LastWriteTime = null,
-                CreationTime = null
-            }));
+
+            files = key
+                .GetSubKeyNames()
+                .Select(name => new FindFileInformation
+                {
+                    FileName = name,
+                    Attributes = FileAttributes.Directory,
+                    LastAccessTime = DateTime.Now,
+                    LastWriteTime = null,
+                    CreationTime = null
+                })
+                .Concat(key
+                .GetValueNames()
+                .Where(name => !string.IsNullOrWhiteSpace(name))
+                .Select(name => new FindFileInformation
+                {
+                    FileName = name,
+                    Attributes = FileAttributes.Normal,
+                    LastAccessTime = DateTime.Now,
+                    LastWriteTime = null,
+                    CreationTime = null
+                }));
+
             return DokanResult.Success;
         }
     }

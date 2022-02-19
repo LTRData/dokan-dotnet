@@ -143,7 +143,6 @@ public static class Dokan
     /// <param name="sectorSize">Sector Size of the volume. This will behave on the file size.</param>
     /// <param name="logger"><see cref="ILogger"/> that will log all DokanNet debug informations.</param>
     /// <exception cref="DokanException">If the mount fails.</exception>
-    [SuppressMessage("Reliability", "CA2000:Dispose objects before losing scope", Justification = "<Pending>")]
     public static void Mount(this IDokanOperations operations, string mountPoint, DokanOptions mountOptions,
         bool singleThread, int version, TimeSpan timeout, string uncName = null, int allocationUnitSize = 512,
         int sectorSize = 512, ILogger logger = null)
@@ -152,7 +151,7 @@ public static class Dokan
 
         if (logger == null)
         {
-#if TRACE
+#if DEBUG
             logger = new ConsoleLogger("[DokanNet] ");
 #else
             logger = new NullLogger();
@@ -206,6 +205,9 @@ public static class Dokan
         };
 
         DokanStatus status = NativeMethods.DokanMain(dokanOptions, dokanOperations);
+
+        GC.KeepAlive(dokanOptions);
+        GC.KeepAlive(dokanOperations);
 
         if (logger_created && logger is IDisposable disposable_logger)
         {
@@ -339,7 +341,6 @@ public static class Dokan
     /// <param name="logger"><see cref="ILogger"/> that will log all DokanNet debug informations.</param>
     /// <exception cref="DokanException">If the mount fails.</exception>
     /// <returns>Dokan mount instance context that can be used for related instance calls like <see cref="IsFileSystemRunning"/></returns>
-    [SuppressMessage("Reliability", "CA2000:Dispose objects before losing scope", Justification = "<Pending>")]
     public static DokanInstance CreateFileSystem(this IDokanOperations operations, string mountPoint, DokanOptions mountOptions,
         bool singleThread, int version, TimeSpan timeout, string uncName = null, int allocationUnitSize = 512,
         int sectorSize = 512, ILogger logger = null)
@@ -348,7 +349,7 @@ public static class Dokan
 
         if (logger == null)
         {
-#if TRACE
+#if DEBUG
             logger = new ConsoleLogger("[DokanNet] ");
 #else
             logger = new NullLogger();
