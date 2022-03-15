@@ -40,19 +40,45 @@ public struct DokanFileInfo : IDokanFileInfo
     /// </summary>
     private readonly IntPtr _processingContext;
 
-    private readonly uint _processId;
+    /// <summary>
+    /// Process id for the thread that originally requested a given I/O
+    /// operation.
+    /// </summary>
+    public int ProcessId { get; }
 
-    [MarshalAs(UnmanagedType.U1)] private bool _isDirectory;
+    /// <summary>
+    /// Gets or sets a value indicating whether it requesting a directory
+    /// file. Must be set in <see cref="IDokanOperations.CreateFile"/> if
+    /// the file appear to be a folder.
+    /// </summary>
+    [field: MarshalAs(UnmanagedType.U1)] public bool IsDirectory { get; set; }
 
-    [MarshalAs(UnmanagedType.U1)] private bool _deleteOnClose;
+    /// <summary>
+    /// Gets or sets a value indicating whether the file has to be delete
+    /// during the <see cref="IDokanOperations.Cleanup"/> event.
+    /// </summary>
+    [field: MarshalAs(UnmanagedType.U1)] public bool DeleteOnClose { get; set; }
 
-    [MarshalAs(UnmanagedType.U1)] private readonly bool _pagingIo;
+    /// <summary>
+    /// Read or write is paging IO.
+    /// </summary>
+    [field: MarshalAs(UnmanagedType.U1)] public bool PagingIo { get; set; }
 
-    [MarshalAs(UnmanagedType.U1)] private readonly bool _synchronousIo;
+    /// <summary>
+    /// Read or write is synchronous IO.
+    /// </summary>
+    [field: MarshalAs(UnmanagedType.U1)] public bool SynchronousIo { get; set; }
 
-    [MarshalAs(UnmanagedType.U1)] private readonly bool _noCache;
+    /// <summary>
+    /// Read or write directly from data source without cache.
+    /// </summary>
+    [field: MarshalAs(UnmanagedType.U1)] public bool NoCache { get; set; }
 
-    [MarshalAs(UnmanagedType.U1)] private readonly bool _writeToEndOfFile;
+    /// <summary>
+    /// If <c>true</c>, write to the current end of file instead 
+    /// of using the <c>Offset</c> parameter.
+    /// </summary>
+    [field: MarshalAs(UnmanagedType.U1)] public bool WriteToEndOfFile { get; set; }
 
     /// <summary>
     /// Gets or sets context that can be used to carry information between operation.
@@ -85,54 +111,6 @@ public struct DokanFileInfo : IDokanFileInfo
             }
         }
     }
-
-    /// <summary>
-    /// Process id for the thread that originally requested a given I/O
-    /// operation.
-    /// </summary>
-    public int ProcessId => (int)_processId;
-
-    /// <summary>
-    /// Gets or sets a value indicating whether it requesting a directory
-    /// file. Must be set in <see cref="IDokanOperations.CreateFile"/> if
-    /// the file appear to be a folder.
-    /// </summary>
-    public bool IsDirectory
-    {
-        get => _isDirectory;
-        set => _isDirectory = value;
-    }
-
-    /// <summary>
-    /// Gets or sets a value indicating whether the file has to be delete
-    /// during the <see cref="IDokanOperations.Cleanup"/> event.
-    /// </summary>
-    public bool DeleteOnClose
-    {
-        get => _deleteOnClose;
-        set => _deleteOnClose = value;
-    }
-
-    /// <summary>
-    /// Read or write is paging IO.
-    /// </summary>
-    public bool PagingIo => _pagingIo;
-
-    /// <summary>
-    /// Read or write is synchronous IO.
-    /// </summary>
-    public bool SynchronousIo => _synchronousIo;
-
-    /// <summary>
-    /// Read or write directly from data source without cache.
-    /// </summary>
-    public bool NoCache => _noCache;
-
-    /// <summary>
-    /// If <c>true</c>, write to the current end of file instead 
-    /// of using the <c>Offset</c> parameter.
-    /// </summary>
-    public bool WriteToEndOfFile => _writeToEndOfFile;
 
     /// <summary>
     /// This method needs to be called in <see cref="IDokanOperations.CreateFile"/>.

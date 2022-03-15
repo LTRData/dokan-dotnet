@@ -24,7 +24,7 @@ internal class BufferPool
 #if NET46_OR_GREATER || NETSTANDARD || NETCOREAPP
     private static readonly byte[] _emptyArray = Array.Empty<byte>();
 #else
-        private static readonly byte[] _emptyArray = new byte[0];
+    private static readonly byte[] _emptyArray = new byte[0];
 #endif
 
     private readonly uint _maxBuffersPerPool; // Max buffers to cache per buffer size.
@@ -99,7 +99,11 @@ internal class BufferPool
         int poolIndex = GetPoolIndex(bufferSize);
         if (poolIndex == -1 || poolIndex >= _pools.Length)
         {
-            if (logger.DebugEnabled) logger.Debug($"Buffer size {bufferSize} not power of 2 or too large, returning unpooled buffer.");
+            if (logger.DebugEnabled)
+            {
+                logger.Debug($"Buffer size {bufferSize} not power of 2 or too large, returning unpooled buffer.");
+            }
+
             return new byte[bufferSize];
         }
 
@@ -107,11 +111,18 @@ internal class BufferPool
         ConcurrentBag<byte[]> pool = _pools[poolIndex];
         if (pool.TryTake(out byte[] buffer))
         {
-            if (logger.DebugEnabled) logger.Debug($"Using pooled buffer from pool {poolIndex}.");
+            if (logger.DebugEnabled)
+            {
+                logger.Debug($"Using pooled buffer from pool {poolIndex}.");
+            }
         }
         else
         {
-            if (logger.DebugEnabled) logger.Debug($"Pool {poolIndex} empty, creating new buffer.");
+            if (logger.DebugEnabled)
+            {
+                logger.Debug($"Pool {poolIndex} empty, creating new buffer.");
+            }
+
             buffer = new byte[bufferSize];
         }
 
@@ -142,16 +153,25 @@ internal class BufferPool
             {
                 Array.Clear(buffer, 0, buffer.Length);
                 pool.Add(buffer);
-                if (logger.DebugEnabled) logger.Debug($"Returned buffer to pool {poolIndex}.");
+                if (logger.DebugEnabled)
+                {
+                    logger.Debug($"Returned buffer to pool {poolIndex}.");
+                }
             }
             else
             {
-                if (logger.DebugEnabled) logger.Debug($"Pool {poolIndex} is full, discarding buffer.");
+                if (logger.DebugEnabled)
+                {
+                    logger.Debug($"Pool {poolIndex} is full, discarding buffer.");
+                }
             }
         }
         else
         {
-            if (logger.DebugEnabled) logger.Debug($"{poolIndex} (size {buffer.Length}) outside pool range, discarding buffer.");
+            if (logger.DebugEnabled)
+            {
+                logger.Debug($"{poolIndex} (size {buffer.Length}) outside pool range, discarding buffer.");
+            }
         }
     }
 

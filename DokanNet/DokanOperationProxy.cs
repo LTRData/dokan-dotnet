@@ -1,11 +1,3 @@
-#if !(NET10 || NET11 || NET20 || NET30 || NET35 || NET40 ) 
-#define NET45_OR_GREATER   
-#endif
-
-#if NET45_OR_GREATER && !(NET45 ) 
-#define NET451_OR_GREATER   
-#endif
-
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -206,17 +198,16 @@ internal sealed class DokanOperationProxy
     /// Note that some flags where introduces in .NET Framework 4.5, and is not supported 
     /// in .NET Framework 4. 
     /// </summary>
-    private const int FileAttributeMask =
-        (int)
-         (FileAttributes.ReadOnly | FileAttributes.Hidden | FileAttributes.System
-         | FileAttributes.Directory | FileAttributes.Archive | FileAttributes.Device
-         | FileAttributes.Normal | FileAttributes.Temporary | FileAttributes.SparseFile
-         | FileAttributes.ReparsePoint | FileAttributes.Compressed | FileAttributes.Offline
-         | FileAttributes.NotContentIndexed | FileAttributes.Encrypted
-#if NET45_OR_GREATER
-             | FileAttributes.IntegrityStream | FileAttributes.NoScrubData
+    private const int FileAttributeMask = (int)(
+        FileAttributes.ReadOnly | FileAttributes.Hidden | FileAttributes.System
+        | FileAttributes.Directory | FileAttributes.Archive | FileAttributes.Device
+        | FileAttributes.Normal | FileAttributes.Temporary | FileAttributes.SparseFile
+        | FileAttributes.ReparsePoint | FileAttributes.Compressed | FileAttributes.Offline
+        | FileAttributes.NotContentIndexed | FileAttributes.Encrypted
+#if NET45_OR_GREATER || NETSTANDARD || NETCOREAPP
+        | FileAttributes.IntegrityStream | FileAttributes.NoScrubData
 #endif
-            );
+    );
 
     /// <summary>
     /// To be used to mask out the <see cref="NativeFileAccess"/> flags.
@@ -293,17 +284,14 @@ internal sealed class DokanOperationProxy
     {
         try
         {
-            var fileAttributesAndFlags = 0;
-            var creationDisposition = 0;
-            var outDesiredAccess = 0u;
             NativeMethods.DokanMapKernelToUserCreateFileFlags(
                 rawDesiredAccess,
                 rawFileAttributes,
                 rawCreateOptions,
                 rawCreateDisposition,
-                ref outDesiredAccess,
-                ref fileAttributesAndFlags,
-                ref creationDisposition);
+                out var outDesiredAccess,
+                out var fileAttributesAndFlags,
+                out var creationDisposition);
 
             var fileAttributes = (FileAttributes)(fileAttributesAndFlags & FileAttributeMask);
             var fileOptions = (FileOptions)(fileAttributesAndFlags & FileOptionsMask);
@@ -821,7 +809,7 @@ internal sealed class DokanOperationProxy
     /// <exception cref="System.ArgumentException">The <typeparam name="TDelegate" /> generic parameter is not a delegate, or it is an open generic type.</exception>
     /// <exception cref="System.ArgumentNullException">The <paramref name="rawDelegate" /> parameter is null.</exception>
     private static TDelegate GetDataFromPointer<TDelegate>(IntPtr rawDelegate) where TDelegate : class =>
-#if NET451_OR_GREATER
+#if NET451_OR_GREATER || NETSTANDARD || NETCOREAPP
         Marshal.GetDelegateForFunctionPointer<TDelegate>(rawDelegate);
 #else
         Marshal.GetDelegateForFunctionPointer(rawDelegate, typeof(TDelegate)) as TDelegate;

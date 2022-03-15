@@ -155,9 +155,9 @@ internal static class NativeMethods
         uint fileAttributes,
         uint createOptions,
         uint createDisposition,
-        ref uint outDesiredAccess,
-        ref int outFileAttributesAndFlags,
-        ref int outCreationDisposition);
+        out uint outDesiredAccess,
+        out int outFileAttributesAndFlags,
+        out int outCreationDisposition);
 
     /*
     [DllImport(DOKAN_DLL, CharSet = CharSet.Unicode)]
