@@ -19,7 +19,7 @@ namespace DokanNet;
 /// </remarks>
 [StructLayout(LayoutKind.Sequential, Pack = 4)]
 [SuppressMessage("Performance", "CA1815:Override equals and operator equals on value types", Justification = "Not relevant")]
-public struct DokanFileInfo : IDokanFileInfo
+public struct DokanFileInfo
 {
     private ulong _context;
 

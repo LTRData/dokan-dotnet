@@ -45,38 +45,42 @@ internal class Mirror :
         this.path = path;
     }
 
-    protected string GetPath(string fileName) => path + fileName;
+#if NETCOREAPP
+    protected string GetPath(ReadOnlySpan<char> fileName) => string.Concat(path, fileName);
+#else
+    protected string GetPath(ReadOnlySpan<char> fileName) => path + fileName.ToString();
+#endif
 
-    protected NtStatus Trace(string method, string fileName, in DokanFileInfo info, NtStatus result,
+    protected NtStatus Trace(string method, ReadOnlySpan<char> fileName, in DokanFileInfo info, NtStatus result,
         params object[] parameters)
     {
-#if DEBUG
+#if CONSOLE_LOGGING
         var extraParameters = parameters != null && parameters.Length > 0
             ? ", " + string.Join(", ", parameters.Select(x => string.Format(DefaultFormatProvider, "{0}", x)))
             : string.Empty;
 
-        logger.Debug(DokanFormat($"{method}('{fileName}', {info}{extraParameters}) -> {result}"));
+        logger.Debug(DokanFormat($"{method}('{fileName.ToString()}', {info}{extraParameters}) -> {result}"));
 #endif
 
         return result;
     }
 
-    private NtStatus Trace(string method, string fileName, in DokanFileInfo info,
+    private NtStatus Trace(string method, ReadOnlySpan<char> fileName, in DokanFileInfo info,
         NativeFileAccess access, FileShare share, FileMode mode, FileOptions options, FileAttributes attributes,
         NtStatus result)
     {
-#if DEBUG
+#if CONSOLE_LOGGING
         logger.Debug(
             DokanFormat(
-                $"{method}('{fileName}', {info}, [{access}], [{share}], [{mode}], [{options}], [{attributes}]) -> {result}"));
+                $"{method}('{fileName.ToString()}', {info}, [{access}], [{share}], [{mode}], [{options}], [{attributes}]) -> {result}"));
 #endif
 
         return result;
     }
 
-    #region Implementation of IDokanOperations
+#region Implementation of IDokanOperations
 
-    public NtStatus CreateFile(string fileName, NativeFileAccess access, FileShare share, FileMode mode,
+    public NtStatus CreateFile(ReadOnlySpan<char> fileName, NativeFileAccess access, FileShare share, FileMode mode,
         FileOptions options, FileAttributes attributes, ref DokanFileInfo info)
     {
         var result = DokanResult.Success;
@@ -262,15 +266,8 @@ internal class Mirror :
             result);
     }
 
-    public void Cleanup(string fileName, ref DokanFileInfo info)
+    public void Cleanup(ReadOnlySpan<char> fileName, ref DokanFileInfo info)
     {
-#if DEBUG
-        if (info.Context != null)
-        {
-            Console.WriteLine(DokanFormat($"{nameof(Cleanup)}('{fileName}', {info} - entering"));
-        }
-#endif
-
         (info.Context as FileStream)?.Dispose();
         info.Context = null;
 
@@ -288,22 +285,15 @@ internal class Mirror :
         Trace(nameof(Cleanup), fileName, info, DokanResult.Success);
     }
 
-    public void CloseFile(string fileName, ref DokanFileInfo info)
+    public void CloseFile(ReadOnlySpan<char> fileName, ref DokanFileInfo info)
     {
-#if DEBUG
-        if (info.Context != null)
-        {
-            Console.WriteLine(DokanFormat($"{nameof(CloseFile)}('{fileName}', {info} - entering"));
-        }
-#endif
-
         (info.Context as FileStream)?.Dispose();
         info.Context = null;
         Trace(nameof(CloseFile), fileName, info, DokanResult.Success);
         // could recreate cleanup code here but this is not called sometimes
     }
 
-    public NtStatus ReadFile(string fileName, byte[] buffer, out int bytesRead, long offset, in DokanFileInfo info)
+    public NtStatus ReadFile(ReadOnlySpan<char> fileName, byte[] buffer, out int bytesRead, long offset, in DokanFileInfo info)
     {
         if (info.Context == null) // memory mapped read
         {
@@ -325,7 +315,7 @@ internal class Mirror :
     }
 
 #if NETCOREAPP || NETSTANDARD2_1_OR_GREATER
-    public unsafe NtStatus ReadFile(string fileName, IntPtr buffer, uint bufferLength, out int bytesRead, long offset, in DokanFileInfo info)
+    public unsafe NtStatus ReadFile(ReadOnlySpan<char> fileName, IntPtr buffer, uint bufferLength, out int bytesRead, long offset, in DokanFileInfo info)
     {
         if (info.Context == null) // memory mapped read
         {
@@ -347,7 +337,7 @@ internal class Mirror :
     }
 #endif
 
-    public NtStatus WriteFile(string fileName, byte[] buffer, out int bytesWritten, long offset, in DokanFileInfo info)
+    public NtStatus WriteFile(ReadOnlySpan<char> fileName, byte[] buffer, out int bytesWritten, long offset, in DokanFileInfo info)
     {
         var append = offset == -1;
         if (info.Context == null)
@@ -391,7 +381,7 @@ internal class Mirror :
     }
 
 #if NETCOREAPP || NETSTANDARD2_1_OR_GREATER
-    public unsafe NtStatus WriteFile(string fileName, IntPtr buffer, uint bufferLength, out int bytesWritten, long offset, in DokanFileInfo info)
+    public unsafe NtStatus WriteFile(ReadOnlySpan<char> fileName, IntPtr buffer, uint bufferLength, out int bytesWritten, long offset, in DokanFileInfo info)
     {
         var append = offset == -1;
         if (info.Context == null)
@@ -435,7 +425,7 @@ internal class Mirror :
     }
 #endif
 
-    public NtStatus FlushFileBuffers(string fileName, in DokanFileInfo info)
+    public NtStatus FlushFileBuffers(ReadOnlySpan<char> fileName, in DokanFileInfo info)
     {
         try
         {
@@ -448,7 +438,7 @@ internal class Mirror :
         }
     }
 
-    public NtStatus GetFileInformation(string fileName, out ByHandleFileInformation fileInfo, in DokanFileInfo info)
+    public NtStatus GetFileInformation(ReadOnlySpan<char> fileName, out ByHandleFileInformation fileInfo, in DokanFileInfo info)
     {
         // may be called with info.Context == null, but usually it isn't
         var filePath = GetPath(fileName);
@@ -469,16 +459,16 @@ internal class Mirror :
         return Trace(nameof(GetFileInformation), fileName, info, DokanResult.Success);
     }
 
-    public NtStatus FindFiles(string fileName, out IEnumerable<FindFileInformation> files, in DokanFileInfo info)
+    public NtStatus FindFiles(ReadOnlySpan<char> fileName, out IEnumerable<FindFileInformation> files, in DokanFileInfo info)
     {
         // This function is not called because FindFilesWithPattern is implemented
         // Return DokanResult.NotImplemented in FindFilesWithPattern to make FindFiles called
-        files = FindFilesHelper(fileName, "*");
+        files = FindFilesHelper(fileName, "*".AsSpan());
 
         return Trace(nameof(FindFiles), fileName, info, DokanResult.Success);
     }
 
-    public NtStatus SetFileAttributes(string fileName, FileAttributes attributes, in DokanFileInfo info)
+    public NtStatus SetFileAttributes(ReadOnlySpan<char> fileName, FileAttributes attributes, in DokanFileInfo info)
     {
         try
         {
@@ -505,7 +495,7 @@ internal class Mirror :
         }
     }
 
-    public NtStatus SetFileTime(string fileName, DateTime? creationTime, DateTime? lastAccessTime,
+    public NtStatus SetFileTime(ReadOnlySpan<char> fileName, DateTime? creationTime, DateTime? lastAccessTime,
         DateTime? lastWriteTime, in DokanFileInfo info)
     {
         try
@@ -555,7 +545,7 @@ internal class Mirror :
         }
     }
 
-    public NtStatus DeleteFile(string fileName, in DokanFileInfo info)
+    public NtStatus DeleteFile(ReadOnlySpan<char> fileName, in DokanFileInfo info)
     {
         var filePath = GetPath(fileName);
 
@@ -578,7 +568,7 @@ internal class Mirror :
         // we just check here if we could delete the file - the true deletion is in Cleanup
     }
 
-    public NtStatus DeleteDirectory(string fileName, in DokanFileInfo info)
+    public NtStatus DeleteDirectory(ReadOnlySpan<char> fileName, in DokanFileInfo info)
     {
         return Trace(nameof(DeleteDirectory), fileName, info,
             Directory.EnumerateFileSystemEntries(GetPath(fileName)).Any()
@@ -587,7 +577,7 @@ internal class Mirror :
         // if dir is not empty it can't be deleted
     }
 
-    public NtStatus MoveFile(string oldName, string newName, bool replace, ref DokanFileInfo info)
+    public NtStatus MoveFile(ReadOnlySpan<char> oldName, ReadOnlySpan<char> newName, bool replace, ref DokanFileInfo info)
     {
         var oldpath = GetPath(oldName);
         var newpath = GetPath(newName);
@@ -612,7 +602,7 @@ internal class Mirror :
                     File.Move(oldpath, newpath);
                 }
 
-                return Trace(nameof(MoveFile), oldName, info, DokanResult.Success, newName,
+                return Trace(nameof(MoveFile), oldName, info, DokanResult.Success, newpath,
                     replace.ToString(CultureInfo.InvariantCulture));
             }
             else if (replace)
@@ -621,26 +611,26 @@ internal class Mirror :
 
                 if (info.IsDirectory) //Cannot replace directory destination - See MOVEFILE_REPLACE_EXISTING
                 {
-                    return Trace(nameof(MoveFile), oldName, info, DokanResult.AccessDenied, newName,
+                    return Trace(nameof(MoveFile), oldName, info, DokanResult.AccessDenied, newpath,
                         replace.ToString(CultureInfo.InvariantCulture));
                 }
 
                 File.Delete(newpath);
                 File.Move(oldpath, newpath);
-                return Trace(nameof(MoveFile), oldName, info, DokanResult.Success, newName,
+                return Trace(nameof(MoveFile), oldName, info, DokanResult.Success, newpath,
                     replace.ToString(CultureInfo.InvariantCulture));
             }
         }
         catch (UnauthorizedAccessException)
         {
-            return Trace(nameof(MoveFile), oldName, info, DokanResult.AccessDenied, newName,
+            return Trace(nameof(MoveFile), oldName, info, DokanResult.AccessDenied, newpath,
                 replace.ToString(CultureInfo.InvariantCulture));
         }
-        return Trace(nameof(MoveFile), oldName, info, DokanResult.FileExists, newName,
+        return Trace(nameof(MoveFile), oldName, info, DokanResult.FileExists, newpath,
             replace.ToString(CultureInfo.InvariantCulture));
     }
 
-    public NtStatus SetEndOfFile(string fileName, long length, in DokanFileInfo info)
+    public NtStatus SetEndOfFile(ReadOnlySpan<char> fileName, long length, in DokanFileInfo info)
     {
         try
         {
@@ -655,7 +645,7 @@ internal class Mirror :
         }
     }
 
-    public NtStatus SetAllocationSize(string fileName, long length, in DokanFileInfo info)
+    public NtStatus SetAllocationSize(ReadOnlySpan<char> fileName, long length, in DokanFileInfo info)
     {
         try
         {
@@ -670,7 +660,7 @@ internal class Mirror :
         }
     }
 
-    public NtStatus LockFile(string fileName, long offset, long length, in DokanFileInfo info)
+    public NtStatus LockFile(ReadOnlySpan<char> fileName, long offset, long length, in DokanFileInfo info)
     {
         try
         {
@@ -685,7 +675,7 @@ internal class Mirror :
         }
     }
 
-    public NtStatus UnlockFile(string fileName, long offset, long length, in DokanFileInfo info)
+    public NtStatus UnlockFile(ReadOnlySpan<char> fileName, long offset, long length, in DokanFileInfo info)
     {
         try
         {
@@ -726,7 +716,7 @@ internal class Mirror :
             $"out {features}", $"out {fileSystemName}");
     }
 
-    public NtStatus GetFileSecurity(string fileName, out FileSystemSecurity security, AccessControlSections sections,
+    public NtStatus GetFileSecurity(ReadOnlySpan<char> fileName, out FileSystemSecurity security, AccessControlSections sections,
         in DokanFileInfo info)
     {
         try
@@ -743,7 +733,7 @@ internal class Mirror :
         }
     }
 
-    public NtStatus SetFileSecurity(string fileName, FileSystemSecurity security, AccessControlSections sections,
+    public NtStatus SetFileSecurity(ReadOnlySpan<char> fileName, FileSystemSecurity security, AccessControlSections sections,
         in DokanFileInfo info)
     {
         try
@@ -764,10 +754,10 @@ internal class Mirror :
         }
     }
 
-        public NtStatus Mounted(string mountPoint, in DokanFileInfo info)
-        {
-            return Trace(nameof(Mounted), null, info, DokanResult.Success);
-        }
+    public NtStatus Mounted(ReadOnlySpan<char> mountPoint, in DokanFileInfo info)
+    {
+        return Trace(nameof(Mounted), null, info, DokanResult.Success);
+    }
 
     public NtStatus Unmounted(in DokanFileInfo info)
     {
@@ -778,7 +768,7 @@ internal class Mirror :
         return ntStatus;
     }
 
-    public NtStatus FindStreams(string fileName, IntPtr enumContext, out string streamName, out long streamSize,
+    public NtStatus FindStreams(ReadOnlySpan<char> fileName, IntPtr enumContext, out string streamName, out long streamSize,
         DokanFileInfo info)
     {
         streamName = string.Empty;
@@ -787,14 +777,16 @@ internal class Mirror :
             $"out {streamName}", $"out {streamSize}");
     }
 
-    public NtStatus FindStreams(string fileName, out IEnumerable<FindFileInformation> streams, in DokanFileInfo info)
+    public NtStatus FindStreams(ReadOnlySpan<char> fileName, out IEnumerable<FindFileInformation> streams, in DokanFileInfo info)
     {
         streams = new FindFileInformation[0];
         return Trace(nameof(FindStreams), fileName, info, DokanResult.NotImplemented);
     }
 
-    public IEnumerable<FindFileInformation> FindFilesHelper(string fileName, string searchPattern)
+    public IEnumerable<FindFileInformation> FindFilesHelper(ReadOnlySpan<char> fileName, ReadOnlySpan<char> searchPatternPtr)
     {
+        var searchPattern = searchPatternPtr.ToString();
+
         var files = new DirectoryInfo(GetPath(fileName))
             .EnumerateFileSystemInfos()
             .Where(finfo => DokanHelper.DokanIsNameInExpression(searchPattern, finfo.Name, true))
@@ -811,7 +803,7 @@ internal class Mirror :
         return files;
     }
 
-    public NtStatus FindFilesWithPattern(string fileName, string searchPattern, out IEnumerable<FindFileInformation> files,
+    public NtStatus FindFilesWithPattern(ReadOnlySpan<char> fileName, ReadOnlySpan<char> searchPattern, out IEnumerable<FindFileInformation> files,
         in DokanFileInfo info)
     {
         files = FindFilesHelper(fileName, searchPattern);
@@ -819,5 +811,5 @@ internal class Mirror :
         return Trace(nameof(FindFilesWithPattern), fileName, info, DokanResult.Success);
     }
 
-    #endregion Implementation of IDokanOperations
+#endregion Implementation of IDokanOperations
 }

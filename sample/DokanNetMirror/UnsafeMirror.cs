@@ -23,7 +23,7 @@ internal class UnsafeMirror : Mirror, IDokanOperationsUnsafe
     /// <summary>
     /// Read from file using unmanaged buffers.
     /// </summary>
-    public NtStatus ReadFile(string fileName, IntPtr buffer, uint bufferLength, out int bytesRead, long offset, in DokanFileInfo info)
+    public NtStatus ReadFile(ReadOnlySpan<char> fileName, IntPtr buffer, uint bufferLength, out int bytesRead, long offset, in DokanFileInfo info)
     {
         if (info.Context == null) // memory mapped read
         {
@@ -52,7 +52,7 @@ internal class UnsafeMirror : Mirror, IDokanOperationsUnsafe
     /// <summary>
     /// Write to file using unmanaged buffers.
     /// </summary>
-    public NtStatus WriteFile(string fileName, IntPtr buffer, uint bufferLength, out int bytesWritten, long offset, in DokanFileInfo info)
+    public NtStatus WriteFile(ReadOnlySpan<char> fileName, IntPtr buffer, uint bufferLength, out int bytesWritten, long offset, in DokanFileInfo info)
     {
         if (info.Context == null)
         {

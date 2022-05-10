@@ -3,6 +3,8 @@ using System.Diagnostics.CodeAnalysis;
 using DokanNet.Logging;
 using DokanNet.Native;
 
+#pragma warning disable CA2000 // Dispose objects before losing scope
+
 namespace DokanNet;
 
 /// <summary>
@@ -151,7 +153,7 @@ public static class Dokan
 
         if (logger == null)
         {
-#if DEBUG
+#if CONSOLE_LOGGER
             logger = new ConsoleLogger("[DokanNet] ");
 #else
             logger = new NullLogger();
@@ -349,7 +351,7 @@ public static class Dokan
 
         if (logger == null)
         {
-#if DEBUG
+#if CONSOLE_LOGGER
             logger = new ConsoleLogger("[DokanNet] ");
 #else
             logger = new NullLogger();

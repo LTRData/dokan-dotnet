@@ -19,7 +19,7 @@ public interface IDokanOperationsUnsafe : IDokanOperations
     /// It can be called by different thread at the same time,
     /// therefore the read has to be thread safe.
     /// </summary>
-    /// <param name="fileName">File path requested by the Kernel on the FileSystem.</param>
+    /// <param name="fileNamePtr">File path requested by the Kernel on the FileSystem.</param>
     /// <param name="buffer">Read buffer that has to be fill with the read result.</param>
     /// <param name="bufferLength">The size of 'buffer' in bytes.
     /// The buffer size depends of the read size requested by the kernel.</param>
@@ -28,14 +28,14 @@ public interface IDokanOperationsUnsafe : IDokanOperations
     /// <param name="info">An <see cref="DokanFileInfo"/> with information about the file or directory.</param>
     /// <returns><see cref="NtStatus"/> or <see cref="DokanResult"/> appropriate to the request result.</returns>
     /// <seealso cref="WriteFile"/>
-    NtStatus ReadFile(string fileName, IntPtr buffer, uint bufferLength, out int bytesRead, long offset, in DokanFileInfo info);
+    NtStatus ReadFile(ReadOnlySpan<char> fileNamePtr, IntPtr buffer, uint bufferLength, out int bytesRead, long offset, in DokanFileInfo info);
 
     /// <summary>
     /// WriteFile callback on the file previously opened in <see cref="CreateFile"/>
     /// It can be called by different thread at the same time,
     /// therefore the write/context has to be thread safe.
     /// </summary>
-    /// <param name="fileName">File path requested by the Kernel on the FileSystem.</param>
+    /// <param name="fileNamePtr">File path requested by the Kernel on the FileSystem.</param>
     /// <param name="buffer">Data that has to be written.</param>
     /// <param name="bufferLength">The size of 'buffer' in bytes.</param>
     /// <param name="bytesWritten">Total number of bytes that has been write.</param>
@@ -43,5 +43,5 @@ public interface IDokanOperationsUnsafe : IDokanOperations
     /// <param name="info">An <see cref="DokanFileInfo"/> with information about the file or directory.</param>
     /// <returns><see cref="NtStatus"/> or <see cref="DokanResult"/> appropriate to the request result.</returns>
     /// <seealso cref="ReadFile"/>
-    NtStatus WriteFile(string fileName, IntPtr buffer, uint bufferLength, out int bytesWritten, long offset, in DokanFileInfo info);
+    NtStatus WriteFile(ReadOnlySpan<char> fileNamePtr, IntPtr buffer, uint bufferLength, out int bytesWritten, long offset, in DokanFileInfo info);
 }

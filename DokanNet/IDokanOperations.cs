@@ -37,7 +37,7 @@ namespace DokanNet
         /// <see cref="DokanFileInfo.Context"/> can be used to store data (like <c><see cref="FileStream"/></c>)
         /// that can be retrieved in all other request related to the context.
         /// </summary>
-        /// <param name="fileName">File path requested by the Kernel on the FileSystem.</param>
+        /// <param name="fileNamePtr">File path requested by the Kernel on the FileSystem.</param>
         /// <param name="access">A <see cref="NativeFileAccess"/> with permissions for file or directory.</param>
         /// <param name="share">Type of share access to other threads, which is specified as
         /// <see cref="FileShare.None"/> or any combination of <see cref="FileShare"/>.
@@ -50,7 +50,7 @@ namespace DokanNet
         /// <returns><see cref="NtStatus"/> or <see cref="DokanResult"/> appropriate to the request result.</returns>
         /// \see See <a href="https://msdn.microsoft.com/en-us/library/windows/hardware/ff566424(v=vs.85).aspx">ZwCreateFile (MSDN)</a> for more information about the parameters of this callback.
         NtStatus CreateFile(
-            string fileName,
+            ReadOnlySpan<char> fileNamePtr,
             NativeFileAccess access,
             FileShare share,
             FileMode mode,
@@ -69,12 +69,12 @@ namespace DokanNet
         /// When <see cref="DokanFileInfo.DeleteOnClose"/> is <c>true</c>, you must delete the file in Cleanup.
         /// Refer to <see cref="DeleteFile"/> and <see cref="DeleteDirectory"/> for explanation.
         /// </remarks>
-        /// <param name="fileName">File path requested by the Kernel on the FileSystem.</param>
+        /// <param name="fileNamePtr">File path requested by the Kernel on the FileSystem.</param>
         /// <param name="info">An <see cref="DokanFileInfo"/> with information about the file or directory.</param>
         /// <seealso cref="DeleteFile"/>
         /// <seealso cref="DeleteDirectory"/>
         /// <seealso cref="CloseFile"/>
-        void Cleanup(string fileName, ref DokanFileInfo info);
+        void Cleanup(ReadOnlySpan<char> fileNamePtr, ref DokanFileInfo info);
 
         /// <summary>
         /// CloseFile is called at the end of the life of the context.
@@ -87,17 +87,17 @@ namespace DokanNet
         /// 
         /// Remainings in <see cref="DokanFileInfo.Context"/> has to be cleared before return.
         /// </summary>
-        /// <param name="fileName">File path requested by the Kernel on the FileSystem.</param>
+        /// <param name="fileNamePtr">File path requested by the Kernel on the FileSystem.</param>
         /// <param name="info">An <see cref="DokanFileInfo"/> with information about the file or directory.</param>
         /// <seealso cref="Cleanup"/>
-        void CloseFile(string fileName, ref DokanFileInfo info);
+        void CloseFile(ReadOnlySpan<char> fileNamePtr, ref DokanFileInfo info);
 
         /// <summary>
         /// ReadFile callback on the file previously opened in <see cref="CreateFile"/>.
         /// It can be called by different thread at the same time,
         /// therefor the read has to be thread safe.
         /// </summary>
-        /// <param name="fileName">File path requested by the Kernel on the FileSystem.</param>
+        /// <param name="fileNamePtr">File path requested by the Kernel on the FileSystem.</param>
         /// <param name="buffer">Read buffer that has to be fill with the read result.
         /// The buffer size depend of the read size requested by the kernel.</param>
         /// <param name="bytesRead">Total number of bytes that has been read.</param>
@@ -105,38 +105,38 @@ namespace DokanNet
         /// <param name="info">An <see cref="DokanFileInfo"/> with information about the file or directory.</param>
         /// <returns><see cref="NtStatus"/> or <see cref="DokanResult"/> appropriate to the request result.</returns>
         /// <seealso cref="WriteFile"/>
-        NtStatus ReadFile(string fileName, byte[] buffer, out int bytesRead, long offset, in DokanFileInfo info);
+        NtStatus ReadFile(ReadOnlySpan<char> fileNamePtr, byte[] buffer, out int bytesRead, long offset, in DokanFileInfo info);
 
         /// <summary>
         /// WriteFile callback on the file previously opened in <see cref="CreateFile"/>
         /// It can be called by different thread at the same time,
         /// therefor the write/context has to be thread safe.
         /// </summary>
-        /// <param name="fileName">File path requested by the Kernel on the FileSystem.</param>
+        /// <param name="fileNamePtr">File path requested by the Kernel on the FileSystem.</param>
         /// <param name="buffer">Data that has to be written.</param>
         /// <param name="bytesWritten">Total number of bytes that has been write.</param>
         /// <param name="offset">Offset from where the write has to be proceed.</param>
         /// <param name="info">An <see cref="DokanFileInfo"/> with information about the file or directory.</param>
         /// <returns><see cref="NtStatus"/> or <see cref="DokanResult"/> appropriate to the request result.</returns>
         /// <seealso cref="ReadFile"/>
-        NtStatus WriteFile(string fileName, byte[] buffer, out int bytesWritten, long offset, in DokanFileInfo info);
+        NtStatus WriteFile(ReadOnlySpan<char> fileNamePtr, byte[] buffer, out int bytesWritten, long offset, in DokanFileInfo info);
 
         /// <summary>
         /// Clears buffers for this context and causes any buffered data to be written to the file.
         /// </summary>
-        /// <param name="fileName">File path requested by the Kernel on the FileSystem.</param>
+        /// <param name="fileNamePtr">File path requested by the Kernel on the FileSystem.</param>
         /// <param name="info">An <see cref="DokanFileInfo"/> with information about the file or directory.</param>
         /// <returns><see cref="NtStatus"/> or <see cref="DokanResult"/> appropriate to the request result.</returns>
-        NtStatus FlushFileBuffers(string fileName, in DokanFileInfo info);
+        NtStatus FlushFileBuffers(ReadOnlySpan<char> fileNamePtr, in DokanFileInfo info);
 
         /// <summary>
         /// Get specific informations on a file.
         /// </summary>
-        /// <param name="fileName">File path requested by the Kernel on the FileSystem.</param>
+        /// <param name="fileNamePtr">File path requested by the Kernel on the FileSystem.</param>
         /// <param name="fileInfo"><see cref="ByHandleFileInformation"/> struct to fill</param>
         /// <param name="info">An <see cref="DokanFileInfo"/> with information about the file or directory.</param>
         /// <returns><see cref="NtStatus"/> or <see cref="DokanResult"/> appropriate to the request result.</returns>
-        NtStatus GetFileInformation(string fileName, out ByHandleFileInformation fileInfo, in DokanFileInfo info);
+        NtStatus GetFileInformation(ReadOnlySpan<char> fileNamePtr, out ByHandleFileInformation fileInfo, in DokanFileInfo info);
 
         /// <summary>
         /// List all files in the path requested
@@ -144,25 +144,25 @@ namespace DokanNet
         /// <see cref="FindFilesWithPattern"/> is checking first. If it is not implemented or
         /// returns <see cref="NtStatus.NotImplemented"/>, then FindFiles is called.
         /// </summary>
-        /// <param name="fileName">File path requested by the Kernel on the FileSystem.</param>
+        /// <param name="fileNamePtr">File path requested by the Kernel on the FileSystem.</param>
         /// <param name="files">A list of <see cref="ByHandleFileInformation"/> to return.</param>
         /// <param name="info">An <see cref="DokanFileInfo"/> with information about the file or directory.</param>
         /// <returns><see cref="NtStatus"/> or <see cref="DokanResult"/> appropriate to the request result.</returns>
         /// <seealso cref="FindFilesWithPattern"/>
-        NtStatus FindFiles(string fileName, out IEnumerable<FindFileInformation> files, in DokanFileInfo info);
+        NtStatus FindFiles(ReadOnlySpan<char> fileNamePtr, out IEnumerable<FindFileInformation> files, in DokanFileInfo info);
 
         /// <summary>
         /// Same as <see cref="FindFiles"/> but with a search pattern to filter the result.
         /// </summary>
-        /// <param name="fileName">Path requested by the Kernel on the FileSystem.</param>
-        /// <param name="searchPattern">Search pattern</param>
+        /// <param name="fileNamePtr">Path requested by the Kernel on the FileSystem.</param>
+        /// <param name="searchPatternPtr">Search pattern</param>
         /// <param name="files">A list of <see cref="ByHandleFileInformation"/> to return.</param>
         /// <param name="info">An <see cref="DokanFileInfo"/> with information about the file or directory.</param>
         /// <returns><see cref="NtStatus"/> or <see cref="DokanResult"/> appropriate to the request result.</returns>
         /// <seealso cref="FindFiles"/>
         NtStatus FindFilesWithPattern(
-            string fileName,
-            string searchPattern,
+            ReadOnlySpan<char> fileNamePtr,
+            ReadOnlySpan<char> searchPatternPtr,
             out IEnumerable<FindFileInformation> files,
             in DokanFileInfo info);
 
@@ -170,25 +170,25 @@ namespace DokanNet
         /// Set file attributes on a specific file.
         /// </summary>
         /// <remarks>SetFileAttributes and <see cref="SetFileTime"/> are called only if both of them are implemented.</remarks>
-        /// <param name="fileName">File path requested by the Kernel on the FileSystem.</param>
+        /// <param name="fileNamePtr">File path requested by the Kernel on the FileSystem.</param>
         /// <param name="attributes"><see cref="FileAttributes"/> to set on file</param>
         /// <param name="info">An <see cref="DokanFileInfo"/> with information about the file or directory.</param>
         /// <returns><see cref="NtStatus"/> or <see cref="DokanResult"/> appropriate to the request result.</returns>
-        NtStatus SetFileAttributes(string fileName, FileAttributes attributes, in DokanFileInfo info);
+        NtStatus SetFileAttributes(ReadOnlySpan<char> fileNamePtr, FileAttributes attributes, in DokanFileInfo info);
 
         /// <summary>
         /// Set file times on a specific file.
         /// If <see cref="DateTime"/> is <c>null</c>, this should not be updated.
         /// </summary>
         /// <remarks><see cref="SetFileAttributes"/> and SetFileTime are called only if both of them are implemented.</remarks>
-        /// <param name="fileName">File or directory name.</param>
+        /// <param name="fileNamePtr">File or directory name.</param>
         /// <param name="creationTime"><see cref="DateTime"/> when the file was created.</param>
         /// <param name="lastAccessTime"><see cref="DateTime"/> when the file was last accessed.</param>
         /// <param name="lastWriteTime"><see cref="DateTime"/> when the file was last written to.</param>
         /// <param name="info">An <see cref="DokanFileInfo"/> with information about the file or directory.</param>
         /// <returns><see cref="NtStatus"/> or <see cref="DokanResult"/> appropriate to the request result.</returns>
         NtStatus SetFileTime(
-            string fileName,
+            ReadOnlySpan<char> fileNamePtr,
             DateTime? creationTime,
             DateTime? lastAccessTime,
             DateTime? lastWriteTime,
@@ -210,12 +210,12 @@ namespace DokanNet
         /// <see cref="DokanFileInfo.DeleteOnClose"/> set to <c>true</c> and only then you have to actually
         /// delete the file being closed.
         /// </remarks>
-        /// <param name="fileName">File path requested by the Kernel on the FileSystem.</param>
+        /// <param name="fileNamePtr">File path requested by the Kernel on the FileSystem.</param>
         /// <param name="info">An <see cref="DokanFileInfo"/> with information about the file or directory.</param>
         /// <returns>Return <see cref="DokanResult.Success"/> if file can be delete or <see cref="NtStatus"/> appropriate.</returns>
         /// <seealso cref="DeleteDirectory"/>
         /// <seealso cref="Cleanup"/>
-        NtStatus DeleteFile(string fileName, in DokanFileInfo info);
+        NtStatus DeleteFile(ReadOnlySpan<char> fileNamePtr, in DokanFileInfo info);
 
         /// <summary>
         /// Check if it is possible to delete a directory.
@@ -234,64 +234,64 @@ namespace DokanNet
         /// <see cref="DokanFileInfo.DeleteOnClose"/> set to <c>true</c> and only then you have to actually
         /// delete the file being closed.
         /// </remarks>
-        /// <param name="fileName">File path requested by the Kernel on the FileSystem.</param>
+        /// <param name="fileNamePtr">File path requested by the Kernel on the FileSystem.</param>
         /// <param name="info">An <see cref="DokanFileInfo"/> with information about the file or directory.</param>
         /// <returns>Return <see cref="DokanResult.Success"/> if file can be delete or <see cref="NtStatus"/> appropriate.</returns>
         /// <seealso cref="DeleteFile"/>
         /// <seealso cref="Cleanup"/>
-        NtStatus DeleteDirectory(string fileName, in DokanFileInfo info);
+        NtStatus DeleteDirectory(ReadOnlySpan<char> fileNamePtr, in DokanFileInfo info);
 
         /// <summary>
         /// Move a file or directory to a new location.
         /// </summary>
-        /// <param name="oldName">Path to the file to move.</param>
-        /// <param name="newName">Path to the new location for the file.</param>
-        /// <param name="replace">If the file should be replaced if it already exist a file with path <paramref name="newName"/>.</param>
+        /// <param name="oldNamePtr">Path to the file to move.</param>
+        /// <param name="newNamePtr">Path to the new location for the file.</param>
+        /// <param name="replace">If the file should be replaced if it already exist a file with path <paramref name="newNamePtr"/>.</param>
         /// <param name="info">An <see cref="DokanFileInfo"/> with information about the file or directory.</param>
         /// <returns><see cref="NtStatus"/> or <see cref="DokanResult"/> appropriate to the request result.</returns>
-        NtStatus MoveFile(string oldName, string newName, bool replace, ref DokanFileInfo info);
+        NtStatus MoveFile(ReadOnlySpan<char> oldNamePtr, ReadOnlySpan<char> newNamePtr, bool replace, ref DokanFileInfo info);
 
         /// <summary>
         /// SetEndOfFile is used to truncate or extend a file (physical file size).
         /// </summary>
-        /// <param name="fileName">File path requested by the Kernel on the FileSystem.</param>
+        /// <param name="fileNamePtr">File path requested by the Kernel on the FileSystem.</param>
         /// <param name="length">File length to set</param>
         /// <param name="info">An <see cref="DokanFileInfo"/> with information about the file or directory.</param>
         /// <returns><see cref="NtStatus"/> or <see cref="DokanResult"/> appropriate to the request result.</returns>
-        NtStatus SetEndOfFile(string fileName, long length, in DokanFileInfo info);
+        NtStatus SetEndOfFile(ReadOnlySpan<char> fileNamePtr, long length, in DokanFileInfo info);
 
         /// <summary>
         /// SetAllocationSize is used to truncate or extend a file.
         /// </summary>
-        /// <param name="fileName">File path requested by the Kernel on the FileSystem.</param>
+        /// <param name="fileNamePtr">File path requested by the Kernel on the FileSystem.</param>
         /// <param name="length">File length to set</param>
         /// <param name="info">An <see cref="DokanFileInfo"/> with information about the file or directory.</param>
         /// <returns><see cref="NtStatus"/> or <see cref="DokanResult"/> appropriate to the request result.</returns>
-        NtStatus SetAllocationSize(string fileName, long length, in DokanFileInfo info);
+        NtStatus SetAllocationSize(ReadOnlySpan<char> fileNamePtr, long length, in DokanFileInfo info);
 
         /// <summary>
         /// Lock file at a specific offset and data length.
         /// This is only used if <see cref="DokanOptions.UserModeLock"/> is enabled.
         /// </summary>
-        /// <param name="fileName">File path requested by the Kernel on the FileSystem.</param>
+        /// <param name="fileNamePtr">File path requested by the Kernel on the FileSystem.</param>
         /// <param name="offset">Offset from where the lock has to be proceed.</param>
         /// <param name="length">Data length to lock.</param>
         /// <param name="info">An <see cref="DokanFileInfo"/> with information about the file or directory.</param>
         /// <returns><see cref="NtStatus"/> or <see cref="DokanResult"/> appropriate to the request result.</returns>
         /// <seealso cref="UnlockFile"/>
-        NtStatus LockFile(string fileName, long offset, long length, in DokanFileInfo info);
+        NtStatus LockFile(ReadOnlySpan<char> fileNamePtr, long offset, long length, in DokanFileInfo info);
 
         /// <summary>
         /// Unlock file at a specific offset and data length.
         /// This is only used if <see cref="DokanOptions.UserModeLock"/> is enabled.
         /// </summary>
-        /// <param name="fileName">File path requested by the Kernel on the FileSystem.</param>
+        /// <param name="fileNamePtr">File path requested by the Kernel on the FileSystem.</param>
         /// <param name="offset">Offset from where the unlock has to be proceed.</param>
         /// <param name="length">Data length to lock.</param>
         /// <param name="info">An <see cref="DokanFileInfo"/> with information about the file or directory.</param>
         /// <returns><see cref="NtStatus"/> or <see cref="DokanResult"/> appropriate to the request result.</returns>
         /// <seealso cref="LockFile"/>
-        NtStatus UnlockFile(string fileName, long offset, long length, in DokanFileInfo info);
+        NtStatus UnlockFile(ReadOnlySpan<char> fileNamePtr, long offset, long length, in DokanFileInfo info);
 
         /// <summary>
         /// Retrieves information about the amount of space that is available on a disk volume, which is the total amount of space, 
@@ -357,7 +357,7 @@ namespace DokanNet
         /// </remarks>
         /// \since Supported since version 0.6.0. You must specify the version in <see cref="Dokan.Mount(IDokanOperations, string, DokanOptions,int, int, TimeSpan, string, int,int, Logging.ILogger)"/>.
         /// 
-        /// <param name="fileName">File or directory name.</param>
+        /// <param name="fileNamePtr">File or directory name.</param>
         /// <param name="security">A <see cref="FileSystemSecurity"/> with security information to return.</param>
         /// <param name="sections">A <see cref="AccessControlSections"/> with access sections to return.</param>
         /// <param name="info">An <see cref="DokanFileInfo"/> with information about the file or directory.</param>
@@ -365,7 +365,7 @@ namespace DokanNet
         /// <seealso cref="SetFileSecurity"/>
         /// \see <a href="https://msdn.microsoft.com/en-us/library/windows/desktop/aa446639(v=vs.85).aspx">GetFileSecurity function (MSDN)</a>
         NtStatus GetFileSecurity(
-            string fileName,
+            ReadOnlySpan<char> fileNamePtr,
             out FileSystemSecurity security,
             AccessControlSections sections,
             in DokanFileInfo info);
@@ -375,7 +375,7 @@ namespace DokanNet
         /// </summary>
         /// \since Supported since version 0.6.0. You must specify the version in <see cref="Dokan.Mount(IDokanOperations, string, DokanOptions,int, int, TimeSpan, string, int,int, Logging.ILogger)"/>.
         /// 
-        /// <param name="fileName">File path requested by the Kernel on the FileSystem.</param>
+        /// <param name="fileNamePtr">File path requested by the Kernel on the FileSystem.</param>
         /// <param name="security">A <see cref="FileSystemSecurity"/> with security information to set.</param>
         /// <param name="sections">A <see cref="AccessControlSections"/> with access sections on which.</param>
         /// <param name="info">An <see cref="DokanFileInfo"/> with information about the file or directory.</param>
@@ -383,7 +383,7 @@ namespace DokanNet
         /// <seealso cref="GetFileSecurity"/>
         /// \see <a href="https://msdn.microsoft.com/en-us/library/windows/desktop/aa379577(v=vs.85).aspx">SetFileSecurity function (MSDN)</a>
         NtStatus SetFileSecurity(
-            string fileName,
+            ReadOnlySpan<char> fileNamePtr,
             FileSystemSecurity security,
             AccessControlSections sections,
             in DokanFileInfo info);
@@ -398,7 +398,7 @@ namespace DokanNet
         /// <param name="info">An <see cref="DokanFileInfo"/> with information about the file or directory.</param>
         /// <returns><see cref="NtStatus"/> or <see cref="DokanResult"/> appropriate to the request result.</returns>
         /// <see cref="Unmounted"/>
-        NtStatus Mounted(string mountPoint, in DokanFileInfo info);
+        NtStatus Mounted(ReadOnlySpan<char> mountPoint, in DokanFileInfo info);
 
         /// <summary>
         /// Is called when %Dokan is unmounting the volume.
@@ -416,13 +416,13 @@ namespace DokanNet
         /// default data stream <c>"::$DATA"</c>.</remarks>
         /// \since Supported since version 0.8.0. You must specify the version in <see cref="Dokan.Mount(IDokanOperations, string, DokanOptions,int, int, TimeSpan, string, int,int, Logging.ILogger)"/>.
         /// 
-        /// <param name="fileName">File path requested by the Kernel on the FileSystem.</param>
+        /// <param name="fileNamePtr">File path requested by the Kernel on the FileSystem.</param>
         /// <param name="streams">List of <see cref="ByHandleFileInformation"/> for each streams present on the file.</param>
         /// <param name="info">An <see cref="DokanFileInfo"/> with information about the file or directory.</param>
         /// <returns>Return <see cref="NtStatus"/> or <see cref="DokanResult"/> appropriate to the request result.</returns>
         /// \see <a href="https://msdn.microsoft.com/en-us/library/windows/desktop/aa364424(v=vs.85).aspx">FindFirstStreamW function (MSDN)</a>
         /// \see <a href="https://msdn.microsoft.com/en-us/library/windows/desktop/aa365993(v=vs.85).aspx">About KTM (MSDN)</a>
-        NtStatus FindStreams(string fileName, out IEnumerable<FindFileInformation> streams, in DokanFileInfo info);
+        NtStatus FindStreams(ReadOnlySpan<char> fileNamePtr, out IEnumerable<FindFileInformation> streams, in DokanFileInfo info);
     }
 }
 
