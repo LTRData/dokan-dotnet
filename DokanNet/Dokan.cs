@@ -3,6 +3,7 @@ using System.Diagnostics.CodeAnalysis;
 using DokanNet.Logging;
 using DokanNet.Native;
 
+#pragma warning disable IDE0079 // Remove unnecessary suppression
 #pragma warning disable CA2000 // Dispose objects before losing scope
 
 namespace DokanNet;

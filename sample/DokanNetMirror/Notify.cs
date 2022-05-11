@@ -64,7 +64,7 @@ internal class Notify
 
     private string AlterPathToMountPath(string path)
     {
-        var relativeMirrorPath = path.Substring(sourcePath.Length).TrimStart('\\');
+        var relativeMirrorPath = path.AsSpan(sourcePath.Length).TrimStart('\\').ToString();
 
         return Path.Combine(targetPath, relativeMirrorPath);
     }

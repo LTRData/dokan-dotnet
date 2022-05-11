@@ -16,6 +16,13 @@ namespace DokanNet;
 [DebuggerDisplay("{FileName}, {Length}, {CreationTime}, {LastWriteTime}, {LastAccessTime}, {Attributes}")]
 public sealed class FindFileInformation
 {
+    // An empty array does not contain data and can be statically cached.
+#if NET46_OR_GREATER || NETSTANDARD || NETCOREAPP
+    public static readonly FindFileInformation[] Empty = Array.Empty<FindFileInformation>();
+#else
+    public static readonly FindFileInformation[] Empty = new FindFileInformation[0];
+#endif
+
     /// <summary>
     /// Gets or sets the name of the file or directory.
     /// <see cref="IDokanOperations.GetFileInformation"/> required the file path

@@ -779,7 +779,7 @@ internal class Mirror :
 
     public NtStatus FindStreams(ReadOnlySpan<char> fileName, out IEnumerable<FindFileInformation> streams, in DokanFileInfo info)
     {
-        streams = new FindFileInformation[0];
+        streams = FindFileInformation.Empty;
         return Trace(nameof(FindStreams), fileName, info, DokanResult.NotImplemented);
     }
 
@@ -789,7 +789,7 @@ internal class Mirror :
 
         var files = new DirectoryInfo(GetPath(fileName))
             .EnumerateFileSystemInfos()
-            .Where(finfo => DokanHelper.DokanIsNameInExpression(searchPattern, finfo.Name, true))
+            .Where(finfo => DokanHelper.DokanIsNameInExpression(searchPattern.AsSpan(), finfo.Name.AsSpan(), true))
             .Select(finfo => new FindFileInformation
             {
                 Attributes = finfo.Attributes,

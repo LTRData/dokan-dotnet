@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 
 #pragma warning disable IDE0079 // Remove unnecessary suppression
 #pragma warning disable IDE0057 // Use range operator
@@ -51,7 +52,7 @@ public static class DokanHelper
     /// <param name="name">The string that will be tested.</param>
     /// <param name="ignoreCase">When set to true a case insensitive match will be performed.</param>
     /// <returns>Returns true if Expression match Name, false otherwise.</returns>
-    public static bool DokanIsNameInExpression(string expression, string name, bool ignoreCase)
+    public static bool DokanIsNameInExpression(ReadOnlySpan<char> expression, ReadOnlySpan<char> name, bool ignoreCase)
     {
         var ei = 0;
         var ni = 0;
@@ -69,7 +70,7 @@ public static class DokanHelper
 
                     while (ni < name.Length)
                     {
-                        if (DokanIsNameInExpression(expression.Substring(ei), name.Substring(ni), ignoreCase))
+                        if (DokanIsNameInExpression(expression.Slice(ei), name.Slice(ni), ignoreCase))
                         {
                             return true;
                         }
@@ -89,7 +90,7 @@ public static class DokanHelper
 
                         if (!endReached)
                         {
-                            if (DokanIsNameInExpression(expression.Substring(ei), name.Substring(ni), ignoreCase))
+                            if (DokanIsNameInExpression(expression.Slice(ei), name.Slice(ni), ignoreCase))
                             {
                                 return true;
                             }
@@ -170,9 +171,27 @@ public static class DokanHelper
             }
         }
 
-        var nextExpressionChars = expression.Substring(ei);
-        var areNextExpressionCharsAllNullMatchers = expression.Any() && !string.IsNullOrEmpty(nextExpressionChars) && nextExpressionChars.All(x => CharsThatMatchEmptyStringsAtEnd.Contains(x));
+        var nextExpressionChars = expression.Slice(ei);
+
+        var areNextExpressionCharsAllNullMatchers = false;
+
+        if (!expression.IsEmpty &&
+            !nextExpressionChars.IsEmpty)
+        {
+            areNextExpressionCharsAllNullMatchers = true;
+
+            foreach (var chr in nextExpressionChars)
+            {
+                if (Array.IndexOf(CharsThatMatchEmptyStringsAtEnd, chr) < 0)
+                {
+                    areNextExpressionCharsAllNullMatchers = false;
+                    break;
+                }
+            }
+        }
+        
         var isNameCurrentCharTheLast = ni == name.Length;
+        
         if (ei == expression.Length && isNameCurrentCharTheLast || isNameCurrentCharTheLast && areNextExpressionCharsAllNullMatchers)
         {
             return true;

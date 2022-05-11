@@ -271,14 +271,14 @@ internal class RFS : IDokanOperations
 
     public NtStatus FindStreams(ReadOnlySpan<char> fileName, out IEnumerable<FindFileInformation> streams, in DokanFileInfo info)
     {
-        streams = new FindFileInformation[0];
+        streams = FindFileInformation.Empty;
         return DokanResult.NotImplemented;
     }
 
     public NtStatus FindFilesWithPattern(ReadOnlySpan<char> fileName, ReadOnlySpan<char> searchPattern, out IEnumerable<FindFileInformation> files,
         in DokanFileInfo info)
     {
-        files = new FindFileInformation[0];
+        files = FindFileInformation.Empty;
         return DokanResult.NotImplemented;
     }
 
