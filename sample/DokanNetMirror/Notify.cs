@@ -4,6 +4,7 @@ using DokanNet;
 
 #pragma warning disable IDE0079 // Remove unnecessary suppression
 #pragma warning disable IDE0057 // Use range operator
+#pragma warning disable CA1001 // Types that own disposable fields should be disposable
 
 namespace DokanNetMirror;
 

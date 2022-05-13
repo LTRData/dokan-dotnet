@@ -3,7 +3,7 @@ using Microsoft.Win32.SafeHandles;
 
 namespace DokanNetMirror;
 
-public static class NativeMethods
+internal static class NativeMethods
 {
     /// <summary>
     /// Sets the date and time that the specified file or directory was created, last accessed, or last modified.
@@ -24,5 +24,5 @@ public static class NativeMethods
     /// \see <a href="https://msdn.microsoft.com/en-us/library/windows/desktop/ms724933">SetFileTime function (MSDN)</a>
     [DllImport("kernel32", SetLastError = true)]
     [return: MarshalAs(UnmanagedType.Bool)]
-    public static extern bool SetFileTime(SafeFileHandle hFile, ref long lpCreationTime, ref long lpLastAccessTime, ref long lpLastWriteTime);
+    public static extern bool SetFileTime(SafeFileHandle hFile, in long lpCreationTime, in long lpLastAccessTime, in long lpLastWriteTime);
 }

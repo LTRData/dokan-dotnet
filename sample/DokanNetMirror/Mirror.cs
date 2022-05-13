@@ -12,6 +12,7 @@ using NativeFileAccess = DokanNet.NativeFileAccess;
 
 #pragma warning disable IDE0079 // Remove unnecessary suppression
 #pragma warning disable IDE0022 // Use expression body for methods
+#pragma warning disable CA2002 // Do not lock on objects with weak identity
 
 namespace DokanNetMirror;
 
@@ -505,7 +506,7 @@ internal class Mirror :
                 var ct = creationTime?.ToFileTime() ?? 0;
                 var lat = lastAccessTime?.ToFileTime() ?? 0;
                 var lwt = lastWriteTime?.ToFileTime() ?? 0;
-                if (NativeMethods.SetFileTime(stream.SafeFileHandle, ref ct, ref lat, ref lwt))
+                if (NativeMethods.SetFileTime(stream.SafeFileHandle, in ct, in lat, in lwt))
                 {
                     return DokanResult.Success;
                 }
