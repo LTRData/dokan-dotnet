@@ -70,16 +70,16 @@ internal class RFS : IDokanOperations
         var topname = name.Slice(1, top).ToString();
         var sub = name.Slice(1).IndexOf('\\');
 
-        if (TopDirectory.ContainsKey(topname))
+        if (TopDirectory.TryGetValue(topname, out var subkey))
         {
             if (sub == -1)
             {
-                return TopDirectory[topname];
+                return subkey;
             }
             else
             {
                 var subKeyPath = name.Slice(sub + 2).ToString();
-                return TopDirectory[topname].OpenSubKey(subKeyPath);
+                return subkey.OpenSubKey(subKeyPath);
             }
         }
         return null;
@@ -187,7 +187,7 @@ internal class RFS : IDokanOperations
 
     public NtStatus ReadFile(
         ReadOnlySpan<char> filename,
-        byte[] buffer,
+        Span<byte> buffer,
         out int readBytes,
         long offset,
         in DokanFileInfo info)
@@ -232,7 +232,7 @@ internal class RFS : IDokanOperations
 
     public NtStatus WriteFile(
         ReadOnlySpan<char> filename,
-        byte[] buffer,
+        ReadOnlySpan<byte> buffer,
         out int writtenBytes,
         long offset,
         in DokanFileInfo info)

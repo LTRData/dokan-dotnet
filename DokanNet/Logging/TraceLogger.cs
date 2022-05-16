@@ -1,4 +1,6 @@
-﻿using System.Diagnostics;
+﻿using System;
+using System.Diagnostics;
+using System.Globalization;
 
 namespace DokanNet.Logging;
 
@@ -11,17 +13,17 @@ public class TraceLogger : ILogger
     public bool DebugEnabled => true;
 
     /// <inheritdoc />
-    public void Debug(string message, params object[] args) => Trace.TraceInformation(message, args);
+    public void Debug(FormattableString message) => Trace.TraceInformation(message.ToString(CultureInfo.InvariantCulture));
 
     /// <inheritdoc />
-    public void Info(string message, params object[] args) => Trace.TraceInformation(message, args);
+    public void Info(FormattableString message) => Trace.TraceInformation(message.ToString(CultureInfo.InvariantCulture));
 
     /// <inheritdoc />
-    public void Warn(string message, params object[] args) => Trace.TraceWarning(message, args);
+    public void Warn(FormattableString message) => Trace.TraceWarning(message.ToString(CultureInfo.InvariantCulture));
 
     /// <inheritdoc />
-    public void Error(string message, params object[] args) => Trace.TraceError(message, args);
+    public void Error(FormattableString message) => Trace.TraceError(message.ToString(CultureInfo.InvariantCulture));
 
     /// <inheritdoc />
-    public void Fatal(string message, params object[] args) => Trace.TraceError(message, args);
+    public void Fatal(FormattableString message) => Trace.TraceError(message.ToString(CultureInfo.InvariantCulture));
 }

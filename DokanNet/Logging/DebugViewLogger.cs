@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿using System;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
 
@@ -28,28 +29,20 @@ public class DebugViewLogger : ILogger
     public bool DebugEnabled => true;
 
     /// <inheritdoc />
-    public void Debug(string message, params object[] args) => WriteMessageToDebugView("debug", message, args);
+    public void Debug(FormattableString message) => WriteMessageToDebugView("debug", message);
 
     /// <inheritdoc />
-    public void Info(string message, params object[] args) => WriteMessageToDebugView("info", message, args);
+    public void Info(FormattableString message) => WriteMessageToDebugView("info", message);
 
     /// <inheritdoc />
-    public void Warn(string message, params object[] args) => WriteMessageToDebugView("warn", message, args);
+    public void Warn(FormattableString message) => WriteMessageToDebugView("warn", message);
 
     /// <inheritdoc />
-    public void Error(string message, params object[] args) => WriteMessageToDebugView("error", message, args);
+    public void Error(FormattableString message) => WriteMessageToDebugView("error", message);
 
     /// <inheritdoc />
-    public void Fatal(string message, params object[] args) => WriteMessageToDebugView("fatal", message, args);
+    public void Fatal(FormattableString message) => WriteMessageToDebugView("fatal", message);
 
-    [SuppressMessage("Globalization", "CA1305:Specify IFormatProvider", Justification = "<Pending>")]
-    private void WriteMessageToDebugView(string category, string message, params object[] args)
-    {
-        if (args?.Length > 0)
-        {
-            message = string.Format(message, args);
-        }
-
+    private void WriteMessageToDebugView(string category, FormattableString message) =>
         Trace.WriteLine(message.FormatMessageForLogging(category, _loggerName));
-    }
 }

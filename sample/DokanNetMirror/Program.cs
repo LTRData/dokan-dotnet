@@ -8,7 +8,6 @@ internal class Program
 {
     private const string MirrorKey = "-what";
     private const string MountKey = "-where";
-    private const string UseUnsafeKey = "-unsafe";
 
     private static int Main(string[] args)
     {
@@ -26,12 +25,7 @@ internal class Program
                ? arguments[MountKey] as string
                : @"N:\";
 
-            var unsafeReadWrite = arguments.ContainsKey(UseUnsafeKey);
-
-            Console.WriteLine($"Using unsafe methods: {unsafeReadWrite}");
-            var mirror = unsafeReadWrite 
-                ? new UnsafeMirror(mirrorPath) 
-                : new Mirror(mirrorPath);
+            var mirror = new Mirror(mirrorPath);
 
             Dokan.Init();
 

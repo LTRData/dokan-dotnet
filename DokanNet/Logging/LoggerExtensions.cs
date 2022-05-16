@@ -17,7 +17,7 @@ public static class LoggerExtensions
     /// <param name="loggerName">Optional log name to at to the log message.</param>
     /// <returns>A formated log message.</returns>
     public static string FormatMessageForLogging(
-        this string message,
+        this FormattableString message,
         string category = null,
         string loggerName = "") => message.FormatMessageForLogging(addDateTime: false, threadId: null, category, loggerName);
 
@@ -30,13 +30,14 @@ public static class LoggerExtensions
     /// <param name="loggerName">Optional log name to at to the log message.</param>
     /// <returns>A formated log message.</returns>
     public static string FormatMessageForLogging(
-        this string message,
+        this FormattableString message,
         bool addDateTime = false,
         int? threadId = null,
         string category = null,
         string loggerName = "")
     {
         var stringBuilder = new StringBuilder();
+
         if (addDateTime)
         {
             stringBuilder.AppendFormat("{0} - ", DateTime.Now.ToString(CultureInfo.InvariantCulture));
@@ -57,7 +58,8 @@ public static class LoggerExtensions
             stringBuilder.Append($"{category} ");
         }
 
-        stringBuilder.Append(message);
+        stringBuilder.Append(message.ToString(CultureInfo.InvariantCulture));
+
         return stringBuilder.ToString();
     }
 }

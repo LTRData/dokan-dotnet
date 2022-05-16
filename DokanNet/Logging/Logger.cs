@@ -7,26 +7,26 @@ namespace DokanNet.Logging;
 /// </summary>
 public class Logger : ILogger
 {
-    private readonly Action<string, object[]> _debug;
-    private readonly Action<string, object[]> _info;
-    private readonly Action<string, object[]> _warn;
-    private readonly Action<string, object[]> _error;
-    private readonly Action<string, object[]> _fatal;
+    private readonly Action<FormattableString> _debug;
+    private readonly Action<FormattableString> _info;
+    private readonly Action<FormattableString> _warn;
+    private readonly Action<FormattableString> _error;
+    private readonly Action<FormattableString> _fatal;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="Logger"/> class.
     /// </summary>
-    /// <param name="debug">An <see cref="Action{T}"/> that are called when a debug log message are arriving.</param>
-    /// <param name="info">An <see cref="Action{T}"/> that are called when a information log message are arriving</param>
-    /// <param name="warn">An <see cref="Action{T}"/> that are called when a warning log message are arriving</param>
-    /// <param name="error">An <see cref="Action{T}"/> that are called when a error log message are arriving</param>
-    /// <param name="fatal">An <see cref="Action{T}"/> that are called when a fatal error log message are arriving</param>
+    /// <param name="debug">An <see cref="Action{FormattableString}"/> that are called when a debug log message are arriving.</param>
+    /// <param name="info">An <see cref="Action{FormattableString}"/> that are called when a information log message are arriving</param>
+    /// <param name="warn">An <see cref="Action{FormattableString}"/> that are called when a warning log message are arriving</param>
+    /// <param name="error">An <see cref="Action{FormattableString}"/> that are called when a error log message are arriving</param>
+    /// <param name="fatal">An <see cref="Action{FormattableString}"/> that are called when a fatal error log message are arriving</param>
     public Logger(
-        Action<string, object[]> debug,
-        Action<string, object[]> info,
-        Action<string, object[]> warn,
-        Action<string, object[]> error,
-        Action<string, object[]> fatal)
+        Action<FormattableString> debug,
+        Action<FormattableString> info,
+        Action<FormattableString> warn,
+        Action<FormattableString> error,
+        Action<FormattableString> fatal)
     {
         _debug = debug;
         _info = info;
@@ -39,17 +39,17 @@ public class Logger : ILogger
     public bool DebugEnabled => _debug != null;
 
     /// <inheritdoc />
-    public void Debug(string message, params object[] args) => _debug(message, args);
+    public void Debug(FormattableString message) => _debug(message);
 
     /// <inheritdoc />
-    public void Info(string message, params object[] args) => _info(message, args);
+    public void Info(FormattableString message) => _info(message);
 
     /// <inheritdoc />
-    public void Warn(string message, params object[] args) => _warn(message, args);
+    public void Warn(FormattableString message) => _warn(message);
 
     /// <inheritdoc />
-    public void Error(string message, params object[] args) => _error(message, args);
+    public void Error(FormattableString message) => _error(message);
 
     /// <inheritdoc />
-    public void Fatal(string message, params object[] args) => _fatal(message, args);
+    public void Fatal(FormattableString message) => _fatal(message);
 }

@@ -13,15 +13,11 @@ using NativeFileAccess = DokanNet.NativeFileAccess;
 #pragma warning disable IDE0079 // Remove unnecessary suppression
 #pragma warning disable IDE0022 // Use expression body for methods
 #pragma warning disable CA2002 // Do not lock on objects with weak identity
+#pragma warning disable CA1822 // Mark members as static
 
 namespace DokanNetMirror;
 
-internal class Mirror :
-#if NETCOREAPP || NETSTANDARD2_1_OR_GREATER
-        IDokanOperationsUnsafe
-#else
-        IDokanOperations
-#endif
+internal class Mirror : IDokanOperations
 {
     private readonly string path;
 
@@ -40,7 +36,7 @@ internal class Mirror :
     {
         if (!Directory.Exists(path))
         {
-            throw new ArgumentException(nameof(path));
+            throw new DirectoryNotFoundException($"Directory '{path}' does not exist");
         }
 
         this.path = path;
@@ -113,7 +109,6 @@ internal class Mirror :
                                 attributes, DokanResult.PathNotFound);
                         }
 
-                        new DirectoryInfo(filePath).EnumerateFileSystemInfos().Any();
                         // you can't list the directory
                         break;
 
@@ -294,13 +289,13 @@ internal class Mirror :
         // could recreate cleanup code here but this is not called sometimes
     }
 
-    public NtStatus ReadFile(ReadOnlySpan<char> fileName, byte[] buffer, out int bytesRead, long offset, in DokanFileInfo info)
+    public NtStatus ReadFile(ReadOnlySpan<char> fileName, Span<byte> buffer, out int bytesRead, long offset, in DokanFileInfo info)
     {
         if (info.Context == null) // memory mapped read
         {
             using var stream = new FileStream(GetPath(fileName), FileMode.Open, System.IO.FileAccess.Read);
             stream.Position = offset;
-            bytesRead = stream.Read(buffer, 0, buffer.Length);
+            bytesRead = stream.Read(buffer);
         }
         else // normal read
         {
@@ -308,37 +303,14 @@ internal class Mirror :
             lock (stream) //Protect from overlapped read
             {
                 stream.Position = offset;
-                bytesRead = stream.Read(buffer, 0, buffer.Length);
+                bytesRead = stream.Read(buffer);
             }
         }
         return Trace(nameof(ReadFile), fileName, info, DokanResult.Success, $"out {bytesRead}",
             offset.ToString(CultureInfo.InvariantCulture));
     }
 
-#if NETCOREAPP || NETSTANDARD2_1_OR_GREATER
-    public unsafe NtStatus ReadFile(ReadOnlySpan<char> fileName, IntPtr buffer, uint bufferLength, out int bytesRead, long offset, in DokanFileInfo info)
-    {
-        if (info.Context == null) // memory mapped read
-        {
-            using var stream = new FileStream(GetPath(fileName), FileMode.Open, System.IO.FileAccess.Read);
-            stream.Position = offset;
-            bytesRead = stream.Read(new Span<byte>(buffer.ToPointer(), (int)bufferLength));
-        }
-        else // normal read
-        {
-            var stream = info.Context as FileStream;
-            lock (stream) //Protect from overlapped read
-            {
-                stream.Position = offset;
-                bytesRead = stream.Read(new Span<byte>(buffer.ToPointer(), (int)bufferLength));
-            }
-        }
-        return Trace(nameof(ReadFile), fileName, info, DokanResult.Success, $"out {bytesRead}",
-            offset.ToString(CultureInfo.InvariantCulture));
-    }
-#endif
-
-    public NtStatus WriteFile(ReadOnlySpan<char> fileName, byte[] buffer, out int bytesWritten, long offset, in DokanFileInfo info)
+    public NtStatus WriteFile(ReadOnlySpan<char> fileName, ReadOnlySpan<byte> buffer, out int bytesWritten, long offset, in DokanFileInfo info)
     {
         var append = offset == -1;
         if (info.Context == null)
@@ -348,7 +320,7 @@ internal class Mirror :
             {
                 stream.Position = offset;
             }
-            stream.Write(buffer, 0, buffer.Length);
+            stream.Write(buffer);
             bytesWritten = buffer.Length;
         }
         else
@@ -373,58 +345,13 @@ internal class Mirror :
                 {
                     stream.Position = offset;
                 }
-                stream.Write(buffer, 0, buffer.Length);
+                stream.Write(buffer);
             }
             bytesWritten = buffer.Length;
         }
         return Trace(nameof(WriteFile), fileName, info, DokanResult.Success, $"out {bytesWritten}",
             offset.ToString(CultureInfo.InvariantCulture));
     }
-
-#if NETCOREAPP || NETSTANDARD2_1_OR_GREATER
-    public unsafe NtStatus WriteFile(ReadOnlySpan<char> fileName, IntPtr buffer, uint bufferLength, out int bytesWritten, long offset, in DokanFileInfo info)
-    {
-        var append = offset == -1;
-        if (info.Context == null)
-        {
-            using var stream = new FileStream(GetPath(fileName), append ? FileMode.Append : FileMode.Open, System.IO.FileAccess.Write);
-            if (!append) // Offset of -1 is an APPEND: https://docs.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-writefile
-            {
-                stream.Position = offset;
-            }
-            stream.Write(new ReadOnlySpan<byte>(buffer.ToPointer(), (int)bufferLength));
-            bytesWritten = (int)bufferLength;
-        }
-        else
-        {
-            var stream = info.Context as FileStream;
-            lock (stream) //Protect from overlapped write
-            {
-                if (append)
-                {
-                    if (stream.CanSeek)
-                    {
-                        stream.Seek(0, SeekOrigin.End);
-                    }
-                    else
-                    {
-                        bytesWritten = 0;
-                        return Trace(nameof(WriteFile), fileName, info, DokanResult.Error, $"out {bytesWritten}",
-                            offset.ToString(CultureInfo.InvariantCulture));
-                    }
-                }
-                else
-                {
-                    stream.Position = offset;
-                }
-                stream.Write(new ReadOnlySpan<byte>(buffer.ToPointer(), (int)bufferLength));
-            }
-            bytesWritten = (int)bufferLength;
-        }
-        return Trace(nameof(WriteFile), fileName, info, DokanResult.Success, $"out {bytesWritten}",
-            offset.ToString(CultureInfo.InvariantCulture));
-    }
-#endif
 
     public NtStatus FlushFileBuffers(ReadOnlySpan<char> fileName, in DokanFileInfo info)
     {

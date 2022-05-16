@@ -1,5 +1,8 @@
 ﻿using System;
+using System.Buffers;
+using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 
 #pragma warning disable IDE0079 // Remove unnecessary suppression
 #pragma warning disable IDE0057 // Use range operator
@@ -199,4 +202,35 @@ public static class DokanHelper
 
         return false;
     }
+
+#if NETFRAMEWORK || (NETSTANDARD && !NETSTANDARD2_1_OR_GREATER)
+    public static int Read(this Stream stream, Span<byte> buffer)
+    {
+        var array = ArrayPool<byte>.Shared.Rent(buffer.Length);
+        try
+        {
+            var count = stream.Read(array, 0, buffer.Length);
+            array.AsSpan(0, count).CopyTo(buffer);
+            return count;
+        }
+        finally
+        {
+            ArrayPool<byte>.Shared.Return(array);
+        }
+    }
+
+    public static void Write(this Stream stream, ReadOnlySpan<byte> buffer)
+    {
+        var array = ArrayPool<byte>.Shared.Rent(buffer.Length);
+        try
+        {
+            buffer.CopyTo(array);
+            stream.Write(array, 0, buffer.Length);
+        }
+        finally
+        {
+            ArrayPool<byte>.Shared.Return(array);
+        }
+    }
+#endif
 }

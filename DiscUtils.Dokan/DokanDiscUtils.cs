@@ -26,13 +26,7 @@ namespace DiscUtils.Dokan;
 using VirtualFileSystem;
 
 [SuppressMessage("Design", "CA1062:Validate arguments of public methods", Justification = "<Pending>")]
-public class DokanDiscUtils :
-#if NETCOREAPP || NETSTANDARD2_1_OR_GREATER
-        IDokanOperationsUnsafe,
-#else
-        IDokanOperations,
-#endif
-        IDisposable
+public class DokanDiscUtils : IDokanOperations, IDisposable
 {
     public IFileSystem FileSystem { get; }
 
@@ -603,7 +597,7 @@ public class DokanDiscUtils :
         // could recreate cleanup code here but this is not called sometimes
     }
 
-    public NtStatus ReadFile(ReadOnlySpan<char> fileNamePtr, byte[] buffer, out int bytesRead, long offset, in DokanFileInfo info)
+    public NtStatus ReadFile(ReadOnlySpan<char> fileNamePtr, Span<byte> buffer, out int bytesRead, long offset, in DokanFileInfo info)
     {
         if (info.Context == null) // memory mapped read
         {
@@ -611,7 +605,7 @@ public class DokanDiscUtils :
 
             using var stream = FileSystem.OpenFile(fileName, FileMode.Open, FileAccess.Read);
             stream.Position = offset;
-            bytesRead = stream.Read(buffer, 0, buffer.Length);
+            bytesRead = stream.Read(buffer);
         }
         else // normal read
         {
@@ -620,40 +614,14 @@ public class DokanDiscUtils :
             lock (stream) //Protect from overlapped read
             {
                 stream.Position = offset;
-                bytesRead = stream.Read(buffer, 0, buffer.Length);
+                bytesRead = stream.Read(buffer);
             }
         }
         return Trace(nameof(ReadFile), fileNamePtr, info, DokanResult.Success, $"out {bytesRead}",
             offset.ToString(CultureInfo.InvariantCulture));
     }
 
-#if NETCOREAPP || NETSTANDARD2_1_OR_GREATER
-    public unsafe NtStatus ReadFile(ReadOnlySpan<char> fileNamePtr, IntPtr buffer, uint bufferLength, out int bytesRead, long offset, in DokanFileInfo info)
-    {
-        if (info.Context == null) // memory mapped read
-        {
-            var fileName = TranslatePath(fileNamePtr);
-
-            using var stream = FileSystem.OpenFile(fileName, FileMode.Open, FileAccess.Read);
-            stream.Position = offset;
-            bytesRead = stream.Read(new Span<byte>(buffer.ToPointer(), (int)bufferLength));
-        }
-        else // normal read
-        {
-            var stream = info.Context as Stream;
-
-            lock (stream) //Protect from overlapped read
-            {
-                stream.Position = offset;
-                bytesRead = stream.Read(new Span<byte>(buffer.ToPointer(), (int)bufferLength));
-            }
-        }
-        return Trace(nameof(ReadFile), fileNamePtr, info, DokanResult.Success, $"out {bytesRead}",
-            offset.ToString(CultureInfo.InvariantCulture));
-    }
-#endif
-
-    public NtStatus WriteFile(ReadOnlySpan<char> fileNamePtr, byte[] buffer, out int bytesWritten, long offset, in DokanFileInfo info)
+    public NtStatus WriteFile(ReadOnlySpan<char> fileNamePtr, ReadOnlySpan<byte> buffer, out int bytesWritten, long offset, in DokanFileInfo info)
     {
         bytesWritten = 0;
 
@@ -668,7 +636,7 @@ public class DokanDiscUtils :
 
             using var stream = FileSystem.OpenFile(fileName, FileMode.Open, FileAccess.Write);
             stream.Position = offset;
-            stream.Write(buffer, 0, buffer.Length);
+            stream.Write(buffer);
             bytesWritten = buffer.Length;
         }
         else
@@ -678,7 +646,7 @@ public class DokanDiscUtils :
             lock (stream) //Protect from overlapped write
             {
                 stream.Position = offset;
-                stream.Write(buffer, 0, buffer.Length);
+                stream.Write(buffer);
             }
             bytesWritten = buffer.Length;
         }

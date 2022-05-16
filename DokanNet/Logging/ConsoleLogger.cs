@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -11,8 +13,7 @@ namespace DokanNet.Logging;
 public class ConsoleLogger : ILogger, IDisposable
 {
     private readonly string _loggerName;
-    private readonly System.Collections.Concurrent.BlockingCollection<(int ThreadId, string Message, ConsoleColor Color)> _PendingLogs
-        = new();
+    private readonly BlockingCollection<(string Message, ConsoleColor Color)> _PendingLogs = new();
 
     private readonly Thread _WriterTask = null;
     /// <summary>
@@ -24,9 +25,9 @@ public class ConsoleLogger : ILogger, IDisposable
         _loggerName = loggerName;
         _WriterTask = new Thread(o =>
         {
-            foreach (var (ThreadId, Message, Color) in _PendingLogs.GetConsumingEnumerable())
+            foreach (var (Message, Color) in _PendingLogs.GetConsumingEnumerable())
             {
-                WriteMessage(ThreadId, Message, Color);
+                WriteMessage(Message, Color);
             }
         });
         _WriterTask.Start();
@@ -36,40 +37,36 @@ public class ConsoleLogger : ILogger, IDisposable
     public bool DebugEnabled => true;
 
     /// <inheritdoc />
-    public void Debug(string message, params object[] args) => EnqueueMessage(Console.ForegroundColor, message, args);
+    public void Debug(FormattableString message) => EnqueueMessage(Console.ForegroundColor, message);
 
     /// <inheritdoc />
-    public void Info(string message, params object[] args) => EnqueueMessage(Console.ForegroundColor, message, args);
+    public void Info(FormattableString message) => EnqueueMessage(Console.ForegroundColor, message);
 
     /// <inheritdoc />
-    public void Warn(string message, params object[] args) => EnqueueMessage(ConsoleColor.DarkYellow, message, args);
+    public void Warn(FormattableString message) => EnqueueMessage(ConsoleColor.DarkYellow, message);
 
     /// <inheritdoc />
-    public void Error(string message, params object[] args) => EnqueueMessage(ConsoleColor.Red, message, args);
+    public void Error(FormattableString message) => EnqueueMessage(ConsoleColor.Red, message);
 
     /// <inheritdoc />
-    public void Fatal(string message, params object[] args) => EnqueueMessage(ConsoleColor.Red, message, args);
+    public void Fatal(FormattableString message) => EnqueueMessage(ConsoleColor.Red, message);
 
-    [SuppressMessage("Globalization", "CA1305:Specify IFormatProvider", Justification = "<Pending>")]
-    private void EnqueueMessage(ConsoleColor newColor, string message, params object[] args)
+    private void EnqueueMessage(ConsoleColor newColor, FormattableString message)
     {
-        if (args.Length > 0)
-        {
-            message = string.Format(message, args);
-        }
-
-        _PendingLogs.Add((Thread.CurrentThread.ManagedThreadId, message, newColor));
+        _PendingLogs.Add((
+            Message: message.FormatMessageForLogging(addDateTime: true, threadId: Environment.CurrentManagedThreadId, loggerName: _loggerName),
+            Color: newColor));
     }
 
     private static readonly object _lock = new();
 
-    private void WriteMessage(int threadId, string message, ConsoleColor newColor)
+    private void WriteMessage(string message, ConsoleColor newColor)
     {
         lock (_lock)
         {
             var origForegroundColor = Console.ForegroundColor;
             Console.ForegroundColor = newColor;
-            Console.WriteLine(message.FormatMessageForLogging(addDateTime: true, threadId: threadId, loggerName: _loggerName));
+            Console.WriteLine(message);
             Console.ForegroundColor = origForegroundColor;
         }
     }

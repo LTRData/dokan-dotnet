@@ -1,4 +1,6 @@
-﻿namespace DokanNet.Logging;
+﻿using System;
+
+namespace DokanNet.Logging;
 
 /// <summary>
 /// Ignore all log messages.
@@ -9,27 +11,27 @@ public class NullLogger : ILogger
     public bool DebugEnabled => false;
 
     /// <inheritdoc />
-    public void Debug(string message, params object[] args)
+    public void Debug(FormattableString message)
     {
     }
 
     /// <inheritdoc />
-    public void Error(string message, params object[] args)
+    public void Error(FormattableString message)
     {
     }
 
     /// <inheritdoc />
-    public void Fatal(string message, params object[] args)
+    public void Fatal(FormattableString message)
     {
     }
 
     /// <inheritdoc />
-    public void Info(string message, params object[] args)
+    public void Info(FormattableString message)
     {
     }
 
     /// <inheritdoc />
-    public void Warn(string message, params object[] args)
+    public void Warn(FormattableString message)
     {
     }
 }
