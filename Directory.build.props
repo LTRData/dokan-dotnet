@@ -4,6 +4,12 @@
     <LangVersion>Latest</LangVersion>
 
     <DiscUtilsFramework>$(TargetFramework.Split(`-`)[0])</DiscUtilsFramework>
+
+    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    <PackageId>LTRData.$(MSBuildProjectName)</PackageId>
+    <Company>LTR Data</Company>
+    <Authors>Olof Lagerkvist</Authors>
+
   </PropertyGroup>
 
 </Project>

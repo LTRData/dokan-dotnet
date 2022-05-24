@@ -35,86 +35,35 @@
     <DefineDebug>true</DefineDebug>
   </PropertyGroup>
 
-  <PropertyGroup>
-    <DiscUtilsFramework Condition="'$(TargetFramework.CompareTo(`net5`))' &gt;= 0">netstandard2.1</DiscUtilsFramework>
-    <DiscUtilsFramework Condition="'$(TargetFramework.CompareTo(`net5`))' &lt; 0">$(TargetFramework)</DiscUtilsFramework>
-  </PropertyGroup>
-  
   <ItemGroup>
     <ProjectReference Include="..\DiscUtils.Dokan\DiscUtils.Dokan.csproj" />
     <ProjectReference Include="..\DokanNet\DokanNet.csproj" />
   </ItemGroup>
 
   <ItemGroup>
-    <Reference Include="DiscUtils.Btrfs">
-      <HintPath>..\..\DiscUtils\Library\DiscUtils\bin\$(Configuration)\$(DiscUtilsFramework)\DiscUtils.Btrfs.dll</HintPath>
-    </Reference>
-    <Reference Include="DiscUtils.Core">
-      <HintPath>..\..\DiscUtils\Library\DiscUtils\bin\$(Configuration)\$(DiscUtilsFramework)\DiscUtils.Core.dll</HintPath>
-    </Reference>
-    <Reference Include="DiscUtils.Ext">
-      <HintPath>..\..\DiscUtils\Library\DiscUtils\bin\$(Configuration)\$(DiscUtilsFramework)\DiscUtils.Ext.dll</HintPath>
-    </Reference>
-    <Reference Include="DiscUtils.Fat">
-      <HintPath>..\..\DiscUtils\Library\DiscUtils\bin\$(Configuration)\$(DiscUtilsFramework)\DiscUtils.Fat.dll</HintPath>
-    </Reference>
-    <Reference Include="DiscUtils.HfsPlus">
-      <HintPath>..\..\DiscUtils\Library\DiscUtils\bin\$(Configuration)\$(DiscUtilsFramework)\DiscUtils.HfsPlus.dll</HintPath>
-    </Reference>
-    <Reference Include="DiscUtils.Iso9660">
-      <HintPath>..\..\DiscUtils\Library\DiscUtils\bin\$(Configuration)\$(DiscUtilsFramework)\DiscUtils.Iso9660.dll</HintPath>
-    </Reference>
-    <Reference Include="DiscUtils.Lvm">
-      <HintPath>..\..\DiscUtils\Library\DiscUtils\bin\$(Configuration)\$(DiscUtilsFramework)\DiscUtils.Lvm.dll</HintPath>
-    </Reference>
-    <Reference Include="DiscUtils.Nfs">
-      <HintPath>..\..\DiscUtils\Library\DiscUtils\bin\$(Configuration)\$(DiscUtilsFramework)\DiscUtils.Nfs.dll</HintPath>
-    </Reference>
-    <Reference Include="DiscUtils.Ntfs">
-      <HintPath>..\..\DiscUtils\Library\DiscUtils\bin\$(Configuration)\$(DiscUtilsFramework)\DiscUtils.Ntfs.dll</HintPath>
-    </Reference>
-    <Reference Include="DiscUtils.Registry">
-      <HintPath>..\..\DiscUtils\Library\DiscUtils\bin\$(Configuration)\$(DiscUtilsFramework)\DiscUtils.Registry.dll</HintPath>
-    </Reference>
-    <Reference Include="DiscUtils.SquashFs">
-      <HintPath>..\..\DiscUtils\Library\DiscUtils\bin\$(Configuration)\$(DiscUtilsFramework)\DiscUtils.SquashFs.dll</HintPath>
-    </Reference>
-    <Reference Include="DiscUtils.Streams">
-      <HintPath>..\..\DiscUtils\Library\DiscUtils\bin\$(Configuration)\$(DiscUtilsFramework)\DiscUtils.Streams.dll</HintPath>
-    </Reference>
-    <Reference Include="DiscUtils.Swap">
-      <HintPath>..\..\DiscUtils\Library\DiscUtils\bin\$(Configuration)\$(DiscUtilsFramework)\DiscUtils.Swap.dll</HintPath>
-    </Reference>
-    <Reference Include="DiscUtils.Udf">
-      <HintPath>..\..\DiscUtils\Library\DiscUtils\bin\$(Configuration)\$(DiscUtilsFramework)\DiscUtils.Udf.dll</HintPath>
-    </Reference>
-    <Reference Include="DiscUtils.Vdi">
-      <HintPath>..\..\DiscUtils\Library\DiscUtils\bin\$(Configuration)\$(DiscUtilsFramework)\DiscUtils.Vdi.dll</HintPath>
-    </Reference>
-    <Reference Include="DiscUtils.Vhd">
-      <HintPath>..\..\DiscUtils\Library\DiscUtils\bin\$(Configuration)\$(DiscUtilsFramework)\DiscUtils.Vhd.dll</HintPath>
-    </Reference>
-    <Reference Include="DiscUtils.Vhdx">
-      <HintPath>..\..\DiscUtils\Library\DiscUtils\bin\$(Configuration)\$(DiscUtilsFramework)\DiscUtils.Vhdx.dll</HintPath>
-    </Reference>
-    <Reference Include="DiscUtils.VirtualFileSystem">
-      <HintPath>..\..\DiscUtils\Library\DiscUtils\bin\$(Configuration)\$(DiscUtilsFramework)\DiscUtils.VirtualFileSystem.dll</HintPath>
-    </Reference>
-    <Reference Include="DiscUtils.Vmdk">
-      <HintPath>..\..\DiscUtils\Library\DiscUtils\bin\$(Configuration)\$(DiscUtilsFramework)\DiscUtils.Vmdk.dll</HintPath>
-    </Reference>
-    <Reference Include="DiscUtils.Wim">
-      <HintPath>..\..\DiscUtils\Library\DiscUtils\bin\$(Configuration)\$(DiscUtilsFramework)\DiscUtils.Wim.dll</HintPath>
-    </Reference>
-    <Reference Include="DiscUtils.Xfs">
-      <HintPath>..\..\DiscUtils\Library\DiscUtils\bin\$(Configuration)\$(DiscUtilsFramework)\DiscUtils.Xfs.dll</HintPath>
-    </Reference>
-    <Reference Include="ExFat.Core">
-      <HintPath>..\..\Repos\ExFat\bin\$(Configuration)\$(DiscUtilsFramework)\ExFat.Core.dll</HintPath>
-    </Reference>
-    <Reference Include="ExFat.DiscUtils">
-      <HintPath>..\..\Repos\ExFat\bin\$(Configuration)\$(DiscUtilsFramework)\ExFat.DiscUtils.dll</HintPath>
-    </Reference>
+    <PackageReference Include="LTRData.DiscUtils.Btrfs" Version="1.0.0" />
+    <PackageReference Include="LTRData.DiscUtils.Core" Version="1.0.0" />
+    <PackageReference Include="LTRData.DiscUtils.Ext" Version="1.0.0" />
+    <PackageReference Include="LTRData.DiscUtils.Fat" Version="1.0.0" />
+    <PackageReference Include="LTRData.DiscUtils.HfsPlus" Version="1.0.0" />
+    <PackageReference Include="LTRData.DiscUtils.Iso9660" Version="1.0.0" />
+    <PackageReference Include="LTRData.DiscUtils.Lvm" Version="1.0.0" />
+    <PackageReference Include="LTRData.DiscUtils.Nfs" Version="1.0.0" />
+    <PackageReference Include="LTRData.DiscUtils.Ntfs" Version="1.0.0" />
+    <PackageReference Include="LTRData.DiscUtils.Registry" Version="1.0.0" />
+    <PackageReference Include="LTRData.DiscUtils.SquashFs" Version="1.0.0" />
+    <PackageReference Include="LTRData.DiscUtils.Streams" Version="1.0.0" />
+    <PackageReference Include="LTRData.DiscUtils.Swap" Version="1.0.0" />
+    <PackageReference Include="LTRData.DiscUtils.Udf" Version="1.0.0" />
+    <PackageReference Include="LTRData.DiscUtils.Vdi" Version="1.0.0" />
+    <PackageReference Include="LTRData.DiscUtils.Vhd" Version="1.0.0" />
+    <PackageReference Include="LTRData.DiscUtils.Vhdx" Version="1.0.0" />
+    <PackageReference Include="LTRData.DiscUtils.VirtualFileSystem" Version="1.0.0" />
+    <PackageReference Include="LTRData.DiscUtils.Vmdk" Version="1.0.0" />
+    <PackageReference Include="LTRData.DiscUtils.Wim" Version="1.0.0" />
+    <PackageReference Include="LTRData.DiscUtils.Xfs" Version="1.0.0" />
+    <PackageReference Include="LTRData.ExFat.Core" Version="0.9.16" />
+    <PackageReference Include="LTRData.ExFat.DiscUtils" Version="0.9.16" />
   </ItemGroup>
 
 </Project>
