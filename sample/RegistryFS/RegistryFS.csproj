@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFrameworks>net45;net6.0-windows</TargetFrameworks>
+    <TargetFrameworks>net46;net6.0-windows</TargetFrameworks>
     <OutputPath>..\$(Configuration)\</OutputPath>
   </PropertyGroup>
  
@@ -23,7 +23,6 @@
   </ItemGroup>
 
   <PropertyGroup>
-    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
     <!--Set to True to run Code Analysis-->
     <RunCodeAnalysis>false</RunCodeAnalysis>
   </PropertyGroup>

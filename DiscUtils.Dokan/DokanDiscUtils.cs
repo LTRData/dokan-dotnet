@@ -170,7 +170,6 @@ public class DokanDiscUtils : IDokanOperations, IDisposable
 
     #region Implementation of IDokanOperations
 
-#if NETCOREAPP
     private string TranslatePath(ReadOnlySpan<char> path)
     {
         path = path.Trim('\\');
@@ -182,7 +181,7 @@ public class DokanDiscUtils : IDokanOperations, IDisposable
 
         foreach (var transl in _transl)
         {
-            if (path.Equals(transl.Key, _comparison))
+            if (path.Equals(transl.Key.AsSpan(), _comparison))
             {
                 var newpath = transl.Value;
 #if DEBUG
@@ -192,11 +191,19 @@ public class DokanDiscUtils : IDokanOperations, IDisposable
                 return newpath;
             }
 
-            var dirpath = transl.Key + @"\";
-
-            if (path.StartsWith(dirpath, _comparison))
+            if (path.Length <= transl.Key.Length)
             {
-                var newpath = string.Concat(transl.Value, path.Slice(transl.Key.Length));
+                continue;
+            }
+
+            if (path.StartsWith(transl.Key.AsSpan(), _comparison) &&
+                path[transl.Key.Length] == '\\')
+            {
+#if NETCOREAPP || NETSTANDARD2_1_OR_GREATER
+                var newpath = Path.Join(transl.Value, path.Slice(transl.Key.Length));
+#else
+                var newpath = string.Concat(transl.Value, path.Slice(transl.Key.Length).ToString());
+#endif
 
                 var originalpath = path.ToString();
 
@@ -224,7 +231,7 @@ public class DokanDiscUtils : IDokanOperations, IDisposable
 
         foreach (var transl in _transl)
         {
-            if (path.Equals(transl.Value, _comparison))
+            if (path.Equals(transl.Value.AsSpan(), _comparison))
             {
                 var newpath = transl.Key;
 #if DEBUG
@@ -234,11 +241,19 @@ public class DokanDiscUtils : IDokanOperations, IDisposable
                 return newpath;
             }
 
-            var dirpath = transl.Value + @"\";
-
-            if (path.StartsWith(dirpath, _comparison))
+            if (path.Length <= transl.Value.Length)
             {
-                var newpath = string.Concat(transl.Key, path.Slice(transl.Value.Length));
+                continue;
+            }
+
+            if (path.StartsWith(transl.Value.AsSpan(), _comparison) &&
+                path[transl.Value.Length] == '\\')
+            {
+#if NETCOREAPP || NETSTANDARD2_1_OR_GREATER
+                var newpath = Path.Join(transl.Key, path.Slice(transl.Value.Length));
+#else
+                var newpath = string.Concat(transl.Key, path.Slice(transl.Value.Length).ToString());
+#endif
 
                 var originalpath = path.ToString();
 
@@ -254,91 +269,6 @@ public class DokanDiscUtils : IDokanOperations, IDisposable
 
         return path.ToString();
     }
-#else
-    private string TranslatePath(ReadOnlySpan<char> pathPtr)
-    {
-        pathPtr = pathPtr.Trim('\\');
-
-        if (pathPtr.IsEmpty)
-        {
-            return string.Empty;
-        }
-
-        var originalpath = pathPtr.ToString();
-
-        foreach (var transl in _transl)
-        {
-            if (originalpath.Equals(transl.Key, _comparison))
-            {
-                var newpath = transl.Value;
-#if DEBUG
-                Debug.WriteLine($"Using translation of '{transl.Key}' to '{newpath}'");
-#endif
-
-                return newpath;
-            }
-
-            var dirpath = transl.Key + @"\";
-
-            if (originalpath.StartsWith(dirpath, _comparison))
-            {
-                var newpath = string.Concat(transl.Value, originalpath.Substring(transl.Key.Length));
-
-                _transl.Add(new(originalpath, newpath));
-
-#if DEBUG
-                Debug.WriteLine($"DokanDiscUtils: Added parent directory based translation of '{originalpath}' to '{newpath}'");
-#endif
-
-                return newpath;
-            }
-        }
-
-        return originalpath;
-    }
-
-    private string UntranslatePath(ReadOnlySpan<char> pathPtr)
-    {
-        pathPtr = pathPtr.Trim('\\');
-
-        if (pathPtr.IsEmpty)
-        {
-            return string.Empty;
-        }
-
-        var originalpath = pathPtr.ToString();
-
-        foreach (var transl in _transl)
-        {
-            if (originalpath.Equals(transl.Value, _comparison))
-            {
-                var newpath = transl.Key;
-#if DEBUG
-                Debug.WriteLine($"Using translation of '{newpath}' to '{transl.Value}'");
-#endif
-
-                return newpath;
-            }
-
-            var dirpath = transl.Value + @"\";
-
-            if (originalpath.StartsWith(dirpath, _comparison))
-            {
-                var newpath = string.Concat(transl.Key, originalpath.Substring(transl.Value.Length));
-
-                _transl.Add(new(newpath, originalpath));
-
-#if DEBUG
-                Debug.WriteLine($"DokanDiscUtils: Added parent directory based translation of '{newpath}' to '{originalpath}'");
-#endif
-
-                return newpath;
-            }
-        }
-
-        return originalpath;
-    }
-#endif
 
     private string SanitizePath(string path)
     {
@@ -653,41 +583,6 @@ public class DokanDiscUtils : IDokanOperations, IDisposable
         return Trace(nameof(WriteFile), fileNamePtr, info, DokanResult.Success, $"out {bytesWritten}",
             offset.ToString(CultureInfo.InvariantCulture));
     }
-
-#if NETCOREAPP || NETSTANDARD2_1_OR_GREATER
-    public unsafe NtStatus WriteFile(ReadOnlySpan<char> fileNamePtr, IntPtr buffer, uint bufferLength, out int bytesWritten, long offset, in DokanFileInfo info)
-    {
-        bytesWritten = 0;
-
-        if (ReadOnly)
-        {
-            return Trace(nameof(WriteFile), fileNamePtr, info, DokanResult.AccessDenied);
-        }
-
-        if (info.Context == null)
-        {
-            var fileName = TranslatePath(fileNamePtr);
-
-            using var stream = FileSystem.OpenFile(fileName, FileMode.Open, FileAccess.Write);
-            stream.Position = offset;
-            stream.Write(new ReadOnlySpan<byte>(buffer.ToPointer(), (int)bufferLength));
-            bytesWritten = (int)bufferLength;
-        }
-        else
-        {
-            var stream = info.Context as Stream;
-
-            lock (stream) //Protect from overlapped write
-            {
-                stream.Position = offset;
-                stream.Write(new ReadOnlySpan<byte>(buffer.ToPointer(), (int)bufferLength));
-            }
-            bytesWritten = (int)bufferLength;
-        }
-        return Trace(nameof(WriteFile), fileNamePtr, info, DokanResult.Success, $"out {bytesWritten}",
-            offset.ToString(CultureInfo.InvariantCulture));
-    }
-#endif
 
     public NtStatus FlushFileBuffers(ReadOnlySpan<char> fileNamePtr, in DokanFileInfo info)
     {

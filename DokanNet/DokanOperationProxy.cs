@@ -23,6 +23,13 @@ namespace DokanNet;
 /// </summary>
 internal sealed class DokanOperationProxy
 {
+#if NET6_0_OR_GREATER
+    
+    unsafe private static ReadOnlySpan<char> SpanFromIntPtr(IntPtr ptr)
+        => MemoryMarshal.CreateReadOnlySpanFromNullTerminated((char*)ptr.ToPointer());
+
+#else
+
     [DllImport("msvcrt", CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
     private static extern int wcslen(IntPtr ptr);
 
@@ -33,8 +40,10 @@ internal sealed class DokanOperationProxy
             return default;
         }
 
-        return new ReadOnlySpan<char>(ptr.ToPointer(), wcslen(ptr));
+        return new(ptr.ToPointer(), wcslen(ptr));
     }
+
+#endif
 
     #region Delegates
 
@@ -190,7 +199,7 @@ internal sealed class DokanOperationProxy
     public delegate NtStatus UnmountedDelegate(
         in DokanFileInfo rawFileInfo);
 
-    #endregion Delegates
+#endregion Delegates
 
     private readonly IDokanOperations operations;
 
@@ -198,7 +207,7 @@ internal sealed class DokanOperationProxy
 
     private uint serialNumber;
 
-    #region Enum masks
+#region Enum masks
     /// <summary>
     /// To be used to mask out the <see cref="FileOptions"/> flags from what is returned 
     /// from <see cref="Native.NativeMethods.DokanMapKernelToUserCreateFileFlags"/>.
@@ -245,7 +254,7 @@ internal sealed class DokanOperationProxy
     private const int FileShareMask =
         (int)
         (FileShare.ReadWrite | FileShare.Delete | FileShare.Inheritable);
-    #endregion
+#endregion
 
     /// <summary>
     /// Initializes a new instance of the <see cref="DokanOperationProxy"/> class.
@@ -425,7 +434,7 @@ internal sealed class DokanOperationProxy
 
             // Check if the file system has implemented the unsafe Dokan interface.
             // If so, pass the raw IntPtr through instead of marshaling.
-            var result = operations.ReadFile(SpanFromIntPtr(rawFileName), new Span<byte>(rawBuffer.ToPointer(), (int)rawBufferLength), out rawReadLength, rawOffset, rawFileInfo);
+            var result = operations.ReadFile(SpanFromIntPtr(rawFileName), new(rawBuffer.ToPointer(), (int)rawBufferLength), out rawReadLength, rawOffset, rawFileInfo);
 
             if (logger.DebugEnabled)
             {
@@ -463,7 +472,7 @@ internal sealed class DokanOperationProxy
 
             // Check if the file system has implemented the unsafe Dokan interface.
             // If so, pass the raw IntPtr through instead of marshalling.
-            var result = operations.WriteFile(SpanFromIntPtr(rawFileName), new ReadOnlySpan<byte>(rawBuffer.ToPointer(), (int)rawNumberOfBytesToWrite), out rawNumberOfBytesWritten, rawOffset, rawFileInfo);
+            var result = operations.WriteFile(SpanFromIntPtr(rawFileName), new(rawBuffer.ToPointer(), (int)rawNumberOfBytesToWrite), out rawNumberOfBytesWritten, rawOffset, rawFileInfo);
 
             if (logger.DebugEnabled)
             {

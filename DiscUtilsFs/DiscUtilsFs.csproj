@@ -11,7 +11,7 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <Deterministic>false</Deterministic>
-    <TargetFrameworks>net6.0;net48;net45</TargetFrameworks>
+    <TargetFrameworks>net6.0-windows;net46;net48</TargetFrameworks>
     <RunAnalyzersDuringBuild>false</RunAnalyzersDuringBuild>
     <EnableNETAnalyzers>true</EnableNETAnalyzers>
     <OutputPath>..\$(Configuration)\</OutputPath>
@@ -108,6 +108,12 @@
     </Reference>
     <Reference Include="DiscUtils.Xfs">
       <HintPath>..\..\DiscUtils\Library\DiscUtils\bin\$(Configuration)\$(DiscUtilsFramework)\DiscUtils.Xfs.dll</HintPath>
+    </Reference>
+    <Reference Include="ExFat.Core">
+      <HintPath>..\..\Repos\ExFat\bin\$(Configuration)\$(DiscUtilsFramework)\ExFat.Core.dll</HintPath>
+    </Reference>
+    <Reference Include="ExFat.DiscUtils">
+      <HintPath>..\..\Repos\ExFat\bin\$(Configuration)\$(DiscUtilsFramework)\ExFat.DiscUtils.dll</HintPath>
     </Reference>
   </ItemGroup>
 

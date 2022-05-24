@@ -21,26 +21,27 @@ internal static class DiscUtilsSupport
 {
     private static readonly Assembly[] asms =
     {
-            typeof(DiscUtils.Btrfs.BtrfsFileSystem).Assembly,
-            typeof(DiscUtils.Ext.ExtFileSystem).Assembly,
-            typeof(DiscUtils.Fat.FatFileSystem).Assembly,
-            typeof(DiscUtils.HfsPlus.HfsPlusFileSystem).Assembly,
-            typeof(DiscUtils.Iso9660.CDReader).Assembly,
-            typeof(DiscUtils.Lvm.LogicalVolumeManager).Assembly,
-            typeof(DiscUtils.Nfs.NfsFileSystem).Assembly,
-            typeof(DiscUtils.Ntfs.NtfsFileSystem).Assembly,
-            typeof(DiscUtils.Registry.RegistryHive).Assembly,
-            typeof(DiscUtils.SquashFs.SquashFileSystemReader).Assembly,
-            typeof(DiscUtils.Swap.SwapFileSystem).Assembly,
-            typeof(DiscUtils.Udf.UdfReader).Assembly,
-            typeof(DiscUtils.Vdi.Disk).Assembly,
-            typeof(DiscUtils.Vhd.Disk).Assembly,
-            typeof(DiscUtils.Vhdx.Disk).Assembly,
-            typeof(DiscUtils.VirtualFileSystem.TarFileSystem).Assembly,
-            typeof(DiscUtils.Wim.WimFileSystem).Assembly,
-            typeof(DiscUtils.Vmdk.Disk).Assembly,
-            typeof(DiscUtils.Xfs.XfsFileSystem).Assembly
-        };
+        typeof(DiscUtils.Btrfs.BtrfsFileSystem).Assembly,
+        typeof(DiscUtils.Ext.ExtFileSystem).Assembly,
+        typeof(DiscUtils.Fat.FatFileSystem).Assembly,
+        typeof(DiscUtils.HfsPlus.HfsPlusFileSystem).Assembly,
+        typeof(DiscUtils.Iso9660.CDReader).Assembly,
+        typeof(DiscUtils.Lvm.LogicalVolumeManager).Assembly,
+        typeof(DiscUtils.Nfs.NfsFileSystem).Assembly,
+        typeof(DiscUtils.Ntfs.NtfsFileSystem).Assembly,
+        typeof(DiscUtils.Registry.RegistryHive).Assembly,
+        typeof(DiscUtils.SquashFs.SquashFileSystemReader).Assembly,
+        typeof(DiscUtils.Swap.SwapFileSystem).Assembly,
+        typeof(DiscUtils.Udf.UdfReader).Assembly,
+        typeof(DiscUtils.Vdi.Disk).Assembly,
+        typeof(DiscUtils.Vhd.Disk).Assembly,
+        typeof(DiscUtils.Vhdx.Disk).Assembly,
+        typeof(DiscUtils.VirtualFileSystem.TarFileSystem).Assembly,
+        typeof(DiscUtils.Wim.WimFileSystem).Assembly,
+        typeof(DiscUtils.Vmdk.Disk).Assembly,
+        typeof(DiscUtils.Xfs.XfsFileSystem).Assembly,
+        typeof(ExFat.DiscUtils.ExFatFileSystem).Assembly
+    };
 
     public static void RegisterAssemblies()
     {
@@ -146,7 +147,7 @@ public static class Program
             var mountOptions = default(DokanOptions);
 
 #if DEBUG
-                mountOptions |= DokanOptions.DebugMode;
+            mountOptions |= DokanOptions.DebugMode;
 #endif
 
             if (dokan_discutils.ReadOnly)
@@ -216,13 +217,13 @@ public static class Program
     private static IFileSystem InitializeTmpFs()
     {
         IFileSystem file_system;
+
+        var vfs = new VirtualFileSystem(new VirtualFileSystemOptions
         {
-            var vfs = new VirtualFileSystem(new VirtualFileSystemOptions
-            {
-                HasSecurity = false,
-                IsThreadSafe = false,
-                VolumeLabel = "VirtualFs"
-            });
+            HasSecurity = false,
+            IsThreadSafe = false,
+            VolumeLabel = "VirtualFs"
+        });
 
 #if SAMPLE_FILE
                     var stream = new MemoryStream();
@@ -235,10 +236,9 @@ public static class Program
                     vfs.UpdateUsedSpace();
 #endif
 
-            vfs.CreateFile += (sender, e) => e.Result = vfs.AddFile(e.Path, (mode, access) => Stream.Null);
+        vfs.CreateFile += (sender, e) => e.Result = vfs.AddFile(e.Path, (mode, access) => Stream.Null);
 
-            file_system = vfs;
-        }
+        file_system = vfs;
 
         return file_system;
     }
@@ -247,7 +247,7 @@ public static class Program
     {
         if (string.IsNullOrWhiteSpace(fsPath))
         {
-            throw new ArgumentException("Missing value for argument", FsKey);
+            throw new InvalidOperationException($"Missing value for argument: {FsKey}");
         }
 
         var part_content = File.OpenRead(fsPath);
@@ -266,14 +266,14 @@ public static class Program
     {
         if (string.IsNullOrWhiteSpace(vhdPath))
         {
-            throw new ArgumentException("Missing value for argument", VhdKey);
+            throw new InvalidOperationException($"Missing value for argument: {VhdKey}");
         }
 
         var partNo = 1;
 
         if (arguments.TryGetValue(PartKey, out var partNoStr) && !int.TryParse(partNoStr, out partNo))
         {
-            throw new ArgumentException("Missing value for argument", PartKey);
+            throw new ArgumentException($"Missing value for argument: {PartKey}");
         }
 
         var disk = VirtualDisk.OpenDisk(vhdPath, FileAccess.Read) ??
