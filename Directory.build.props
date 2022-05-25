@@ -9,6 +9,7 @@
     <PackageId>LTRData.$(MSBuildProjectName)</PackageId>
     <Company>LTR Data</Company>
     <Authors>Olof Lagerkvist</Authors>
+	<PackageOutputPath>$(LocalNuGetPath)\$(Configuration)</PackageOutputPath>
 
   </PropertyGroup>
 
