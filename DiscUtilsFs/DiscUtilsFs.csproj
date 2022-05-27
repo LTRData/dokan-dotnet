@@ -41,29 +41,29 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="LTRData.DiscUtils.Btrfs" Version="1.0.0" />
-    <PackageReference Include="LTRData.DiscUtils.Core" Version="1.0.0" />
-    <PackageReference Include="LTRData.DiscUtils.Ext" Version="1.0.0" />
-    <PackageReference Include="LTRData.DiscUtils.Fat" Version="1.0.0" />
-    <PackageReference Include="LTRData.DiscUtils.HfsPlus" Version="1.0.0" />
-    <PackageReference Include="LTRData.DiscUtils.Iso9660" Version="1.0.0" />
-    <PackageReference Include="LTRData.DiscUtils.Lvm" Version="1.0.0" />
-    <PackageReference Include="LTRData.DiscUtils.Nfs" Version="1.0.0" />
-    <PackageReference Include="LTRData.DiscUtils.Ntfs" Version="1.0.0" />
-    <PackageReference Include="LTRData.DiscUtils.Registry" Version="1.0.0" />
-    <PackageReference Include="LTRData.DiscUtils.SquashFs" Version="1.0.0" />
-    <PackageReference Include="LTRData.DiscUtils.Streams" Version="1.0.0" />
-    <PackageReference Include="LTRData.DiscUtils.Swap" Version="1.0.0" />
-    <PackageReference Include="LTRData.DiscUtils.Udf" Version="1.0.0" />
-    <PackageReference Include="LTRData.DiscUtils.Vdi" Version="1.0.0" />
-    <PackageReference Include="LTRData.DiscUtils.Vhd" Version="1.0.0" />
-    <PackageReference Include="LTRData.DiscUtils.Vhdx" Version="1.0.0" />
-    <PackageReference Include="LTRData.DiscUtils.VirtualFileSystem" Version="1.0.0" />
-    <PackageReference Include="LTRData.DiscUtils.Vmdk" Version="1.0.0" />
-    <PackageReference Include="LTRData.DiscUtils.Wim" Version="1.0.0" />
-    <PackageReference Include="LTRData.DiscUtils.Xfs" Version="1.0.0" />
-    <PackageReference Include="LTRData.ExFat.Core" Version="0.9.16" />
-    <PackageReference Include="LTRData.ExFat.DiscUtils" Version="0.9.16" />
+    <PackageReference Include="LTRData.DiscUtils.Btrfs" Version="*" />
+    <PackageReference Include="LTRData.DiscUtils.Core" Version="*" />
+    <PackageReference Include="LTRData.DiscUtils.Ext" Version="*" />
+    <PackageReference Include="LTRData.DiscUtils.Fat" Version="*" />
+    <PackageReference Include="LTRData.DiscUtils.HfsPlus" Version="*" />
+    <PackageReference Include="LTRData.DiscUtils.Iso9660" Version="*" />
+    <PackageReference Include="LTRData.DiscUtils.Lvm" Version="*" />
+    <PackageReference Include="LTRData.DiscUtils.Nfs" Version="*" />
+    <PackageReference Include="LTRData.DiscUtils.Ntfs" Version="*" />
+    <PackageReference Include="LTRData.DiscUtils.Registry" Version="*" />
+    <PackageReference Include="LTRData.DiscUtils.SquashFs" Version="*" />
+    <PackageReference Include="LTRData.DiscUtils.Streams" Version="*" />
+    <PackageReference Include="LTRData.DiscUtils.Swap" Version="*" />
+    <PackageReference Include="LTRData.DiscUtils.Udf" Version="*" />
+    <PackageReference Include="LTRData.DiscUtils.Vdi" Version="*" />
+    <PackageReference Include="LTRData.DiscUtils.Vhd" Version="*" />
+    <PackageReference Include="LTRData.DiscUtils.Vhdx" Version="*" />
+    <PackageReference Include="LTRData.DiscUtils.VirtualFileSystem" Version="*" />
+    <PackageReference Include="LTRData.DiscUtils.Vmdk" Version="*" />
+    <PackageReference Include="LTRData.DiscUtils.Wim" Version="*" />
+    <PackageReference Include="LTRData.DiscUtils.Xfs" Version="*" />
+    <PackageReference Include="LTRData.ExFat.Core" Version="*" />
+    <PackageReference Include="LTRData.ExFat.DiscUtils" Version="*" />
   </ItemGroup>
 
 </Project>
