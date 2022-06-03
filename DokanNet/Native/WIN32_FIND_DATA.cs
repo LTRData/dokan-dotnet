@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using System.Runtime.InteropServices;
 using FILETIME = System.Runtime.InteropServices.ComTypes.FILETIME;
 
@@ -22,7 +23,7 @@ namespace DokanNet.Native;
 /// </remarks>
 /// \see <a href="https://msdn.microsoft.com/en-us/library/windows/desktop/aa365740%28v=vs.85%29.aspx?f=255&MSPPError=-2147217396">WIN32_FIND_DATA structure (MSDN)</a>
 [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode, Pack = 4)]
-internal struct WIN32_FIND_DATA
+internal unsafe struct WIN32_FIND_DATA
 {
     /// <summary>
     /// The file attributes of a file.
@@ -96,13 +97,56 @@ internal struct WIN32_FIND_DATA
     /// <summary>
     /// The name of the file.
     /// </summary>
-    [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 260)]
-    public string cFileName;
+    public fixed char cFileName[260];
+
+#if NETSTANDARD2_1_OR_GREATER || NETCOREAPP
+    public ReadOnlySpan<char> FileName { set => value.CopyTo(MemoryMarshal.CreateSpan(ref cFileName[0], 260)); }
+#else
+    public ReadOnlySpan<char> FileName
+    {
+        set
+        {
+            fixed (char* ptr = cFileName)
+            {
+                value.CopyTo(new(ptr, 260));
+            }
+        }
+    }
+#endif
 
     /// <summary>
     /// An alternative name for the file.
     /// This name is in the classic 8.3 file name format.
     /// </summary>
-    [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 14)]
-    public string cAlternateFileName;
+    public fixed char cAlternateFileName[14];
+
+#if NETSTANDARD2_1_OR_GREATER || NETCOREAPP
+    public ReadOnlySpan<char> AlternateFileName { set => value.CopyTo(MemoryMarshal.CreateSpan(ref cAlternateFileName[0], 14)); }
+#else
+    public ReadOnlySpan<char> AlternateFileName
+    {
+        set
+        {
+            fixed (char* ptr = cAlternateFileName)
+            {
+                value.CopyTo(new(ptr, 14));
+            }
+        }
+    }
+#endif
+
+    /// <summary>
+    /// Obsolete. Do not use.
+    /// </summary>
+    public uint dwFileType;
+
+    /// <summary>
+    /// Obsolete. Do not use.
+    /// </summary>
+    public uint dwCreatorType;
+
+    /// <summary>
+    /// Obsolete. Do not use.
+    /// </summary>
+    public ushort wFinderFlags;
 }

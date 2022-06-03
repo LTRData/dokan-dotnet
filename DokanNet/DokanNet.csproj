@@ -7,22 +7,7 @@
     <Description>A user mode file system for windows. 
 
 This is a .NET wrapper over Dokan, and allows you to create your own file systems in Windows.</Description>
-    <Copyright>Copyright (C) 2017-2021</Copyright>
-    <Version>1.5.0.0</Version>
-    <AssemblyVersion>1.5.0.0</AssemblyVersion>
-    <FileVersion>1.5.0.0</FileVersion>
-    <Company>Dokan-dev</Company>
-    <Authors>AdrienJ, MaximeC, Hiroki Asakawa</Authors>
-    <PackageProjectUrl>https://dokan-dev.github.io/</PackageProjectUrl>
-    <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <PackageIcon>dokan_logo.png</PackageIcon>
-    <RepositoryUrl>https://github.com/dokan-dev/dokan-dotnet</RepositoryUrl>
-    <RepositoryType>git</RepositoryType>
-    <PackageTags>dokan file files disk directory storage filesystem io filestore FAT NTFS FUSE</PackageTags>
-    <SignAssembly>True</SignAssembly>
-    <AssemblyOriginatorKeyFile>Dokan.snk</AssemblyOriginatorKeyFile>
     <CLSCompliant>True</CLSCompliant>
-    <LangVersion>preview</LangVersion>
     <RunAnalyzersDuringBuild>false</RunAnalyzersDuringBuild>
     <OutputPath>..\$(Configuration)\</OutputPath>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
@@ -44,7 +29,7 @@ This is a .NET wrapper over Dokan, and allows you to create your own file system
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="System.Memory" Version="4.5.4" />
+    <PackageReference Include="System.Memory" Version="4.5.*" />
     <PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="5.0.0" />
     <PackageReference Include="System.ValueTuple" Version="4.5.0" />
   </ItemGroup>

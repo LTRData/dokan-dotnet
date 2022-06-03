@@ -725,7 +725,7 @@ internal class Mirror : IDokanOperations
                 LastAccessTime = finfo.LastAccessTime,
                 LastWriteTime = finfo.LastWriteTime,
                 Length = (finfo as FileInfo)?.Length ?? 0,
-                FileName = finfo.Name
+                FileName = finfo.Name.AsMemory()
             });
 
         return files;

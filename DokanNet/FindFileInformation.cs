@@ -14,7 +14,7 @@ namespace DokanNet;
 /// </summary>
 [StructLayout(LayoutKind.Auto)]
 [DebuggerDisplay("{FileName}, {Length}, {CreationTime}, {LastWriteTime}, {LastAccessTime}, {Attributes}")]
-public sealed class FindFileInformation
+public struct FindFileInformation
 {
     // An empty array does not contain data and can be statically cached.
 #if NET46_OR_GREATER || NETSTANDARD || NETCOREAPP
@@ -28,7 +28,7 @@ public sealed class FindFileInformation
     /// <see cref="IDokanOperations.GetFileInformation"/> required the file path
     /// when other operations only need the file name.
     /// </summary>
-    public string FileName { get; set; }
+    public ReadOnlyMemory<char> FileName { get; set; }
 
     /// <summary>
     /// Gets or sets the <c><see cref="FileAttributes"/></c> for the file or directory.
@@ -58,7 +58,7 @@ public sealed class FindFileInformation
     /// </summary>
     public long Length { get; set; }
 
-    public string ShortFileName { get; set; }
+    public ReadOnlyMemory<char> ShortFileName { get; set; }
 
-    public override string ToString() => FileName;
+    public override string ToString() => FileName.ToString();
 }

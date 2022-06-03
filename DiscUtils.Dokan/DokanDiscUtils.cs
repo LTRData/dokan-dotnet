@@ -170,6 +170,58 @@ public class DokanDiscUtils : IDokanOperations, IDisposable
 
     #region Implementation of IDokanOperations
 
+    private string TranslatePath(string pathstr)
+    {
+        var path = pathstr.AsSpan().Trim('\\');
+
+        if (path.IsEmpty)
+        {
+            return string.Empty;
+        }
+
+        foreach (var transl in _transl)
+        {
+            if (path.Equals(transl.Key.AsSpan(), _comparison))
+            {
+                var newpath = transl.Value;
+#if DEBUG
+                Debug.WriteLine($"Using translation of '{transl.Key}' to '{newpath}'");
+#endif
+
+                return newpath;
+            }
+
+            if (path.Length <= transl.Key.Length)
+            {
+                continue;
+            }
+
+            if (path.StartsWith(transl.Key.AsSpan(), _comparison) &&
+                path[transl.Key.Length] == '\\')
+            {
+#if NETCOREAPP
+                var newpath = string.Concat(transl.Value, path.Slice(transl.Key.Length));
+#elif NETSTANDARD2_1_OR_GREATER
+                var newpath = Path.Join(transl.Value, path.Slice(transl.Key.Length));
+#else
+                var newpath = string.Concat(transl.Value, path.Slice(transl.Key.Length).ToString());
+#endif
+
+                var originalpath = path.ToString();
+
+                _transl.Add(new(originalpath, newpath));
+
+#if DEBUG
+                Debug.WriteLine($"DokanDiscUtils: Added parent directory based translation of '{originalpath}' to '{newpath}'");
+#endif
+
+                return newpath;
+            }
+        }
+
+        return pathstr;
+    }
+
     private string TranslatePath(ReadOnlySpan<char> path)
     {
         path = path.Trim('\\');
@@ -199,7 +251,9 @@ public class DokanDiscUtils : IDokanOperations, IDisposable
             if (path.StartsWith(transl.Key.AsSpan(), _comparison) &&
                 path[transl.Key.Length] == '\\')
             {
-#if NETCOREAPP || NETSTANDARD2_1_OR_GREATER
+#if NETCOREAPP
+                var newpath = string.Concat(transl.Value, path.Slice(transl.Key.Length));
+#elif NETSTANDARD2_1_OR_GREATER
                 var newpath = Path.Join(transl.Value, path.Slice(transl.Key.Length));
 #else
                 var newpath = string.Concat(transl.Value, path.Slice(transl.Key.Length).ToString());
@@ -220,9 +274,9 @@ public class DokanDiscUtils : IDokanOperations, IDisposable
         return path.ToString();
     }
 
-    private string UntranslatePath(ReadOnlySpan<char> path)
+    private string UntranslatePath(string pathstr)
     {
-        path = path.Trim('\\');
+        var path = pathstr.AsSpan().Trim('\\');
 
         if (path.IsEmpty)
         {
@@ -249,7 +303,9 @@ public class DokanDiscUtils : IDokanOperations, IDisposable
             if (path.StartsWith(transl.Value.AsSpan(), _comparison) &&
                 path[transl.Value.Length] == '\\')
             {
-#if NETCOREAPP || NETSTANDARD2_1_OR_GREATER
+#if NETCOREAPP
+                var newpath = string.Concat(transl.Key, path.Slice(transl.Value.Length));
+#elif NETSTANDARD2_1_OR_GREATER
                 var newpath = Path.Join(transl.Key, path.Slice(transl.Value.Length));
 #else
                 var newpath = string.Concat(transl.Key, path.Slice(transl.Value.Length).ToString());
@@ -267,12 +323,12 @@ public class DokanDiscUtils : IDokanOperations, IDisposable
             }
         }
 
-        return path.ToString();
+        return pathstr;
     }
 
     private string SanitizePath(string path)
     {
-        var newpath = UntranslatePath(path.AsSpan());
+        var newpath = UntranslatePath(path);
 
         if (!ReferenceEquals(newpath, path))
         {
@@ -1067,7 +1123,7 @@ public class DokanDiscUtils : IDokanOperations, IDisposable
                         LastAccessTime = finfo.LastAccessTime,
                         LastWriteTime = finfo.LastWriteTime,
                         Length = finfo.Length,
-                        FileName = finfo.Name
+                        FileName = finfo.Name.AsMemory()
                     };
                 });
 
@@ -1106,7 +1162,7 @@ public class DokanDiscUtils : IDokanOperations, IDisposable
                     var info = new FindFileInformation
                     {
                         Length = (finfo as DiscFileInfo)?.Length ?? 0,
-                        FileName = SanitizePath(finfo.Name)
+                        FileName = SanitizePath(finfo.Name).AsMemory()
                     };
 
                     var wfsinfo = wfs.GetFileStandardInformation(finfo.FullName);
@@ -1114,7 +1170,7 @@ public class DokanDiscUtils : IDokanOperations, IDisposable
                     info.CreationTime = wfsinfo.CreationTime;
                     info.LastAccessTime = wfsinfo.LastAccessTime;
                     info.LastWriteTime = wfsinfo.LastWriteTime;
-                    info.ShortFileName = wfs.GetShortName(finfo.FullName);
+                    info.ShortFileName = wfs.GetShortName(finfo.FullName).AsMemory();
 
                     return new[] { info }.Concat(wfs.GetAlternateDataStreams(finfo.FullName).Select(stream =>
                     {
@@ -1127,7 +1183,7 @@ public class DokanDiscUtils : IDokanOperations, IDisposable
                             LastAccessTime = FileSystem.GetLastAccessTime(stream_path),
                             LastWriteTime = FileSystem.GetLastWriteTime(stream_path),
                             Length = FileSystem.GetFileLength(stream_path),
-                            FileName = SanitizePath(stream_path)
+                            FileName = SanitizePath(stream_path).AsMemory()
                         };
                     }));
                 });
@@ -1137,23 +1193,23 @@ public class DokanDiscUtils : IDokanOperations, IDisposable
         else
         {
             var files = FileSystem.GetFileSystemEntries(path, searchPattern)
-                .Select(name => FileSystem.FileExists(name) ? FileSystem.GetFileInfo(name) : FileSystem.GetFileSystemInfo(name))
-                .Where(finfo => finfo.Exists)
-                .Select(finfo =>
+                .Select(FileSystem.GetFileSystemInfo)
+                .Where(dirEntry => dirEntry.Exists)
+                .Select(dirEntry =>
                 {
                     var info = new FindFileInformation
                     {
-                        Attributes = FilterAttributes(finfo.Attributes),
-                        CreationTime = finfo.CreationTime,
-                        LastAccessTime = finfo.LastAccessTime,
-                        LastWriteTime = finfo.LastWriteTime,
-                        Length = (finfo as DiscFileInfo)?.Length ?? 0,
-                        FileName = SanitizePath(finfo.Name)
+                        Attributes = FilterAttributes(dirEntry.Attributes),
+                        CreationTime = dirEntry.CreationTime,
+                        LastAccessTime = dirEntry.LastAccessTime,
+                        LastWriteTime = dirEntry.LastWriteTime,
+                        Length = (dirEntry as DiscFileInfo)?.Length ?? 0,
+                        FileName = SanitizePath(dirEntry.Name).AsMemory()
                     };
 
                     if (FileSystem is IDosFileSystem dfs)
                     {
-                        info.ShortFileName = dfs.GetShortName(finfo.FullName);
+                        info.ShortFileName = dfs.GetShortName(dirEntry.FullName).AsMemory();
                     }
 
                     return info;

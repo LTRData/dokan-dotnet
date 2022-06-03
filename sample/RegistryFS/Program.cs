@@ -98,7 +98,7 @@ internal class RFS : IDokanOperations
         {
             files = TopDirectory.Keys.Select(name => new FindFileInformation
             {
-                FileName = name,
+                FileName = name.AsMemory(),
                 Attributes = FileAttributes.Directory,
                 LastAccessTime = DateTime.Now,
                 LastWriteTime = null,
@@ -120,7 +120,7 @@ internal class RFS : IDokanOperations
                 .GetSubKeyNames()
                 .Select(name => new FindFileInformation
                 {
-                    FileName = name,
+                    FileName = name.AsMemory(),
                     Attributes = FileAttributes.Directory,
                     LastAccessTime = DateTime.Now,
                     LastWriteTime = null,
@@ -131,7 +131,7 @@ internal class RFS : IDokanOperations
                 .Where(name => !string.IsNullOrWhiteSpace(name))
                 .Select(name => new FindFileInformation
                 {
-                    FileName = name,
+                    FileName = name.AsMemory(),
                     Attributes = FileAttributes.Normal,
                     LastAccessTime = DateTime.Now,
                     LastWriteTime = null,

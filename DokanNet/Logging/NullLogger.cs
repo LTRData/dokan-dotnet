@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 
 namespace DokanNet.Logging;
 
@@ -16,14 +17,10 @@ public class NullLogger : ILogger
     }
 
     /// <inheritdoc />
-    public void Error(FormattableString message)
-    {
-    }
+    public void Error(FormattableString message) => Trace.WriteLine(message?.ToString());
 
     /// <inheritdoc />
-    public void Fatal(FormattableString message)
-    {
-    }
+    public void Fatal(FormattableString message) => Trace.WriteLine(message?.ToString());
 
     /// <inheritdoc />
     public void Info(FormattableString message)

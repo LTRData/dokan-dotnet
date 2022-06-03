@@ -4,6 +4,7 @@
     <OutputType>Exe</OutputType>
     <TargetFrameworks>net46;net6.0-windows</TargetFrameworks>
     <OutputPath>..\$(Configuration)\</OutputPath>
+    <AssemblyOriginatorKeyFile>..\..\DokanNet\Dokan.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
  
   <ItemGroup>
