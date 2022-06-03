@@ -19,7 +19,7 @@
     <Authors>AdrienJ, MaximeC, Hiroki Asakawa. Olof Lagerkvist</Authors>
     <PackageProjectUrl>https://github.com/LTRData/dokan-dotnet</PackageProjectUrl>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <PackageIcon>dokan_logo.png</PackageIcon>
+    <PackageIcon>..\dokan_logo.png</PackageIcon>
     <RepositoryUrl>https://github.com/LTRData/dokan-dotnet</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageTags>dokan file files disk directory storage filesystem io filestore FAT NTFS FUSE</PackageTags>

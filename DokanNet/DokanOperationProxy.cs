@@ -694,7 +694,7 @@ internal sealed class DokanOperationProxy
                 {
                     count++;
 
-                    if (unchecked(Environment.TickCount - startTime) >= 30000)
+                    if (unchecked(Environment.TickCount - startTime) >= 25000)
                     {
                         logger.Error($"FindFilesWithPatternProxy : Timed out at {fileNamePtr.ToString()} with pattern {searchPatternPtr.ToString()} after {count} files");
                         return NtStatus.IoTimeout;
