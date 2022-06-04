@@ -96,16 +96,16 @@ internal class Mirror : IDokanOperations
                             {
                                 if (!File.GetAttributes(filePath).HasFlag(FileAttributes.Directory))
                                 {
-                                    return Trace(nameof(CreateFile), fileName, in info, access, share, mode, options,
+                                    return Trace(nameof(CreateFile), fileName, info, access, share, mode, options,
                                         attributes, DokanResult.NotADirectory);
                                 }
                             }
                             catch (Exception)
                             {
-                                return Trace(nameof(CreateFile), fileName, in info, access, share, mode, options,
+                                return Trace(nameof(CreateFile), fileName, info, access, share, mode, options,
                                     attributes, DokanResult.FileNotFound);
                             }
-                            return Trace(nameof(CreateFile), fileName, in info, access, share, mode, options,
+                            return Trace(nameof(CreateFile), fileName, info, access, share, mode, options,
                                 attributes, DokanResult.PathNotFound);
                         }
 
@@ -115,7 +115,7 @@ internal class Mirror : IDokanOperations
                     case FileMode.CreateNew:
                         if (Directory.Exists(filePath))
                         {
-                            return Trace(nameof(CreateFile), fileName, in info, access, share, mode, options,
+                            return Trace(nameof(CreateFile), fileName, info, access, share, mode, options,
                                 attributes, DokanResult.FileExists);
                         }
 
@@ -433,7 +433,7 @@ internal class Mirror : IDokanOperations
                 var ct = creationTime?.ToFileTime() ?? 0;
                 var lat = lastAccessTime?.ToFileTime() ?? 0;
                 var lwt = lastWriteTime?.ToFileTime() ?? 0;
-                if (NativeMethods.SetFileTime(stream.SafeFileHandle, in ct, in lat, in lwt))
+                if (NativeMethods.SetFileTime(stream.SafeFileHandle, ct, lat, lwt))
                 {
                     return DokanResult.Success;
                 }

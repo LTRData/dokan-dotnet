@@ -60,7 +60,9 @@ public static class Program
     private const string MountKey = "-where";
     private const string TmpKey = "-tmp";
     private const string HiddenKey = "-hidden";
+    private const string ReadOnlyKey = "-ro";
     private const string NoExecKey = "-noexec";
+    private const string NoOpenKey = "-q";
 
     public static int Main(params string[] args)
     {
@@ -90,6 +92,8 @@ public static class Program
             {
                 mountPath = @"N:\";
             }
+
+            var openFolderWindow = !arguments.ContainsKey(NoOpenKey);
 
             IFileSystem file_system;
 
@@ -150,7 +154,7 @@ public static class Program
             mountOptions |= DokanOptions.DebugMode;
 #endif
 
-            if (dokan_discutils.ReadOnly)
+            if (dokan_discutils.ReadOnly || arguments.ContainsKey(ReadOnlyKey))
             {
                 mountOptions |= DokanOptions.WriteProtection;
             }
@@ -183,7 +187,7 @@ public static class Program
                         Thread.Sleep(200);
                     }
 
-                    if (drive.IsReady)
+                    if (openFolderWindow && drive.IsReady)
                     {
                         Process.Start(new ProcessStartInfo(mountPath) { UseShellExecute = true });
                     }
@@ -196,7 +200,7 @@ public static class Program
 
             Console.WriteLine("Press Ctrl+C to dismount.");
 
-            dokan_discutils.Mount(mountPath, mountOptions);
+            dokan_discutils.Mount(mountPath, mountOptions, singleThread: !file_system.IsThreadSafe);
 
             Console.WriteLine("Dismounted.");
 

@@ -641,7 +641,7 @@ internal sealed class DokanOperationProxy
                         logger.Debug($"\t\tLength\t{fi.Length}");
                     }
 
-                    AddTo(fill, in rawFileInfo, fi);
+                    AddTo(fill, rawFileInfo, fi);
                 }
             }
 
@@ -694,7 +694,7 @@ internal sealed class DokanOperationProxy
                 {
                     count++;
 
-                    if (unchecked(Environment.TickCount - startTime) >= 25000)
+                    if (unchecked(Environment.TickCount - startTime) >= 30000)
                     {
                         logger.Error($"FindFilesWithPatternProxy : Timed out at {fileNamePtr.ToString()} with pattern {searchPatternPtr.ToString()} after {count} files");
                         return NtStatus.IoTimeout;
@@ -710,7 +710,7 @@ internal sealed class DokanOperationProxy
                         logger.Debug($"\t\tLength\t{fi.Length}");
                     }
 
-                    AddTo(fill, in rawFileInfo, fi);
+                    AddTo(fill, rawFileInfo, fi);
                 }
             }
 
@@ -734,7 +734,7 @@ internal sealed class DokanOperationProxy
     /// <param name="fill">The delegate of type <see cref="FILL_FIND_FILE_DATA"/> to be called.</param>
     /// <param name="rawFileInfo">A <see cref="DokanFileInfo"/> to be used when calling <paramref name="fill"/>.</param>
     /// <param name="fi">A <see cref="ByHandleFileInformation"/> with information to be used when calling <paramref name="fill"/>.</param>
-    private static void AddTo(FILL_FIND_FILE_DATA fill, in DokanFileInfo rawFileInfo, FindFileInformation fi)
+    private static void AddTo(FILL_FIND_FILE_DATA fill, in DokanFileInfo rawFileInfo, in FindFileInformation fi)
     {
         Debug.Assert(!fi.FileName.IsEmpty, "FileName must not be empty or null");
         var ctime = ToFileTime(fi.CreationTime);
@@ -764,49 +764,63 @@ internal sealed class DokanOperationProxy
             AlternateFileName = fi.ShortFileName.Span
         };
 
-        fill(ref data, in rawFileInfo);
+        fill(ref data, rawFileInfo);
     }
 
     public NtStatus FindStreamsProxy(IntPtr rawFileName, IntPtr rawFillFindData, IntPtr findStreamContext, in DokanFileInfo rawFileInfo)
     {
+        var startTime = Environment.TickCount;
+
+        var fileNamePtr = SpanFromIntPtr(rawFileName);
+
         try
         {
             if (logger.DebugEnabled)
             {
-                logger.Debug($"FindStreamsProxy: {rawFileName}");
+                logger.Debug($"FindStreamsProxy: {fileNamePtr.ToString()}");
                 logger.Debug($"\tContext\t{rawFileInfo}");
             }
 
-            var result = operations.FindStreams(SpanFromIntPtr(rawFileName), out var files, in rawFileInfo);
+            var result = operations.FindStreams(fileNamePtr, out var files, rawFileInfo);
 
             Debug.Assert(!(result == DokanResult.NotImplemented && files is null));
             if (result == DokanResult.Success)
             {
                 var fill = GetDataFromPointer<FILL_FIND_STREAM_DATA>(rawFillFindData);
 
+                var count = 0L;
+
                 // used a single entry call to speed up the "enumeration" of the list
                 foreach (var fi in files)
                 {
+                    count++;
+
+                    if (unchecked(Environment.TickCount - startTime) >= 30000)
+                    {
+                        logger.Error($"FindStreamsProxy : Timed out at {fileNamePtr.ToString()} after {count} names");
+                        return NtStatus.IoTimeout;
+                    }
+
                     if (logger.DebugEnabled)
                     {
                         logger.Debug($"\tFileName\t{fi.FileName}");
                         logger.Debug($"\t\tLength\t{fi.Length}");
                     }
 
-                    AddTo(fill, in rawFileInfo, fi);
+                    AddTo(fill, rawFileInfo, fi);
                 }
             }
 
             if (logger.DebugEnabled)
             {
-                logger.Debug($"FindStreamsProxy : {rawFileName} Return : {result}");
+                logger.Debug($"FindStreamsProxy : {fileNamePtr.ToString()} Return : {result}");
             }
 
             return result;
         }
         catch (Exception ex)
         {
-            logger.Error($"FindStreamsProxy : {rawFileName} Throw : {ex.Message}");
+            logger.Error($"FindStreamsProxy : {fileNamePtr.ToString()} Throw : {ex.Message}");
             return DokanResult.InvalidParameter;
         }
     }
@@ -837,7 +851,7 @@ internal sealed class DokanOperationProxy
         };
         //ZeroMemory(&data, sizeof(WIN32_FIND_DATAW));
 
-        fill(ref data, in rawFileInfo);
+        fill(ref data, rawFileInfo);
     }
 
     ////

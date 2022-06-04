@@ -207,7 +207,7 @@ public static class Dokan
             FindStreams = dokanOperationProxy.FindStreamsProxy
         };
 
-        DokanStatus status = NativeMethods.DokanMain(dokanOptions, dokanOperations);
+        var status = NativeMethods.DokanMain(dokanOptions, dokanOperations);
 
         GC.KeepAlive(dokanOptions);
         GC.KeepAlive(dokanOperations);
@@ -361,7 +361,7 @@ public static class Dokan
             logger_created = true;
         }
 
-        DokanInstance instance = new DokanInstance();
+        var instance = new DokanInstance();
 
         var dokanOperationProxy = new DokanOperationProxy(operations, logger);
 
@@ -416,7 +416,7 @@ public static class Dokan
             instance.Disposed += (s, e) => disposable_logger.Dispose();
         }
 
-        DokanStatus status = NativeMethods.DokanCreateFileSystem(instance.DokanOptions, instance.DokanOperations, out instance.DokanHandle);
+        var status = NativeMethods.DokanCreateFileSystem(instance.DokanOptions, instance.DokanOperations, out instance.DokanHandle);
 
         if (status != DokanStatus.Success)
         {

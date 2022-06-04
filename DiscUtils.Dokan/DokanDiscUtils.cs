@@ -708,8 +708,6 @@ public class DokanDiscUtils : IDokanOperations, IDisposable
 
     public NtStatus FindFiles(ReadOnlySpan<char> fileNamePtr, out IEnumerable<FindFileInformation> files, in DokanFileInfo info)
     {
-        // This function is not called because FindFilesWithPattern is implemented
-        // Return DokanResult.NotImplemented in FindFilesWithPattern to make FindFiles called
         files = FindFilesHelper(fileNamePtr, "*".AsSpan());
 
         return Trace(nameof(FindFiles), fileNamePtr, info, DokanResult.Success);
@@ -1155,26 +1153,26 @@ public class DokanDiscUtils : IDokanOperations, IDisposable
         if (FileSystem is IWindowsFileSystem wfs)
         {
             var files = FileSystem.GetFileSystemEntries(path, searchPattern)
-                .Select(name => FileSystem.FileExists(name) ? FileSystem.GetFileInfo(name) : FileSystem.GetFileSystemInfo(name))
-                .Where(finfo => finfo.Exists)
-                .SelectMany(finfo =>
+                .Select(FileSystem.GetFileSystemInfo)
+                .Where(dirEntry => dirEntry.Exists)
+                .SelectMany(dirEntry =>
                 {
                     var info = new FindFileInformation
                     {
-                        Length = (finfo as DiscFileInfo)?.Length ?? 0,
-                        FileName = SanitizePath(finfo.Name).AsMemory()
+                        Length = (dirEntry as DiscFileInfo)?.Length ?? 0,
+                        FileName = SanitizePath(dirEntry.Name).AsMemory()
                     };
 
-                    var wfsinfo = wfs.GetFileStandardInformation(finfo.FullName);
-                    info.Attributes = FilterAttributes(finfo.Attributes);
+                    var wfsinfo = wfs.GetFileStandardInformation(dirEntry.FullName);
+                    info.Attributes = FilterAttributes(dirEntry.Attributes);
                     info.CreationTime = wfsinfo.CreationTime;
                     info.LastAccessTime = wfsinfo.LastAccessTime;
                     info.LastWriteTime = wfsinfo.LastWriteTime;
-                    info.ShortFileName = wfs.GetShortName(finfo.FullName).AsMemory();
+                    info.ShortFileName = wfs.GetShortName(dirEntry.FullName).AsMemory();
 
-                    return new[] { info }.Concat(wfs.GetAlternateDataStreams(finfo.FullName).Select(stream =>
+                    return new[] { info }.Concat(wfs.GetAlternateDataStreams(dirEntry.FullName).Select(stream =>
                     {
-                        var stream_path = $"{finfo.FullName}:{stream}";
+                        var stream_path = $"{dirEntry.FullName}:{stream}";
 
                         return new FindFileInformation
                         {
