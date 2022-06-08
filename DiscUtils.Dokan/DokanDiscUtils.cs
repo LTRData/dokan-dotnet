@@ -23,6 +23,7 @@ using NativeFileAccess = DokanNet.NativeFileAccess;
 
 namespace DiscUtils.Dokan;
 
+using DiscUtils.Streams.Compatibility;
 using VirtualFileSystem;
 
 [SuppressMessage("Design", "CA1062:Validate arguments of public methods", Justification = "<Pending>")]
@@ -170,6 +171,11 @@ public class DokanDiscUtils : IDokanOperations, IDisposable
 
     #region Implementation of IDokanOperations
 
+    /// <summary>
+    /// Translates a path from OS representation to file system representation
+    /// </summary>
+    /// <param name="pathstr">OS translated path</param>
+    /// <returns>File system original path</returns>
     private string TranslatePath(string pathstr)
     {
         var path = pathstr.AsSpan().Trim('\\');
@@ -222,6 +228,11 @@ public class DokanDiscUtils : IDokanOperations, IDisposable
         return pathstr;
     }
 
+    /// <summary>
+    /// Translates a path from OS representation to file system representation
+    /// </summary>
+    /// <param name="pathstr">OS translated path</param>
+    /// <returns>File system original path</returns>
     private string TranslatePath(ReadOnlySpan<char> path)
     {
         path = path.Trim('\\');
@@ -274,6 +285,11 @@ public class DokanDiscUtils : IDokanOperations, IDisposable
         return path.ToString();
     }
 
+    /// <summary>
+    /// Translates a path from file system representation to OS representation
+    /// </summary>
+    /// <param name="pathstr">File system original path</param>
+    /// <returns>OS translated path</returns>
     private string UntranslatePath(string pathstr)
     {
         var path = pathstr.AsSpan().Trim('\\');
@@ -326,33 +342,36 @@ public class DokanDiscUtils : IDokanOperations, IDisposable
         return pathstr;
     }
 
-    private string SanitizePath(string path)
+    private readonly static char[] _invalidFileNameChars = Path.GetInvalidFileNameChars();
+
+    /// <summary>
+    /// Removes unsupported characters from a file name and adds a record to the translation
+    /// dictionary for later file open/delete/etc operations.
+    /// </summary>
+    /// <param name="OSPath">Directory path, OS translated</param>
+    /// <param name="fileSystempath">Directory path in the file system</param>
+    /// <param name="fileSystemname">Directory entry name in the file system</param>
+    /// <returns>OS translated name of the directory entry</returns>
+    private string SanitizePath(string OSPath, string fileSystempath, string fileSystemname)
     {
-        var newpath = UntranslatePath(path);
+        var newpath = fileSystemname;
 
-        if (!ReferenceEquals(newpath, path))
+        foreach (var c in _invalidFileNameChars)
         {
-            return newpath;
+            newpath = newpath.Replace(c, '_');
         }
 
-        newpath = path
-            .Replace(":", "..")
-            .Replace('?', '_')
-            .Replace('*', '_')
-            .Replace('"', '_')
-            .Replace('\'', '_')
-            .Replace('/', '\\')
-            .Replace(',', '_')
-            .Replace(';', '_');
-
-        if (ReferenceEquals(newpath, path))
+        if (ReferenceEquals(newpath, fileSystemname))
         {
-            return path;
+            return fileSystemname;
         }
 
-        _transl.Add(new(newpath, path));
+        var newFullPath = Path.Combine(OSPath, newpath);
+        var fsFullPath = Path.Combine(fileSystempath, fileSystemname);
 
-        Debug.WriteLine($"DokanDiscUtils: Added translation of '{path}' to '{newpath}'");
+        _transl.Add(new(newFullPath, fsFullPath));
+
+        Debug.WriteLine($"DokanDiscUtils: Added translation of '{fsFullPath}' to '{newFullPath}'");
 
         return newpath;
     }
@@ -364,7 +383,7 @@ public class DokanDiscUtils : IDokanOperations, IDisposable
 
         if (info.IsDirectory)
         {
-            return CreateDirectory(fileName.AsSpan(), access, share, mode, options, attributes, info);
+            return CreateDirectory(fileName, access, share, mode, options, attributes, info);
         }
 
         var result = DokanResult.Success;
@@ -377,6 +396,7 @@ public class DokanDiscUtils : IDokanOperations, IDisposable
                 result);
         }
 
+        DiscFileSystemInfo fileInfo = null;
         var pathExists = true;
         var pathIsDirectory = false;
 
@@ -385,8 +405,14 @@ public class DokanDiscUtils : IDokanOperations, IDisposable
 
         try
         {
-            pathExists = FileSystem.Exists(fileName);
-            pathIsDirectory = FileSystem.DirectoryExists(fileName);
+            fileInfo = FileSystem.GetFileSystemInfo(fileName);
+            
+            pathExists = fileInfo.Exists;
+
+            if (pathExists)
+            {
+                pathIsDirectory = fileInfo.Attributes.HasFlag(FileAttributes.Directory);
+            }
         }
         catch (IOException)
         {
@@ -486,14 +512,12 @@ public class DokanDiscUtils : IDokanOperations, IDisposable
             result);
     }
 
-    private NtStatus CreateDirectory(ReadOnlySpan<char> fileNamePtr, NativeFileAccess access, FileShare share, FileMode mode, FileOptions options, FileAttributes attributes, in DokanFileInfo info)
+    private NtStatus CreateDirectory(string fileName, NativeFileAccess access, FileShare share, FileMode mode, FileOptions options, FileAttributes attributes, in DokanFileInfo info)
     {
         var result = DokanResult.Success;
 
         try
         {
-            var fileName = fileNamePtr.ToString();
-
             switch (mode)
             {
                 case FileMode.Open:
@@ -546,11 +570,11 @@ public class DokanDiscUtils : IDokanOperations, IDisposable
         }
         catch (UnauthorizedAccessException)
         {
-            return Trace(nameof(CreateFile), fileNamePtr, info, access, share, mode, options, attributes,
+            return Trace(nameof(CreateFile), fileName, info, access, share, mode, options, attributes,
                 DokanResult.AccessDenied);
         }
 
-        return Trace(nameof(CreateFile), fileNamePtr, info, access, share, mode, options, attributes,
+        return Trace(nameof(CreateFile), fileName, info, access, share, mode, options, attributes,
             result);
     }
 
@@ -585,23 +609,21 @@ public class DokanDiscUtils : IDokanOperations, IDisposable
 
     public NtStatus ReadFile(ReadOnlySpan<char> fileNamePtr, Span<byte> buffer, out int bytesRead, long offset, in DokanFileInfo info)
     {
-        if (info.Context == null) // memory mapped read
+        if (info.Context is Stream stream) // normal read
         {
-            var fileName = TranslatePath(fileNamePtr);
-
-            using var stream = FileSystem.OpenFile(fileName, FileMode.Open, FileAccess.Read);
-            stream.Position = offset;
-            bytesRead = stream.Read(buffer);
-        }
-        else // normal read
-        {
-            var stream = info.Context as Stream;
-
             lock (stream) //Protect from overlapped read
             {
                 stream.Position = offset;
                 bytesRead = stream.Read(buffer);
             }
+        }
+        else // memory mapped read
+        {
+            var fileName = TranslatePath(fileNamePtr);
+
+            using var fstream = FileSystem.OpenFile(fileName, FileMode.Open, FileAccess.Read);
+            fstream.Position = offset;
+            bytesRead = fstream.Read(buffer);
         }
         return Trace(nameof(ReadFile), fileNamePtr, info, DokanResult.Success, $"out {bytesRead}",
             offset.ToString(CultureInfo.InvariantCulture));
@@ -616,24 +638,22 @@ public class DokanDiscUtils : IDokanOperations, IDisposable
             return Trace(nameof(WriteFile), fileNamePtr, info, DokanResult.AccessDenied);
         }
 
-        if (info.Context == null)
+        if (info.Context is Stream stream)
         {
-            var fileName = TranslatePath(fileNamePtr);
-
-            using var stream = FileSystem.OpenFile(fileName, FileMode.Open, FileAccess.Write);
-            stream.Position = offset;
-            stream.Write(buffer);
-            bytesWritten = buffer.Length;
-        }
-        else
-        {
-            var stream = info.Context as Stream;
-
             lock (stream) //Protect from overlapped write
             {
                 stream.Position = offset;
                 stream.Write(buffer);
             }
+            bytesWritten = buffer.Length;
+        }
+        else
+        {
+            var fileName = TranslatePath(fileNamePtr);
+
+            using var fstream = FileSystem.OpenFile(fileName, FileMode.Open, FileAccess.Write);
+            fstream.Position = offset;
+            fstream.Write(buffer);
             bytesWritten = buffer.Length;
         }
         return Trace(nameof(WriteFile), fileNamePtr, info, DokanResult.Success, $"out {bytesWritten}",
@@ -667,7 +687,7 @@ public class DokanDiscUtils : IDokanOperations, IDisposable
 
         if (!finfo.Exists)
         {
-            fileInfo = null;
+            fileInfo = default;
             return Trace(nameof(GetFileInformation), fileName, info, DokanResult.FileNotFound);
         }
 
@@ -1146,7 +1166,8 @@ public class DokanDiscUtils : IDokanOperations, IDisposable
 
     public IEnumerable<FindFileInformation> FindFilesHelper(ReadOnlySpan<char> pathPtr, ReadOnlySpan<char> searchPatternPtr)
     {
-        var path = TranslatePath(pathPtr);
+        var OSPath = pathPtr.ToString();
+        var path = TranslatePath(OSPath);
 
         var searchPattern = searchPatternPtr.ToString().Replace('<', '*');
 
@@ -1157,20 +1178,20 @@ public class DokanDiscUtils : IDokanOperations, IDisposable
                 .Where(dirEntry => dirEntry.Exists)
                 .SelectMany(dirEntry =>
                 {
+                    var wfsinfo = wfs.GetFileStandardInformation(dirEntry.FullName);
+
                     var info = new FindFileInformation
                     {
                         Length = (dirEntry as DiscFileInfo)?.Length ?? 0,
-                        FileName = SanitizePath(dirEntry.Name).AsMemory()
+                        FileName = SanitizePath(OSPath, path, dirEntry.Name).AsMemory(),
+                        Attributes = FilterAttributes(dirEntry.Attributes),
+                        CreationTime = wfsinfo.CreationTime,
+                        LastAccessTime = wfsinfo.LastAccessTime,
+                        LastWriteTime = wfsinfo.LastWriteTime,
+                        ShortFileName = wfs.GetShortName(dirEntry.FullName).AsMemory()
                     };
 
-                    var wfsinfo = wfs.GetFileStandardInformation(dirEntry.FullName);
-                    info.Attributes = FilterAttributes(dirEntry.Attributes);
-                    info.CreationTime = wfsinfo.CreationTime;
-                    info.LastAccessTime = wfsinfo.LastAccessTime;
-                    info.LastWriteTime = wfsinfo.LastWriteTime;
-                    info.ShortFileName = wfs.GetShortName(dirEntry.FullName).AsMemory();
-
-                    return new[] { info }.Concat(wfs.GetAlternateDataStreams(dirEntry.FullName).Select(stream =>
+                    return wfs.GetAlternateDataStreams(dirEntry.FullName).Select(stream =>
                     {
                         var stream_path = $"{dirEntry.FullName}:{stream}";
 
@@ -1181,9 +1202,9 @@ public class DokanDiscUtils : IDokanOperations, IDisposable
                             LastAccessTime = FileSystem.GetLastAccessTime(stream_path),
                             LastWriteTime = FileSystem.GetLastWriteTime(stream_path),
                             Length = FileSystem.GetFileLength(stream_path),
-                            FileName = SanitizePath(stream_path).AsMemory()
+                            FileName = SanitizePath(OSPath, path, stream_path).AsMemory()
                         };
-                    }));
+                    }).Prepend(info);
                 });
 
             return files;
@@ -1202,7 +1223,7 @@ public class DokanDiscUtils : IDokanOperations, IDisposable
                         LastAccessTime = dirEntry.LastAccessTime,
                         LastWriteTime = dirEntry.LastWriteTime,
                         Length = (dirEntry as DiscFileInfo)?.Length ?? 0,
-                        FileName = SanitizePath(dirEntry.Name).AsMemory()
+                        FileName = SanitizePath(OSPath, path, dirEntry.Name).AsMemory()
                     };
 
                     if (FileSystem is IDosFileSystem dfs)
@@ -1242,7 +1263,7 @@ public class DokanDiscUtils : IDokanOperations, IDisposable
                     }
                     catch (Exception ex)
                     {
-                        System.Diagnostics.Trace.WriteLine($"{nameof(DokanDiscUtils)}.{nameof(Dispose)}: {ex.GetBaseException().GetType().Name}: {ex.GetBaseException().Message}");
+                        Debug.WriteLine($"{nameof(DokanDiscUtils)}.{nameof(Dispose)}: {ex.GetBaseException().GetType().Name}: {ex.GetBaseException().Message}");
                     }
                 }
 
