@@ -14,8 +14,14 @@ namespace DokanNet;
 /// </summary>
 [StructLayout(LayoutKind.Auto)]
 [DebuggerDisplay("{FileName}, {Length}, {CreationTime}, {LastWriteTime}, {LastAccessTime}, {Attributes}")]
-public sealed class ByHandleFileInformation
+public struct ByHandleFileInformation
 {
+    public ByHandleFileInformation()
+    {
+        this = default;
+        NumberOfLinks = 1;
+    }
+
     /// <summary>
     /// Gets or sets the <c><see cref="FileAttributes"/></c> for the file or directory.
     /// </summary>
@@ -44,7 +50,7 @@ public sealed class ByHandleFileInformation
     /// </summary>
     public long Length { get; set; }
 
-    public int NumberOfLinks { get; set; } = 1;
+    public int NumberOfLinks { get; set; }
 
     public long FileIndex { get; set; }
 }

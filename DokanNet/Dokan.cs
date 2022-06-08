@@ -4,7 +4,6 @@ using DokanNet.Logging;
 using DokanNet.Native;
 
 #pragma warning disable IDE0079 // Remove unnecessary suppression
-#pragma warning disable CA2000 // Dispose objects before losing scope
 
 namespace DokanNet;
 
@@ -491,7 +490,6 @@ public static class Dokan
     /// These functions SHOULD NOT be called from within the implemented
     /// file system and thus be independent of any Dokan file system operation.
     ///</remarks>
-    [SuppressMessage("Design", "CA1034:Nested types should not be visible", Justification = "<Pending>")]
     public static class Notify
     {
         /// <summary>

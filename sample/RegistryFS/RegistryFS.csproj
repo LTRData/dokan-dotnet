@@ -11,18 +11,6 @@
     <ProjectReference Include="..\..\DokanNet\DokanNet.csproj" />
   </ItemGroup>
  
-  <ItemGroup Condition="'$(TargetFramework)' == 'net48'">
-    <PackageReference Include="Microsoft.Win32.Registry">
-      <Version>5.0.0</Version>
-    </PackageReference>
-  </ItemGroup>
- 
-  <ItemGroup Condition="'$(TargetFramework)' == 'netcoreapp3.1'">
-    <PackageReference Include="Microsoft.Win32.Registry">
-      <Version>5.0.0</Version>
-    </PackageReference>
-  </ItemGroup>
-
   <PropertyGroup>
     <!--Set to True to run Code Analysis-->
     <RunCodeAnalysis>false</RunCodeAnalysis>

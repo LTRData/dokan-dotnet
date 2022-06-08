@@ -45,7 +45,10 @@ public class DokanService : IDisposable
             throw new ObjectDisposedException(GetType().Name);
         }
 
-        ServiceThread = new Thread(ServiceThreadProcedure);
+        ServiceThread = new Thread(ServiceThreadProcedure)
+        {
+            Name = "DokanService"
+        };
 
         ServiceThread.Start();
     }

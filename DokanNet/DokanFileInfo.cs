@@ -18,7 +18,6 @@ namespace DokanNet;
 /// This is the same structure as <c>_DOKAN_FILE_INFO</c> (dokan.h) in the C version of Dokan.
 /// </remarks>
 [StructLayout(LayoutKind.Sequential, Pack = 4)]
-[SuppressMessage("Performance", "CA1815:Override equals and operator equals on value types", Justification = "Not relevant")]
 public struct DokanFileInfo
 {
     private ulong _context;

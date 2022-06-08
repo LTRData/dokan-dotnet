@@ -291,20 +291,19 @@ internal class Mirror : IDokanOperations
 
     public NtStatus ReadFile(ReadOnlySpan<char> fileName, Span<byte> buffer, out int bytesRead, long offset, in DokanFileInfo info)
     {
-        if (info.Context == null) // memory mapped read
+        if (info.Context is Stream stream) // normal read
         {
-            using var stream = new FileStream(GetPath(fileName), FileMode.Open, System.IO.FileAccess.Read);
-            stream.Position = offset;
-            bytesRead = stream.Read(buffer);
-        }
-        else // normal read
-        {
-            var stream = info.Context as FileStream;
             lock (stream) //Protect from overlapped read
             {
                 stream.Position = offset;
                 bytesRead = stream.Read(buffer);
             }
+        }
+        else // memory mapped read
+        {
+            using var fstream = new FileStream(GetPath(fileName), FileMode.Open, System.IO.FileAccess.Read);
+            fstream.Position = offset;
+            bytesRead = fstream.Read(buffer);
         }
         return Trace(nameof(ReadFile), fileName, info, DokanResult.Success, $"out {bytesRead}",
             offset.ToString(CultureInfo.InvariantCulture));
@@ -313,19 +312,8 @@ internal class Mirror : IDokanOperations
     public NtStatus WriteFile(ReadOnlySpan<char> fileName, ReadOnlySpan<byte> buffer, out int bytesWritten, long offset, in DokanFileInfo info)
     {
         var append = offset == -1;
-        if (info.Context == null)
+        if (info.Context is Stream stream)
         {
-            using var stream = new FileStream(GetPath(fileName), append ? FileMode.Append : FileMode.Open, System.IO.FileAccess.Write);
-            if (!append) // Offset of -1 is an APPEND: https://docs.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-writefile
-            {
-                stream.Position = offset;
-            }
-            stream.Write(buffer);
-            bytesWritten = buffer.Length;
-        }
-        else
-        {
-            var stream = info.Context as FileStream;
             lock (stream) //Protect from overlapped write
             {
                 if (append)
@@ -347,6 +335,16 @@ internal class Mirror : IDokanOperations
                 }
                 stream.Write(buffer);
             }
+            bytesWritten = buffer.Length;
+        }
+        else
+        {
+            using var fstream = new FileStream(GetPath(fileName), append ? FileMode.Append : FileMode.Open, System.IO.FileAccess.Write);
+            if (!append) // Offset of -1 is an APPEND: https://docs.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-writefile
+            {
+                fstream.Position = offset;
+            }
+            fstream.Write(buffer);
             bytesWritten = buffer.Length;
         }
         return Trace(nameof(WriteFile), fileName, info, DokanResult.Success, $"out {bytesWritten}",

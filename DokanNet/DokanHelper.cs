@@ -5,7 +5,6 @@ using System.Linq;
 using System.Runtime.InteropServices;
 
 #pragma warning disable IDE0079 // Remove unnecessary suppression
-#pragma warning disable IDE0057 // Use range operator
 
 namespace DokanNet;
 

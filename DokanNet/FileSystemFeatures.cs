@@ -7,9 +7,7 @@ namespace DokanNet;
 /// </summary>
 /// \see <a href="https://msdn.microsoft.com/en-us/library/cc246323.aspx">File System Attribute Extensions (MSDN)</a>
 [Flags]
-#pragma warning disable 3009
 public enum FileSystemFeatures : uint
-#pragma warning restore 3009
 {
     /// <summary>
     /// No features defined.

@@ -29,10 +29,8 @@ public class FormatProviders : IFormatProvider, ICustomFormatter
     /// </summary>
     /// <param name="formattable">The <see cref="FormattableString"/> to format.</param>
     /// <returns>The formated string.</returns>
-#pragma warning disable 3001
     public static string DokanFormat(FormattableString formattable)
         => formattable.ToString(DefaultFormatProvider);
-#pragma warning restore 3001
 
     /// <summary>
     /// Returns an object that provides formatting services for the
