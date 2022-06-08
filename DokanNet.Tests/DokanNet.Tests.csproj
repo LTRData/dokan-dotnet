@@ -15,7 +15,7 @@
     net4.6              net4.6
     netstandard1.3      <missing>
     -->
-    <TargetFrameworks>net46</TargetFrameworks>
+    <TargetFrameworks>net46;net48;net6.0-windows</TargetFrameworks>
     
     <!--Add the Target Framework to the output file names. -->
     <AssemblyName>$(MSBuildProjectName).$(TargetFramework)</AssemblyName>
@@ -24,6 +24,16 @@
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>..\DokanNet\Dokan.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
+  <ItemGroup>
+    <Compile Remove="ContextTests.cs" />
+    <Compile Remove="DirectoryInfoTest.cs" />
+    <Compile Remove="DokanOperationsFixture.cs" />
+    <Compile Remove="DriveInfoTests.cs" />
+    <Compile Remove="FileInfoTests.cs" />
+    <Compile Remove="Mounter.cs" />
+    <Compile Remove="OverlappedTests.cs" />
+    <Compile Remove="StringExtensions.cs" />
+  </ItemGroup>
   
   <ItemGroup>
     <Content Include="OverlappedTests.Configuration.xml">

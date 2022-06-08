@@ -1,15 +1,14 @@
-﻿namespace DokanNet.Tests
+﻿namespace DokanNet.Tests;
+
+internal static class TestCategories
 {
-    internal static class TestCategories
-    {
-        public const string Success = nameof(Success);
+    public const string Success = nameof(Success);
 
-        public const string Failure = nameof(Failure);
+    public const string Failure = nameof(Failure);
 
-        public const string Timing = nameof(Timing);
+    public const string Timing = nameof(Timing);
 
-        public const string Manual = nameof(Manual);
+    public const string Manual = nameof(Manual);
 
-        public const string NoPatternSearch = nameof(NoPatternSearch);
-    }
+    public const string NoPatternSearch = nameof(NoPatternSearch);
 }

@@ -1,72 +1,82 @@
 ﻿using System;
 using System.Linq;
 
-namespace DokanNet.Tests
+namespace DokanNet.Tests;
+
+static class FileAccessUtils
 {
-    static class FileAccessUtils
+    private const NativeFileAccess FILE_GENERIC_READ =
+        NativeFileAccess.ReadAttributes |
+        NativeFileAccess.ReadData |
+        NativeFileAccess.ReadExtendedAttributes |
+        NativeFileAccess.ReadPermissions |
+        NativeFileAccess.Synchronize;
+
+    private const NativeFileAccess FILE_GENERIC_WRITE =
+        NativeFileAccess.AppendData |
+        NativeFileAccess.WriteAttributes |
+        NativeFileAccess.WriteData |
+        NativeFileAccess.WriteExtendedAttributes |
+        NativeFileAccess.ReadPermissions |
+        NativeFileAccess.Synchronize;
+
+    private const NativeFileAccess FILE_GENERIC_EXECUTE =
+        NativeFileAccess.Execute |
+        NativeFileAccess.ReadAttributes |
+        NativeFileAccess.ReadPermissions |
+        NativeFileAccess.Synchronize;
+
+    private static readonly NativeFileAccess FILE_ALL_ACCESS = (NativeFileAccess)Enum.GetValues(typeof(NativeFileAccess)).Cast<long>().Sum();
+
+    public static NativeFileAccess MapSpecificToGenericAccess(NativeFileAccess desiredAccess)
     {
-        private const FileAccess FILE_GENERIC_READ =
-            FileAccess.ReadAttributes |
-            FileAccess.ReadData |
-            FileAccess.ReadExtendedAttributes |
-            FileAccess.ReadPermissions |
-            FileAccess.Synchronize;
+        var outDesiredAccess = desiredAccess;
 
-        private const FileAccess FILE_GENERIC_WRITE =
-            FileAccess.AppendData |
-            FileAccess.WriteAttributes |
-            FileAccess.WriteData |
-            FileAccess.WriteExtendedAttributes |
-            FileAccess.ReadPermissions |
-            FileAccess.Synchronize;
-
-        private const FileAccess FILE_GENERIC_EXECUTE =
-            FileAccess.Execute |
-            FileAccess.ReadAttributes |
-            FileAccess.ReadPermissions |
-            FileAccess.Synchronize;
-
-        private static readonly FileAccess FILE_ALL_ACCESS = (FileAccess)Enum.GetValues(typeof(FileAccess)).Cast<long>().Sum();
-
-        public static FileAccess MapSpecificToGenericAccess(FileAccess desiredAccess)
+        var genericRead = false;
+        var genericWrite = false;
+        var genericExecute = false;
+        var genericAll = false;
+        if ((outDesiredAccess & FILE_GENERIC_READ) == FILE_GENERIC_READ)
         {
-            var outDesiredAccess = desiredAccess;
-
-            var genericRead = false;
-            var genericWrite = false;
-            var genericExecute = false;
-            var genericAll = false;
-            if ((outDesiredAccess & FILE_GENERIC_READ) == FILE_GENERIC_READ)
-            {
-                outDesiredAccess |= FileAccess.GenericRead;
-                genericRead = true;
-            }
-            if ((outDesiredAccess & FILE_GENERIC_WRITE) == FILE_GENERIC_WRITE)
-            {
-                outDesiredAccess |= FileAccess.GenericWrite;
-                genericWrite = true;
-            }
-            if ((outDesiredAccess & FILE_GENERIC_EXECUTE) == FILE_GENERIC_EXECUTE)
-            {
-                outDesiredAccess |= FileAccess.GenericExecute;
-                genericExecute = true;
-            }
-            if ((outDesiredAccess & FILE_ALL_ACCESS) == FILE_ALL_ACCESS)
-            {
-                outDesiredAccess |= FileAccess.GenericAll;
-                genericAll = true;
-            }
-
-            if (genericRead)
-                outDesiredAccess &= ~FILE_GENERIC_READ;
-            if (genericWrite)
-                outDesiredAccess &= ~FILE_GENERIC_WRITE;
-            if (genericExecute)
-                outDesiredAccess &= ~FILE_GENERIC_EXECUTE;
-            if (genericAll)
-                outDesiredAccess &= ~FILE_ALL_ACCESS;
-
-            return outDesiredAccess;
+            outDesiredAccess |= NativeFileAccess.GenericRead;
+            genericRead = true;
         }
+        if ((outDesiredAccess & FILE_GENERIC_WRITE) == FILE_GENERIC_WRITE)
+        {
+            outDesiredAccess |= NativeFileAccess.GenericWrite;
+            genericWrite = true;
+        }
+        if ((outDesiredAccess & FILE_GENERIC_EXECUTE) == FILE_GENERIC_EXECUTE)
+        {
+            outDesiredAccess |= NativeFileAccess.GenericExecute;
+            genericExecute = true;
+        }
+        if ((outDesiredAccess & FILE_ALL_ACCESS) == FILE_ALL_ACCESS)
+        {
+            outDesiredAccess |= NativeFileAccess.GenericAll;
+            genericAll = true;
+        }
+
+        if (genericRead)
+        {
+            outDesiredAccess &= ~FILE_GENERIC_READ;
+        }
+
+        if (genericWrite)
+        {
+            outDesiredAccess &= ~FILE_GENERIC_WRITE;
+        }
+
+        if (genericExecute)
+        {
+            outDesiredAccess &= ~FILE_GENERIC_EXECUTE;
+        }
+
+        if (genericAll)
+        {
+            outDesiredAccess &= ~FILE_ALL_ACCESS;
+        }
+
+        return outDesiredAccess;
     }
 }

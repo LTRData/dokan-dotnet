@@ -3,44 +3,48 @@ using System.IO;
 using System.Threading;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace DokanNet.Tests
-{
-    [TestClass]
-    public static class Mounter
-    {
-        private static DokanInstance safeMount;
-        private static DokanInstance unsafeMount;
+namespace DokanNet.Tests;
 
-        [AssemblyInitialize]
-        public static void AssemblyInitialize(TestContext context)
-        {
-            var dokanOptions = DokanOptions.DebugMode | DokanOptions.MountManager | DokanOptions.CurrentSession;
+[TestClass]
+public static class Mounter
+{
+    private static DokanInstance safeMount;
+    private static DokanInstance unsafeMount;
+
+    [AssemblyInitialize]
+    public static void AssemblyInitialize(TestContext context)
+    {
+        var dokanOptions = DokanOptions.DebugMode | DokanOptions.MountManager | DokanOptions.CurrentSession;
 #if NETWORK_DRIVE
-            dokanOptions |= DokanOptions.NetworkDrive;
+        dokanOptions |= DokanOptions.NetworkDrive;
 #else
-            dokanOptions |= DokanOptions.RemovableDrive;
+        dokanOptions |= DokanOptions.RemovableDrive;
 #endif
 #if USER_MODE_LOCK
-            dokanOptions |= DokanOptions.UserModeLock;
+        dokanOptions |= DokanOptions.UserModeLock;
 #endif
 
-            Dokan.Init();
-            safeMount = DokanOperationsFixture.Operations.CreateFileSystem(DokanOperationsFixture.NormalMountPoint, dokanOptions);
-            unsafeMount = DokanOperationsFixture.UnsafeOperations.CreateFileSystem(DokanOperationsFixture.UnsafeMountPoint, dokanOptions);
-            var drive = new DriveInfo(DokanOperationsFixture.NormalMountPoint);
-            var drive2 = new DriveInfo(DokanOperationsFixture.UnsafeMountPoint);
-            while (!drive.IsReady || !drive2.IsReady)
-                Thread.Sleep(50);
-            while (DokanOperationsFixture.HasPendingFiles)
-                Thread.Sleep(50);
+        Dokan.Init();
+        safeMount = DokanOperationsFixture.Operations.CreateFileSystem(DokanOperationsFixture.NormalMountPoint, dokanOptions);
+        unsafeMount = DokanOperationsFixture.UnsafeOperations.CreateFileSystem(DokanOperationsFixture.UnsafeMountPoint, dokanOptions);
+        var drive = new DriveInfo(DokanOperationsFixture.NormalMountPoint);
+        var drive2 = new DriveInfo(DokanOperationsFixture.UnsafeMountPoint);
+        while (!drive.IsReady || !drive2.IsReady)
+        {
+            Thread.Sleep(50);
         }
 
-        [AssemblyCleanup]
-        public static void AssemblyCleanup()
+        while (DokanOperationsFixture.HasPendingFiles)
         {
-            safeMount.Dispose();
-            unsafeMount.Dispose();
-            Dokan.Shutdown();
+            Thread.Sleep(50);
         }
+    }
+
+    [AssemblyCleanup]
+    public static void AssemblyCleanup()
+    {
+        safeMount.Dispose();
+        unsafeMount.Dispose();
+        Dokan.Shutdown();
     }
 }
