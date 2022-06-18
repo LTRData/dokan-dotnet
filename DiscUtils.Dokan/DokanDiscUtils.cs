@@ -23,7 +23,7 @@ using NativeFileAccess = DokanNet.NativeFileAccess;
 
 namespace DiscUtils.Dokan;
 
-using DiscUtils.Streams.Compatibility;
+using Streams.Compatibility;
 using VirtualFileSystem;
 
 [SuppressMessage("Design", "CA1062:Validate arguments of public methods", Justification = "<Pending>")]
@@ -75,7 +75,7 @@ public class DokanDiscUtils : IDokanOperations, IDisposable
             ? ", " + string.Join(", ", parameters.Select(x => string.Format(DefaultFormatProvider, "{0}", x)))
             : string.Empty;
 
-        logger.Debug(DokanFormat($"{method}('{fileName.ToString()}', {info}{extraParameters}) -> {result}"));
+        logger.Debug($"{method}('{fileName.ToString()}', {info}{extraParameters}) -> {result}");
 #endif
 
         return result;
@@ -89,7 +89,7 @@ public class DokanDiscUtils : IDokanOperations, IDisposable
             ? ", " + string.Join(", ", parameters.Select(x => string.Format(DefaultFormatProvider, "{0}", x)))
             : string.Empty;
 
-        logger.Debug(DokanFormat($"{method}('{fileName}', {info}{extraParameters}) -> {result}"));
+        logger.Debug($"{method}('{fileName}', {info}{extraParameters}) -> {result}");
 #endif
 
         return result;
@@ -101,8 +101,7 @@ public class DokanDiscUtils : IDokanOperations, IDisposable
     {
 #if CONSOLE_LOGGING
         logger.Debug(
-            DokanFormat(
-                $"{method}('{fileName.ToString()}', {info}, [{access}], [{share}], [{mode}], [{options}], [{attributes}]) -> {result}"));
+            $"{method}('{fileName.ToString()}', {info}, [{access}], [{share}], [{mode}], [{options}], [{attributes}]) -> {result}");
 #endif
 
         return result;
@@ -114,8 +113,7 @@ public class DokanDiscUtils : IDokanOperations, IDisposable
     {
 #if CONSOLE_LOGGING
         logger.Debug(
-            DokanFormat(
-                $"{method}('{fileName}', {info}, [{access}], [{share}], [{mode}], [{options}], [{attributes}]) -> {result}"));
+            $"{method}('{fileName}', {info}, [{access}], [{share}], [{mode}], [{options}], [{attributes}]) -> {result}");
 #endif
 
         return result;
