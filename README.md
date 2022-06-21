@@ -1,6 +1,6 @@
 ## This fork
 
-This is a for of https://github.com/dokan-dev/dokan-dotnet
+This is a fork of https://github.com/dokan-dev/dokan-dotnet
 
 The main goal of this fork is improved performance by less garbage collector
 and heap allocation pressure, at the cost of dropping compatibility with older
@@ -21,7 +21,7 @@ Dokan.NET Binding is distributed under a version of the "MIT License",
 which is a BSD-like license. See the 'license.mit.txt' file for details.
 
 ## Environment
-Microsoft .NET Framework 4.6 and 4.8, .NET Standard 2.0 or 2.1 or .NET 6.0.
+.NET Framework 4.6 and 4.8, .NET Standard 2.0 or 2.1 or .NET 6.0.
 
 ## How to write a file system
 To make a file system, an application needs to implement IDokanOperations interface.
