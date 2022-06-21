@@ -1,6 +1,4 @@
-﻿//#define CONSOLE_LOGGING
-
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -23,6 +21,7 @@ using NativeFileAccess = DokanNet.NativeFileAccess;
 
 namespace DiscUtils.Dokan;
 
+using DiscUtils.Streams;
 using Streams.Compatibility;
 using VirtualFileSystem;
 
@@ -43,6 +42,8 @@ public class DokanDiscUtils : IDokanOperations, IDisposable
 
 #if CONSOLE_LOGGING
     private readonly ConsoleLogger logger = new("[DokanDiscUtils] ");
+#else
+    private readonly NullLogger logger = new();
 #endif
 
     private readonly StringComparison _comparison = StringComparison.OrdinalIgnoreCase;
@@ -67,30 +68,88 @@ public class DokanDiscUtils : IDokanOperations, IDisposable
 
     public ReadOnlyCollection<KeyValuePair<string, string>> Translations => _transl.AsReadOnly();
 
-    private NtStatus Trace(string method, ReadOnlySpan<char> fileName, in DokanFileInfo info, NtStatus result,
-        params object[] parameters)
+    private NtStatus Trace(string method, string fileName, in DokanFileInfo info, NtStatus result)
     {
-#if CONSOLE_LOGGING
-        var extraParameters = parameters != null && parameters.Length > 0
-            ? ", " + string.Join(", ", parameters.Select(x => string.Format(DefaultFormatProvider, "{0}", x)))
-            : string.Empty;
-
-        logger.Debug($"{method}('{fileName.ToString()}', {info}{extraParameters}) -> {result}");
-#endif
+        if (logger.DebugEnabled)
+        {
+            logger.Debug($"{method}('{fileName}', {info}) -> {result}");
+        }
 
         return result;
     }
 
-    private NtStatus Trace(string method, string fileName, in DokanFileInfo info, NtStatus result,
-        params object[] parameters)
+    private NtStatus Trace(string method, ReadOnlySpan<char> fileName, in DokanFileInfo info, NtStatus result)
     {
-#if CONSOLE_LOGGING
-        var extraParameters = parameters != null && parameters.Length > 0
-            ? ", " + string.Join(", ", parameters.Select(x => string.Format(DefaultFormatProvider, "{0}", x)))
-            : string.Empty;
+        if (logger.DebugEnabled)
+        {
+            logger.Debug($"{method}('{fileName.ToString()}', {info}) -> {result}");
+        }
 
-        logger.Debug($"{method}('{fileName}', {info}{extraParameters}) -> {result}");
-#endif
+        return result;
+    }
+
+    private NtStatus Trace<TParam>(string method, string fileName, in DokanFileInfo info, NtStatus result,
+        TParam parameter)
+    {
+        if (logger.DebugEnabled)
+        {
+            logger.Debug($"{method}('{fileName}', {info}, {parameter}) -> {result}");
+        }
+
+        return result;
+    }
+
+    private NtStatus Trace<TParam>(string method, ReadOnlySpan<char> fileName, in DokanFileInfo info, NtStatus result,
+        TParam parameter)
+    {
+        if (logger.DebugEnabled)
+        {
+            logger.Debug($"{method}('{fileName.ToString()}', {info}, {parameter}) -> {result}");
+        }
+
+        return result;
+    }
+
+    private NtStatus Trace<TParam1, TParam2>(string method, string fileName, in DokanFileInfo info, NtStatus result,
+        TParam1 parameter1, TParam2 parameter2)
+    {
+        if (logger.DebugEnabled)
+        {
+            logger.Debug($"{method}('{fileName}', {info}, {parameter1}, {parameter2}) -> {result}");
+        }
+
+        return result;
+    }
+
+    private NtStatus Trace<TParam1, TParam2>(string method, ReadOnlySpan<char> fileName, in DokanFileInfo info, NtStatus result,
+        TParam1 parameter1, TParam2 parameter2)
+    {
+        if (logger.DebugEnabled)
+        {
+            logger.Debug($"{method}('{fileName.ToString()}', {info}, {parameter1}, {parameter2}) -> {result}");
+        }
+
+        return result;
+    }
+
+    private NtStatus Trace<TParam1, TParam2, TParam3>(string method, string fileName, in DokanFileInfo info, NtStatus result,
+        TParam1 parameter1, TParam2 parameter2, TParam3 parameter3)
+    {
+        if (logger.DebugEnabled)
+        {
+            logger.Debug($"{method}('{fileName}', {info}, {parameter1}, {parameter2}, {parameter3}) -> {result}");
+        }
+
+        return result;
+    }
+
+    private NtStatus Trace<TParam1, TParam2, TParam3>(string method, ReadOnlySpan<char> fileName, in DokanFileInfo info, NtStatus result,
+        TParam1 parameter1, TParam2 parameter2, TParam3 parameter3)
+    {
+        if (logger.DebugEnabled)
+        {
+            logger.Debug($"{method}('{fileName.ToString()}', {info}, {parameter1}, {parameter2}, {parameter3}) -> {result}");
+        }
 
         return result;
     }
@@ -99,10 +158,11 @@ public class DokanDiscUtils : IDokanOperations, IDisposable
         NativeFileAccess access, FileShare share, FileMode mode, FileOptions options, FileAttributes attributes,
         NtStatus result)
     {
-#if CONSOLE_LOGGING
-        logger.Debug(
-            $"{method}('{fileName.ToString()}', {info}, [{access}], [{share}], [{mode}], [{options}], [{attributes}]) -> {result}");
-#endif
+        if (logger.DebugEnabled)
+        {
+            logger.Debug(
+                $"{method}('{fileName.ToString()}', {info}, [{access}], [{share}], [{mode}], [{options}], [{attributes}]) -> {result}");
+        }
 
         return result;
     }
@@ -111,10 +171,11 @@ public class DokanDiscUtils : IDokanOperations, IDisposable
         NativeFileAccess access, FileShare share, FileMode mode, FileOptions options, FileAttributes attributes,
         NtStatus result)
     {
-#if CONSOLE_LOGGING
-        logger.Debug(
-            $"{method}('{fileName}', {info}, [{access}], [{share}], [{mode}], [{options}], [{attributes}]) -> {result}");
-#endif
+        if (logger.DebugEnabled)
+        {
+            logger.Debug(
+                $"{method}('{fileName}', {info}, [{access}], [{share}], [{mode}], [{options}], [{attributes}]) -> {result}");
+        }
 
         return result;
     }
@@ -484,7 +545,7 @@ public class DokanDiscUtils : IDokanOperations, IDisposable
         }
         catch (UnauthorizedAccessException) // don't have access rights
         {
-            if (info.Context is Stream fileStream)
+            if (info.Context is IDisposable fileStream)
             {
                 // returning AccessDenied cleanup and close won't be called,
                 // so we have to take care of the stream now
@@ -607,7 +668,7 @@ public class DokanDiscUtils : IDokanOperations, IDisposable
 
     public NtStatus ReadFile(ReadOnlySpan<char> fileNamePtr, Span<byte> buffer, out int bytesRead, long offset, in DokanFileInfo info)
     {
-        if (info.Context is Stream stream) // normal read
+        if (info.Context is CompatibilityStream stream) // normal read
         {
             lock (stream) //Protect from overlapped read
             {
@@ -623,8 +684,8 @@ public class DokanDiscUtils : IDokanOperations, IDisposable
             fstream.Position = offset;
             bytesRead = fstream.Read(buffer);
         }
-        return Trace(nameof(ReadFile), fileNamePtr, info, DokanResult.Success, $"out {bytesRead}",
-            offset.ToString(CultureInfo.InvariantCulture));
+        return Trace(nameof(ReadFile), fileNamePtr, info, DokanResult.Success, bytesRead,
+            offset);
     }
 
     public NtStatus WriteFile(ReadOnlySpan<char> fileNamePtr, ReadOnlySpan<byte> buffer, out int bytesWritten, long offset, in DokanFileInfo info)
@@ -636,7 +697,7 @@ public class DokanDiscUtils : IDokanOperations, IDisposable
             return Trace(nameof(WriteFile), fileNamePtr, info, DokanResult.AccessDenied);
         }
 
-        if (info.Context is Stream stream)
+        if (info.Context is CompatibilityStream stream)
         {
             lock (stream) //Protect from overlapped write
             {
@@ -654,8 +715,8 @@ public class DokanDiscUtils : IDokanOperations, IDisposable
             fstream.Write(buffer);
             bytesWritten = buffer.Length;
         }
-        return Trace(nameof(WriteFile), fileNamePtr, info, DokanResult.Success, $"out {bytesWritten}",
-            offset.ToString(CultureInfo.InvariantCulture));
+        return Trace(nameof(WriteFile), fileNamePtr, info, DokanResult.Success, bytesWritten,
+            offset);
     }
 
     public NtStatus FlushFileBuffers(ReadOnlySpan<char> fileNamePtr, in DokanFileInfo info)
@@ -749,19 +810,19 @@ public class DokanDiscUtils : IDokanOperations, IDisposable
                 FileSystem.SetAttributes(fileName, attributes);
             }
 
-            return Trace(nameof(SetFileAttributes), fileNamePtr, info, DokanResult.Success, attributes.ToString());
+            return Trace(nameof(SetFileAttributes), fileNamePtr, info, DokanResult.Success, attributes);
         }
         catch (UnauthorizedAccessException)
         {
-            return Trace(nameof(SetFileAttributes), fileNamePtr, info, DokanResult.AccessDenied, attributes.ToString());
+            return Trace(nameof(SetFileAttributes), fileNamePtr, info, DokanResult.AccessDenied, attributes);
         }
         catch (FileNotFoundException)
         {
-            return Trace(nameof(SetFileAttributes), fileNamePtr, info, DokanResult.FileNotFound, attributes.ToString());
+            return Trace(nameof(SetFileAttributes), fileNamePtr, info, DokanResult.FileNotFound, attributes);
         }
         catch (DirectoryNotFoundException)
         {
-            return Trace(nameof(SetFileAttributes), fileNamePtr, info, DokanResult.PathNotFound, attributes.ToString());
+            return Trace(nameof(SetFileAttributes), fileNamePtr, info, DokanResult.PathNotFound, attributes);
         }
     }
 
@@ -863,7 +924,7 @@ public class DokanDiscUtils : IDokanOperations, IDisposable
         var oldName = TranslatePath(oldNamePtr);
         var newName = TranslatePath(newNamePtr);
 
-        (info.Context as Stream)?.Dispose();
+        (info.Context as IDisposable)?.Dispose();
         info.Context = null;
 
         var exist = info.IsDirectory ? FileSystem.DirectoryExists(newName) : FileSystem.FileExists(newName);
@@ -884,7 +945,7 @@ public class DokanDiscUtils : IDokanOperations, IDisposable
                 }
 
                 return Trace(nameof(MoveFile), oldName, info, DokanResult.Success, newName,
-                    replace.ToString(CultureInfo.InvariantCulture));
+                    replace);
             }
             else if (replace)
             {
@@ -893,22 +954,22 @@ public class DokanDiscUtils : IDokanOperations, IDisposable
                 if (info.IsDirectory) //Cannot replace directory destination - See MOVEFILE_REPLACE_EXISTING
                 {
                     return Trace(nameof(MoveFile), oldName, info, DokanResult.AccessDenied, newName,
-                        replace.ToString(CultureInfo.InvariantCulture));
+                        replace);
                 }
 
                 FileSystem.MoveFile(oldName, newName, overwrite: true);
 
                 return Trace(nameof(MoveFile), oldName, info, DokanResult.Success, newName,
-                    replace.ToString(CultureInfo.InvariantCulture));
+                    replace);
             }
         }
         catch (UnauthorizedAccessException)
         {
             return Trace(nameof(MoveFile), oldName, info, DokanResult.AccessDenied, newName,
-                replace.ToString(CultureInfo.InvariantCulture));
+                replace);
         }
         return Trace(nameof(MoveFile), oldName, info, DokanResult.FileExists, newName,
-            replace.ToString(CultureInfo.InvariantCulture));
+            replace);
     }
 
     public NtStatus SetEndOfFile(ReadOnlySpan<char> fileNamePtr, long length, in DokanFileInfo info)
@@ -923,12 +984,12 @@ public class DokanDiscUtils : IDokanOperations, IDisposable
             stream.SetLength(length);
 
             return Trace(nameof(SetEndOfFile), fileNamePtr, info, DokanResult.Success,
-                length.ToString(CultureInfo.InvariantCulture));
+                length);
         }
         catch (IOException)
         {
             return Trace(nameof(SetEndOfFile), fileNamePtr, info, DokanResult.DiskFull,
-                length.ToString(CultureInfo.InvariantCulture));
+                length);
         }
     }
 
@@ -944,12 +1005,12 @@ public class DokanDiscUtils : IDokanOperations, IDisposable
             stream.SetLength(length);
 
             return Trace(nameof(SetAllocationSize), fileNamePtr, info, DokanResult.Success,
-                length.ToString(CultureInfo.InvariantCulture));
+                length);
         }
         catch (IOException)
         {
             return Trace(nameof(SetAllocationSize), fileNamePtr, info, DokanResult.DiskFull,
-                length.ToString(CultureInfo.InvariantCulture));
+                length);
         }
     }
 
@@ -972,8 +1033,8 @@ public class DokanDiscUtils : IDokanOperations, IDisposable
             totalNumberOfFreeBytes = FileSystem.AvailableSpace;
         }
 
-        return Trace(nameof(GetDiskFreeSpace), null as string, info, DokanResult.Success, $"out {freeBytesAvailable}",
-            $"out {totalNumberOfBytes}", $"out {totalNumberOfFreeBytes}");
+        return Trace(nameof(GetDiskFreeSpace), null as string, info, DokanResult.Success, freeBytesAvailable,
+            totalNumberOfBytes, totalNumberOfFreeBytes);
     }
 
     public NtStatus GetVolumeInformation(out string volumeLabel, out FileSystemFeatures features,
@@ -1033,8 +1094,8 @@ public class DokanDiscUtils : IDokanOperations, IDisposable
             volumeSerialNumber = dfs.VolumeId;
         }
 
-        return Trace(nameof(GetVolumeInformation), null as string, info, DokanResult.Success, $"out {volumeLabel}",
-            $"out {features}", $"out {fileSystemName}");
+        return Trace(nameof(GetVolumeInformation), null as string, info, DokanResult.Success, volumeLabel,
+            features, fileSystemName);
     }
 
     public NtStatus GetFileSecurity(ReadOnlySpan<char> fileNamePtr, out FileSystemSecurity security, AccessControlSections sections,
@@ -1079,12 +1140,12 @@ public class DokanDiscUtils : IDokanOperations, IDisposable
                 security.SetSecurityDescriptorBinaryForm(buffer, sections);
             }
 
-            return Trace(nameof(GetFileSecurity), fileName, info, DokanResult.Success, sections.ToString());
+            return Trace(nameof(GetFileSecurity), fileName, info, DokanResult.Success, sections);
         }
         catch (UnauthorizedAccessException)
         {
             security = null;
-            return Trace(nameof(GetFileSecurity), fileNamePtr, info, DokanResult.AccessDenied, sections.ToString());
+            return Trace(nameof(GetFileSecurity), fileNamePtr, info, DokanResult.AccessDenied, sections);
         }
     }
 
@@ -1109,11 +1170,11 @@ public class DokanDiscUtils : IDokanOperations, IDisposable
 
             wfs.SetSecurity(fileName, fs_security);
 
-            return Trace(nameof(SetFileSecurity), fileName, info, DokanResult.Success, sections.ToString());
+            return Trace(nameof(SetFileSecurity), fileName, info, DokanResult.Success, sections);
         }
         catch (UnauthorizedAccessException)
         {
-            return Trace(nameof(SetFileSecurity), fileNamePtr, info, DokanResult.AccessDenied, sections.ToString());
+            return Trace(nameof(SetFileSecurity), fileNamePtr, info, DokanResult.AccessDenied, sections);
         }
     }
 
