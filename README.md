@@ -1,3 +1,11 @@
+## This fork
+
+This is a for of https://github.com/dokan-dev/dokan-dotnet
+
+The main goal of this fork is improved performance by less garbage collector
+and heap allocation pressure, at the cost of dropping compatibility with older
+runtime versions.
+
 # Dokan.NET Binding
 [![Build status](https://ci.appveyor.com/api/projects/status/w707j7xlu21jf3qa?svg=true)](https://ci.appveyor.com/project/Liryna/dokan-dotnet)
 [![NuGet downloads](https://img.shields.io/nuget/dt/DokanNet.svg)](https://www.nuget.org/packages/DokanNet)
@@ -8,21 +16,12 @@ By using Dokan library, you can create your own file systems very easily
 without writing device driver. Dokan.NET Binding is a library that allows
 you to make a file system on .NET environment.
 
-## Install
-
-To install DokanNet, run the following command in the Package Manager Console
-
-    PM> Install-Package DokanNet
-    
-    //Prerelease 
-    PM> Install-Package DokanNet -Pre 
-
 ## Licensing
 Dokan.NET Binding is distributed under a version of the "MIT License",
 which is a BSD-like license. See the 'license.mit.txt' file for details.
 
 ## Environment
-Microsoft .NET Framework 4.0 and Dokan library
+Microsoft .NET Framework 4.6 and 4.8, .NET Standard 2.0 or 2.1 or .NET 6.0.
 
 ## How to write a file system
 To make a file system, an application needs to implement IDokanOperations interface.

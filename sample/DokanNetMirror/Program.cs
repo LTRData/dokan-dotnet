@@ -38,13 +38,13 @@ internal class Program
 
             Dokan.Shutdown();
 
-            Console.WriteLine(@"Success");
+            Console.WriteLine("Success");
 
             return 0;
         }
         catch (DokanException ex)
         {
-            Console.WriteLine(@"Error: " + ex.Message);
+            Console.WriteLine($"Error: {ex.Message}");
 
             return ex.HResult;
         }

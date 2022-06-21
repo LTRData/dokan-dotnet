@@ -3,14 +3,10 @@
   <PropertyGroup>
     <LangVersion>Latest</LangVersion>
 
-    <DiscUtilsFramework>$(TargetFramework.Split(`-`)[0])</DiscUtilsFramework>
-
     <GeneratePackageOnBuild Condition="'$(Configuration)' == 'Release'">true</GeneratePackageOnBuild>
     <PackageId>LTRData.$(MSBuildProjectName)</PackageId>
     <Company>LTR Data</Company>
-    <Authors>Olof Lagerkvist</Authors>
-	<PackageOutputPath>$(LocalNuGetPath)\$(Configuration)</PackageOutputPath>
-
+	<PackageOutputPath>$(LocalNuGetPath)</PackageOutputPath>
     <Copyright>Copyright (C) 2017-2022</Copyright>
     <Version>1.5.1.0</Version>
     <AssemblyVersion>1.5.1.0</AssemblyVersion>
