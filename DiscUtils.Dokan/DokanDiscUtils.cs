@@ -1,16 +1,15 @@
-﻿using System;
-using System.Collections;
+﻿using DiscUtils.Streams.Compatibility;
+using DokanNet;
+using DokanNet.Logging;
+using System;
+using System.Buffers;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
-using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Security.AccessControl;
-using DokanNet;
-using DokanNet.Logging;
-using static DokanNet.FormatProviders;
 using NativeFileAccess = DokanNet.NativeFileAccess;
 
 #pragma warning disable IDE0079 // Remove unnecessary suppression
@@ -21,11 +20,6 @@ using NativeFileAccess = DokanNet.NativeFileAccess;
 
 namespace DiscUtils.Dokan;
 
-using DiscUtils.Streams;
-using Streams.Compatibility;
-using VirtualFileSystem;
-
-[SuppressMessage("Design", "CA1062:Validate arguments of public methods", Justification = "<Pending>")]
 public class DokanDiscUtils : IDokanOperations, IDisposable
 {
     public IFileSystem FileSystem { get; }
@@ -200,7 +194,7 @@ public class DokanDiscUtils : IDokanOperations, IDisposable
         }
 
         if (fileSystem is IUnixFileSystem ||
-            (fileSystem is VirtualFileSystem vfs && vfs.Options.CaseSensitive))
+            (fileSystem is VirtualFileSystem.VirtualFileSystem vfs && vfs.Options.CaseSensitive))
         {
             _comparison = StringComparison.Ordinal;
             CaseSensitive = true;
@@ -1134,10 +1128,16 @@ public class DokanDiscUtils : IDokanOperations, IDisposable
                     return Trace(nameof(GetFileSecurity), fileName, info, DokanResult.InvalidParameter);
                 }
 
-                var buffer = new byte[fs_security.BinaryLength];
-                fs_security.GetBinaryForm(buffer, 0);
-
-                security.SetSecurityDescriptorBinaryForm(buffer, sections);
+                var buffer = ArrayPool<byte>.Shared.Rent(fs_security.BinaryLength);
+                try
+                {
+                    fs_security.GetBinaryForm(buffer, 0);
+                    security.SetSecurityDescriptorBinaryForm(buffer, sections);
+                }
+                finally
+                {
+                    ArrayPool<byte>.Shared.Return(buffer);
+                }
             }
 
             return Trace(nameof(GetFileSecurity), fileName, info, DokanResult.Success, sections);
@@ -1152,7 +1152,7 @@ public class DokanDiscUtils : IDokanOperations, IDisposable
     public NtStatus SetFileSecurity(ReadOnlySpan<char> fileNamePtr, FileSystemSecurity security, AccessControlSections sections,
         in DokanFileInfo info)
     {
-        if (ReadOnly)
+        if (ReadOnly || security is null)
         {
             return Trace(nameof(SetFileSecurity), fileNamePtr, info, DokanResult.AccessDenied);
         }
@@ -1164,7 +1164,8 @@ public class DokanDiscUtils : IDokanOperations, IDisposable
                 return Trace(nameof(SetFileSecurity), fileNamePtr, info, DokanResult.NotImplemented);
             }
 
-            var fs_security = new Core.WindowsSecurity.AccessControl.RawSecurityDescriptor(security.GetSecurityDescriptorBinaryForm(), 0);
+            var binaryForm = security.GetSecurityDescriptorBinaryForm();
+            var fs_security = new Core.WindowsSecurity.AccessControl.RawSecurityDescriptor(binaryForm, 0);
 
             var fileName = TranslatePath(fileNamePtr);
 
