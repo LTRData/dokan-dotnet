@@ -20,6 +20,8 @@
     <RepositoryType>git</RepositoryType>
     <PackageTags>dokan file files disk directory storage filesystem io filestore FAT NTFS FUSE</PackageTags>
     <SignAssembly>True</SignAssembly>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
     <AssemblyOriginatorKeyFile>..\DokanNet\Dokan.snk</AssemblyOriginatorKeyFile>
 
   </PropertyGroup>
