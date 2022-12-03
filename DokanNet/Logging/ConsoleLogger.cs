@@ -51,12 +51,9 @@ public class ConsoleLogger : ILogger, IDisposable
     /// <inheritdoc />
     public void Fatal(FormattableString message) => EnqueueMessage(ConsoleColor.Red, message);
 
-    private void EnqueueMessage(ConsoleColor newColor, FormattableString message)
-    {
-        _PendingLogs.Add((
+    private void EnqueueMessage(ConsoleColor newColor, FormattableString message) => _PendingLogs.Add((
             Message: message.FormatMessageForLogging(addDateTime: true, threadId: Environment.CurrentManagedThreadId, loggerName: _loggerName),
             Color: newColor));
-    }
 
     private static readonly object _lock = new();
 

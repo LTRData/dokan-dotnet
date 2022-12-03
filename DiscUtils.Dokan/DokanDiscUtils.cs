@@ -24,7 +24,6 @@ public class DokanDiscUtils : IDokanOperations, IDisposable
 {
     public IFileSystem FileSystem { get; }
 
-
     private const NativeFileAccess DataAccess = NativeFileAccess.ReadData | NativeFileAccess.WriteData | NativeFileAccess.AppendData |
                                           NativeFileAccess.Execute |
                                           NativeFileAccess.GenericExecute | NativeFileAccess.GenericWrite |
@@ -499,6 +498,7 @@ public class DokanDiscUtils : IDokanOperations, IDisposable
                     return Trace(nameof(CreateFile), fileName, info, access, share, mode, options, attributes,
                         DokanResult.FileNotFound);
                 }
+
                 break;
 
             case FileMode.CreateNew:
@@ -546,6 +546,7 @@ public class DokanDiscUtils : IDokanOperations, IDisposable
                 fileStream.Dispose();
                 info.Context = null;
             }
+
             return Trace(nameof(CreateFile), fileName, info, access, share, mode, options, attributes,
                 DokanResult.AccessDenied);
         }
@@ -649,6 +650,7 @@ public class DokanDiscUtils : IDokanOperations, IDisposable
                 FileSystem.DeleteFile(fileName);
             }
         }
+
         Trace(nameof(Cleanup), fileNamePtr, info, DokanResult.Success);
     }
 
@@ -678,6 +680,7 @@ public class DokanDiscUtils : IDokanOperations, IDisposable
             fstream.Position = offset;
             bytesRead = fstream.Read(buffer);
         }
+
         return Trace(nameof(ReadFile), fileNamePtr, info, DokanResult.Success, bytesRead,
             offset);
     }
@@ -698,6 +701,7 @@ public class DokanDiscUtils : IDokanOperations, IDisposable
                 stream.Position = offset;
                 stream.Write(buffer);
             }
+
             bytesWritten = buffer.Length;
         }
         else
@@ -709,6 +713,7 @@ public class DokanDiscUtils : IDokanOperations, IDisposable
             fstream.Write(buffer);
             bytesWritten = buffer.Length;
         }
+
         return Trace(nameof(WriteFile), fileNamePtr, info, DokanResult.Success, bytesWritten,
             offset);
     }
@@ -962,6 +967,7 @@ public class DokanDiscUtils : IDokanOperations, IDisposable
             return Trace(nameof(MoveFile), oldName, info, DokanResult.AccessDenied, newName,
                 replace);
         }
+
         return Trace(nameof(MoveFile), oldName, info, DokanResult.FileExists, newName,
             replace);
     }

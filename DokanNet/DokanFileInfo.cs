@@ -6,8 +6,6 @@ using DokanNet.Native;
 using Microsoft.Win32.SafeHandles;
 using static DokanNet.FormatProviders;
 
-#pragma warning disable 649,169
-
 namespace DokanNet;
 
 /// <summary>
@@ -20,24 +18,24 @@ namespace DokanNet;
 [StructLayout(LayoutKind.Sequential, Pack = 4)]
 public struct DokanFileInfo
 {
-    private ulong _context;
+    private ulong context;
 
     /// <summary>
     /// Used internally, never modify.
     /// </summary>
-    private readonly ulong _dokanContext;
+    private readonly ulong dokanContext;
 
     /// <summary>
     /// A pointer to the <see cref="DOKAN_OPTIONS"/> which was passed to <see cref="DokanNet.Native.NativeMethods.DokanMain"/>.
     /// </summary>
-    private readonly IntPtr _dokanOptions;
+    private readonly IntPtr dokanOptions;
 
     /// <summary>
     /// Reserved. Used internally by Dokan library. Never modify.
     /// If the processing for the event requires extra data to be associated with it
     /// then a pointer to that data can be placed here
     /// </summary>
-    private readonly IntPtr _processingContext;
+    private readonly IntPtr processingContext;
 
     /// <summary>
     /// Process id for the thread that originally requested a given I/O
@@ -88,9 +86,9 @@ public struct DokanFileInfo
     {
         get
         {
-            if (_context != 0)
+            if (context != 0)
             {
-                return GCHandle.FromIntPtr((IntPtr)_context).Target;
+                return GCHandle.FromIntPtr((IntPtr)context).Target;
             }
 
             return null;
@@ -98,15 +96,15 @@ public struct DokanFileInfo
 
         set
         {
-            if (_context != 0)
+            if (context != 0)
             {
-                GCHandle.FromIntPtr((IntPtr)_context).Free();
-                _context = 0;
+                GCHandle.FromIntPtr((IntPtr)context).Free();
+                context = 0;
             }
 
             if (value != null)
             {
-                _context = (ulong)(IntPtr)GCHandle.Alloc(value);
+                context = (ulong)(IntPtr)GCHandle.Alloc(value);
             }
         }
     }
@@ -120,7 +118,7 @@ public struct DokanFileInfo
     {
         try
         {
-            using var sfh = new SafeFileHandle(NativeMethods.DokanOpenRequestorToken(this), true);
+            using var sfh = NativeMethods.DokanOpenRequestorToken(ref this);
 
             return new(sfh.DangerousGetHandle());
         }
@@ -135,14 +133,10 @@ public struct DokanFileInfo
     /// </summary>
     /// <param name="milliseconds">Number of milliseconds to extend with.</param>
     /// <returns>If the operation was successful.</returns>
-    public bool TryResetTimeout(int milliseconds) => NativeMethods.DokanResetTimeout((uint)milliseconds, this);
+    public bool TryResetTimeout(int milliseconds) => NativeMethods.DokanResetTimeout((uint)milliseconds, ref this);
 
     /// <summary>Returns a string that represents the current object.</summary>
     /// <returns>A string that represents the current object.</returns>
-    public override string ToString()
-    {
-        return
-            DokanFormat(
+    public override string ToString() => DokanFormat(
                 $"{{{Context}, {DeleteOnClose}, {IsDirectory}, {NoCache}, {PagingIo}, #{ProcessId}, {SynchronousIo}, {WriteToEndOfFile}}}");
-    }
 }

@@ -100,7 +100,10 @@ internal unsafe struct WIN32_FIND_DATA
     public fixed char cFileName[260];
 
 #if NETSTANDARD2_1_OR_GREATER || NETCOREAPP
-    public ReadOnlySpan<char> FileName { set => value.CopyTo(MemoryMarshal.CreateSpan(ref cFileName[0], 260)); }
+    public ReadOnlySpan<char> FileName
+    {
+        set => value.CopyTo(MemoryMarshal.CreateSpan(ref cFileName[0], 260));
+    }
 #else
     public ReadOnlySpan<char> FileName
     {

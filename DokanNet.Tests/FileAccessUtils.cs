@@ -41,16 +41,19 @@ static class FileAccessUtils
             outDesiredAccess |= NativeFileAccess.GenericRead;
             genericRead = true;
         }
+
         if ((outDesiredAccess & FILE_GENERIC_WRITE) == FILE_GENERIC_WRITE)
         {
             outDesiredAccess |= NativeFileAccess.GenericWrite;
             genericWrite = true;
         }
+
         if ((outDesiredAccess & FILE_GENERIC_EXECUTE) == FILE_GENERIC_EXECUTE)
         {
             outDesiredAccess |= NativeFileAccess.GenericExecute;
             genericExecute = true;
         }
+
         if ((outDesiredAccess & FILE_ALL_ACCESS) == FILE_ALL_ACCESS)
         {
             outDesiredAccess |= NativeFileAccess.GenericAll;

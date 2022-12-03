@@ -8,9 +8,9 @@
     <Company>LTR Data</Company>
 	<PackageOutputPath>$(LocalNuGetPath)</PackageOutputPath>
     <Copyright>Copyright (C) 2017-2022</Copyright>
-    <Version>1.5.1.0</Version>
-    <AssemblyVersion>1.5.1.0</AssemblyVersion>
-    <FileVersion>1.5.1.0</FileVersion>
+    <Version>1.5.2.0</Version>
+    <AssemblyVersion>1.5.2.0</AssemblyVersion>
+    <FileVersion>1.5.2.0</FileVersion>
     <Company>Dokan-dev</Company>
     <Authors>AdrienJ, MaximeC, Hiroki Asakawa. Olof Lagerkvist</Authors>
     <PackageProjectUrl>https://github.com/LTRData/dokan-dotnet</PackageProjectUrl>
@@ -23,7 +23,12 @@
     <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
     <AssemblyOriginatorKeyFile>..\DokanNet\Dokan.snk</AssemblyOriginatorKeyFile>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
 
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\README.md" Link="README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
 
 </Project>

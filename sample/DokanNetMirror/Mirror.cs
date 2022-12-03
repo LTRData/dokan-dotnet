@@ -105,6 +105,7 @@ internal class Mirror : IDokanOperations
                                 return Trace(nameof(CreateFile), fileName, info, access, share, mode, options,
                                     attributes, DokanResult.FileNotFound);
                             }
+
                             return Trace(nameof(CreateFile), fileName, info, access, share, mode, options,
                                 attributes, DokanResult.PathNotFound);
                         }
@@ -186,6 +187,7 @@ internal class Mirror : IDokanOperations
                         return Trace(nameof(CreateFile), fileName, info, access, share, mode, options, attributes,
                             DokanResult.FileNotFound);
                     }
+
                     break;
 
                 case FileMode.CreateNew:
@@ -237,6 +239,7 @@ internal class Mirror : IDokanOperations
                     fileStream.Dispose();
                     info.Context = null;
                 }
+
                 return Trace(nameof(CreateFile), fileName, info, access, share, mode, options, attributes,
                     DokanResult.AccessDenied);
             }
@@ -258,6 +261,7 @@ internal class Mirror : IDokanOperations
                 }
             }
         }
+
         return Trace(nameof(CreateFile), fileName, info, access, share, mode, options, attributes,
             result);
     }
@@ -278,6 +282,7 @@ internal class Mirror : IDokanOperations
                 File.Delete(GetPath(fileName));
             }
         }
+
         Trace(nameof(Cleanup), fileName, info, DokanResult.Success);
     }
 
@@ -305,6 +310,7 @@ internal class Mirror : IDokanOperations
             fstream.Position = offset;
             bytesRead = fstream.Read(buffer);
         }
+
         return Trace(nameof(ReadFile), fileName, info, DokanResult.Success, $"out {bytesRead}",
             offset.ToString(CultureInfo.InvariantCulture));
     }
@@ -333,8 +339,10 @@ internal class Mirror : IDokanOperations
                 {
                     stream.Position = offset;
                 }
+
                 stream.Write(buffer);
             }
+
             bytesWritten = buffer.Length;
         }
         else
@@ -344,9 +352,11 @@ internal class Mirror : IDokanOperations
             {
                 fstream.Position = offset;
             }
+
             fstream.Write(buffer);
             bytesWritten = buffer.Length;
         }
+
         return Trace(nameof(WriteFile), fileName, info, DokanResult.Success, $"out {bytesWritten}",
             offset.ToString(CultureInfo.InvariantCulture));
     }
@@ -552,6 +562,7 @@ internal class Mirror : IDokanOperations
             return Trace(nameof(MoveFile), oldName, info, DokanResult.AccessDenied, newpath,
                 replace.ToString(CultureInfo.InvariantCulture));
         }
+
         return Trace(nameof(MoveFile), oldName, info, DokanResult.FileExists, newpath,
             replace.ToString(CultureInfo.InvariantCulture));
     }
@@ -672,6 +683,7 @@ internal class Mirror : IDokanOperations
             {
                 new FileInfo(GetPath(fileName)).SetAccessControl((FileSecurity)security);
             }
+
             return Trace(nameof(SetFileSecurity), fileName, info, DokanResult.Success, sections.ToString());
         }
         catch (UnauthorizedAccessException)

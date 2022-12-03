@@ -47,7 +47,8 @@ public static class Dokan
     /// <param name="mountPoint">Mount point. Can be <c>M:\\</c> (drive letter) or <c>C:\\mount\\dokan</c> (path in NTFS).</param>
     /// <param name="logger"><see cref="ILogger"/> that will log all DokanNet debug informations</param>
     /// <exception cref="DokanException">If the mount fails.</exception>
-    public static void Mount(this IDokanOperations operations, string mountPoint, ILogger logger = null) => Mount(operations, mountPoint, DokanOptions.FixedDrive, logger);
+    public static void Mount(this IDokanOperations operations, string mountPoint, ILogger logger = null)
+        => Mount(operations, mountPoint, DokanOptions.FixedDrive, logger);
 
     /// <summary>
     /// Mount a new %Dokan Volume.
@@ -74,7 +75,8 @@ public static class Dokan
     /// <param name="logger"><see cref="ILogger"/> that will log all DokanNet debug informations.</param>
     /// <exception cref="DokanException">If the mount fails.</exception>
     public static void Mount(this IDokanOperations operations, string mountPoint, DokanOptions mountOptions,
-        bool singleThread, ILogger logger = null) => Mount(operations, mountPoint, mountOptions, singleThread, DOKAN_VERSION, logger);
+        bool singleThread, ILogger logger = null)
+        => Mount(operations, mountPoint, mountOptions, singleThread, DOKAN_VERSION, logger);
 
     /// <summary>
     /// Mount a new %Dokan Volume.
@@ -90,10 +92,8 @@ public static class Dokan
     /// <exception cref="DokanException">If the mount fails.</exception>
     public static void Mount(this IDokanOperations operations, string mountPoint, DokanOptions mountOptions,
         bool singleThread, int version, ILogger logger = null)
-    {
-        Mount(operations, mountPoint, mountOptions, singleThread, version, TimeSpan.FromSeconds(20), string.Empty,
+        => Mount(operations, mountPoint, mountOptions, singleThread, version, TimeSpan.FromSeconds(20), string.Empty,
             512, 512, logger);
-    }
 
     /// <summary>
     /// Mount a new %Dokan Volume.
@@ -126,8 +126,8 @@ public static class Dokan
     /// <param name="logger"><see cref="ILogger"/> that will log all DokanNet debug informations.</param>
     /// <exception cref="DokanException">If the mount fails.</exception>
     public static void Mount(this IDokanOperations operations, string mountPoint, DokanOptions mountOptions,
-        bool singleThread, int version, TimeSpan timeout, string uncName, ILogger logger = null) => Mount(operations, mountPoint, mountOptions, singleThread, version, timeout, uncName, 512, 512, logger);
-
+        bool singleThread, int version, TimeSpan timeout, string uncName, ILogger logger = null)
+        => Mount(operations, mountPoint, mountOptions, singleThread, version, timeout, uncName, 512, 512, logger);
 
     /// <summary>
     /// Mount a new %Dokan Volume.
@@ -233,7 +233,8 @@ public static class Dokan
     /// <param name="logger"><see cref="ILogger"/> that will log all DokanNet debug informations</param>
     /// <exception cref="DokanException">If the mount fails.</exception>
     /// <returns>Dokan mount instance context that can be used for related instance calls like <see cref="IsFileSystemRunning"/></returns>
-    public static DokanInstance CreateFileSystem(this IDokanOperations operations, string mountPoint, ILogger logger = null) => CreateFileSystem(operations, mountPoint, DokanOptions.FixedDrive, logger);
+    public static DokanInstance CreateFileSystem(this IDokanOperations operations, string mountPoint, ILogger logger = null)
+        => CreateFileSystem(operations, mountPoint, DokanOptions.FixedDrive, logger);
 
     /// <summary>
     /// Mount a new %Dokan Volume.
@@ -248,7 +249,8 @@ public static class Dokan
     /// <exception cref="DokanException">If the mount fails.</exception>
     /// <returns>Dokan mount instance context that can be used for related instance calls like <see cref="IsFileSystemRunning"/></returns>
     public static DokanInstance CreateFileSystem(this IDokanOperations operations, string mountPoint, DokanOptions mountOptions,
-        ILogger logger = null) => CreateFileSystem(operations, mountPoint, mountOptions, false, logger);
+        ILogger logger = null)
+        => CreateFileSystem(operations, mountPoint, mountOptions, false, logger);
 
     /// <summary>
     /// Mount a new %Dokan Volume.
@@ -264,7 +266,8 @@ public static class Dokan
     /// <exception cref="DokanException">If the mount fails.</exception>
     /// <returns>Dokan mount instance context that can be used for related instance calls like <see cref="IsFileSystemRunning"/></returns>
     public static DokanInstance CreateFileSystem(this IDokanOperations operations, string mountPoint, DokanOptions mountOptions,
-        bool singleThread, ILogger logger = null) => CreateFileSystem(operations, mountPoint, mountOptions, singleThread, DOKAN_VERSION, logger);
+        bool singleThread, ILogger logger = null)
+        => CreateFileSystem(operations, mountPoint, mountOptions, singleThread, DOKAN_VERSION, logger);
 
     /// <summary>
     /// Mount a new %Dokan Volume.
@@ -282,10 +285,8 @@ public static class Dokan
     /// <returns>Dokan mount instance context that can be used for related instance calls like <see cref="IsFileSystemRunning"/></returns>
     public static DokanInstance CreateFileSystem(this IDokanOperations operations, string mountPoint, DokanOptions mountOptions,
         bool singleThread, int version, ILogger logger = null)
-    {
-        return CreateFileSystem(operations, mountPoint, mountOptions, singleThread, version, TimeSpan.FromSeconds(20), string.Empty,
+        => CreateFileSystem(operations, mountPoint, mountOptions, singleThread, version, TimeSpan.FromSeconds(20), string.Empty,
             512, 512, logger);
-    }
 
     /// <summary>
     /// Mount a new %Dokan Volume.
@@ -303,7 +304,8 @@ public static class Dokan
     /// <exception cref="DokanException">If the mount fails.</exception>
     /// <returns>Dokan mount instance context that can be used for related instance calls like <see cref="IsFileSystemRunning"/></returns>
     public static DokanInstance CreateFileSystem(this IDokanOperations operations, string mountPoint, DokanOptions mountOptions,
-        bool singleThread, int version, TimeSpan timeout, ILogger logger = null) => CreateFileSystem(operations, mountPoint, mountOptions, singleThread, version, timeout, string.Empty, 512, 512, logger);
+        bool singleThread, int version, TimeSpan timeout, ILogger logger = null)
+        => CreateFileSystem(operations, mountPoint, mountOptions, singleThread, version, timeout, string.Empty, 512, 512, logger);
 
     /// <summary>
     /// Mount a new %Dokan Volume.
@@ -322,8 +324,8 @@ public static class Dokan
     /// <exception cref="DokanException">If the mount fails.</exception>
     /// <returns>Dokan mount instance context that can be used for related instance calls like <see cref="IsFileSystemRunning"/></returns>
     public static DokanInstance CreateFileSystem(this IDokanOperations operations, string mountPoint, DokanOptions mountOptions,
-        bool singleThread, int version, TimeSpan timeout, string uncName, ILogger logger = null) => CreateFileSystem(operations, mountPoint, mountOptions, singleThread, version, timeout, uncName, 512, 512, logger);
-
+        bool singleThread, int version, TimeSpan timeout, string uncName, ILogger logger = null)
+        => CreateFileSystem(operations, mountPoint, mountOptions, singleThread, version, timeout, uncName, 512, 512, logger);
 
     /// <summary>
     /// Mount a new %Dokan Volume.
@@ -432,7 +434,8 @@ public static class Dokan
     /// </summary>
     /// <param name="dokanInstance">The dokan mount context created by <see cref="CreateFileSystem"/>.</param>
     /// <returns>Whether the FileSystem is still running or not.</returns>
-    public static bool IsFileSystemRunning(this DokanInstance dokanInstance) => NativeMethods.DokanIsFileSystemRunning(dokanInstance.DokanHandle);
+    public static bool IsFileSystemRunning(this DokanInstance dokanInstance)
+        => NativeMethods.DokanIsFileSystemRunning(dokanInstance.DokanHandle);
 
     /// <summary>
     /// Wait until the FileSystem is unmount.
@@ -441,7 +444,8 @@ public static class Dokan
     /// <param name="milliSeconds">The time-out interval, in milliseconds. If a nonzero value is specified, the function waits until the object is signaled or the interval elapses. If <param name="milliSeconds"> is zero,
     /// the function does not enter a wait state if the object is not signaled; it always returns immediately. If <param name="milliSeconds"> is INFINITE, the function will return only when the object is signaled.</param>
     /// <returns>See <a href="https://docs.microsoft.com/en-us/windows/win32/api/synchapi/nf-synchapi-waitforsingleobject">WaitForSingleObject</a> for a description of return values.</returns>
-    public static uint WaitForFileSystemClosed(this DokanInstance dokanInstance, uint milliSeconds) => NativeMethods.DokanWaitForFileSystemClosed(dokanInstance.DokanHandle, milliSeconds);
+    public static uint WaitForFileSystemClosed(this DokanInstance dokanInstance, uint milliSeconds)
+        => NativeMethods.DokanWaitForFileSystemClosed(dokanInstance.DokanHandle, milliSeconds);
 
     /// <summary>
     /// Unmount a dokan device from a driver letter.
@@ -449,7 +453,8 @@ public static class Dokan
     /// <param name="driveLetter">Driver letter to unmount.</param>
     /// <returns><c>true</c> if device was unmount 
     /// -or- <c>false</c> in case of failure or device not found.</returns>
-    public static bool Unmount(char driveLetter) => NativeMethods.DokanUnmount(driveLetter);
+    public static bool Unmount(char driveLetter)
+        => NativeMethods.DokanUnmount(driveLetter);
 
     /// <summary>
     /// Unmount a dokan device from a mount point.
@@ -457,7 +462,8 @@ public static class Dokan
     /// <param name="mountPoint">Mount point to unmount (<c>Z</c>, <c>Z:</c>, <c>Z:\\</c>, <c>Z:\\MyMountPoint</c>).</param>
     /// <returns><c>true</c> if device was unmount 
     /// -or- <c>false</c> in case of failure or device not found.</returns>
-    public static bool RemoveMountPoint(string mountPoint) => NativeMethods.DokanRemoveMountPoint(mountPoint);
+    public static bool RemoveMountPoint(string mountPoint)
+        => NativeMethods.DokanRemoveMountPoint(mountPoint);
 
     /// <summary>
     /// Retrieve native dokan dll version supported.
@@ -470,7 +476,6 @@ public static class Dokan
     /// </summary>
     /// <returns>Return native dokan driver version supported.</returns>
     public static int DriverVersion => (int)NativeMethods.DokanDriverVersion();
-
 
     /// <summary>
     /// Dokan User FS file-change notifications
@@ -499,7 +504,8 @@ public static class Dokan
         /// <param name="filePath">Absolute path to the file or directory, including the mount-point of the file system.</param>
         /// <param name="isDirectory">Indicates if the path is a directory.</param>
         /// <returns>true if the notification succeeded.</returns>
-        public static bool Create(DokanInstance dokanInstance, string filePath, bool isDirectory) => NativeMethods.DokanNotifyCreate(dokanInstance.DokanHandle, filePath, isDirectory);
+        public static bool Create(DokanInstance dokanInstance, string filePath, bool isDirectory)
+            => NativeMethods.DokanNotifyCreate(dokanInstance.DokanHandle, filePath, isDirectory);
 
         /// <summary>
         /// Notify Dokan that a file or directory has been deleted.
@@ -509,7 +515,8 @@ public static class Dokan
         /// <param name="isDirectory">Indicates if the path is a directory.</param>
         /// <returns>true if notification succeeded.</returns>
         /// <remarks><see cref="DokanOptions.EnableNotificationAPI"/> must be set in the mount options for this to succeed.</remarks>
-        public static bool Delete(DokanInstance dokanInstance, string filePath, bool isDirectory) => NativeMethods.DokanNotifyDelete(dokanInstance.DokanHandle, filePath, isDirectory);
+        public static bool Delete(DokanInstance dokanInstance, string filePath, bool isDirectory)
+            => NativeMethods.DokanNotifyDelete(dokanInstance.DokanHandle, filePath, isDirectory);
 
         /// <summary>
         /// Notify Dokan that file or directory attributes have changed.
@@ -518,7 +525,8 @@ public static class Dokan
         /// <param name="filePath">Absolute path to the file or directory, including the mount-point of the file system.</param>
         /// <returns>true if notification succeeded.</returns>
         /// <remarks><see cref="DokanOptions.EnableNotificationAPI"/> must be set in the mount options for this to succeed.</remarks>
-        public static bool Update(DokanInstance dokanInstance, string filePath) => NativeMethods.DokanNotifyUpdate(dokanInstance.DokanHandle, filePath);
+        public static bool Update(DokanInstance dokanInstance, string filePath)
+            => NativeMethods.DokanNotifyUpdate(dokanInstance.DokanHandle, filePath);
 
         /// <summary>
         /// Notify Dokan that file or directory extended attributes have changed.
@@ -527,7 +535,8 @@ public static class Dokan
         /// <param name="filePath">Absolute path to the file or directory, including the mount-point of the file system.</param>
         /// <returns>true if notification succeeded.</returns>
         /// <remarks><see cref="DokanOptions.EnableNotificationAPI"/> must be set in the mount options for this to succeed.</remarks>
-        public static bool XAttrUpdate(DokanInstance dokanInstance, string filePath) => NativeMethods.DokanNotifyXAttrUpdate(dokanInstance.DokanHandle, filePath);
+        public static bool XAttrUpdate(DokanInstance dokanInstance, string filePath)
+            => NativeMethods.DokanNotifyXAttrUpdate(dokanInstance.DokanHandle, filePath);
 
         /// <summary>
         /// Notify Dokan that a file or directory has been renamed.
@@ -541,12 +550,10 @@ public static class Dokan
         /// <returns>true if notification succeeded.</returns>
         /// <remarks><see cref="DokanOptions.EnableNotificationAPI"/> must be set in the mount options for this to succeed.</remarks>
         public static bool Rename(DokanInstance dokanInstance, string oldPath, string newPath, bool isDirectory, bool isInSameDirectory)
-        {
-            return NativeMethods.DokanNotifyRename(dokanInstance.DokanHandle, oldPath,
+            => NativeMethods.DokanNotifyRename(dokanInstance.DokanHandle, oldPath,
                 newPath,
                 isDirectory,
                 isInSameDirectory);
-        }
     }
 }
 

@@ -82,6 +82,7 @@ internal class RFS : IDokanOperations
                 return subkey.OpenSubKey(subKeyPath);
             }
         }
+
         return null;
     }
 

@@ -116,7 +116,6 @@ internal sealed class DokanOperationProxy
         serialNumber = (uint)operations.GetHashCode();
     }
 
-
     /// <summary>
     /// CreateFile is called each time a request is made on a file system object.
     /// 
@@ -412,6 +411,7 @@ internal sealed class DokanOperationProxy
                 rawHandleFileInformation.dwNumberOfLinks = fi.NumberOfLinks;
 
                 var index = fi.FileIndex;
+                
                 if (index == 0)
                 {
 #if NETCOREAPP || NETSTANDARD2_1_OR_GREATER
@@ -420,6 +420,7 @@ internal sealed class DokanOperationProxy
                     index = rawFileName.ToString().GetHashCode();
 #endif
                 }
+
                 rawHandleFileInformation.nFileIndexHigh = (uint)(index >> 32);
                 rawHandleFileInformation.nFileIndexLow = (uint)(index & 0xffffffff);
             }
@@ -677,7 +678,6 @@ internal sealed class DokanOperationProxy
     /// <exception cref="System.ArgumentNullException">The <paramref name="rawDelegate" /> parameter is null.</exception>
     private static TDelegate GetDataFromPointer<TDelegate>(IntPtr rawDelegate) where TDelegate : class =>
         Marshal.GetDelegateForFunctionPointer<TDelegate>(rawDelegate);
-
 
     /// <summary>
     /// Call the delegate <paramref name="fill"/> using data in <paramref name="rawFileInfo"/> and <paramref name="fi"/>.
@@ -1148,22 +1148,26 @@ internal sealed class DokanOperationProxy
         {
             sect |= AccessControlSections.Owner;
         }
+
         if (rawRequestedInformation.HasFlag(SECURITY_INFORMATION.GROUP_SECURITY_INFORMATION))
         {
             sect |= AccessControlSections.Group;
         }
+
         if (rawRequestedInformation.HasFlag(SECURITY_INFORMATION.DACL_SECURITY_INFORMATION) ||
             rawRequestedInformation.HasFlag(SECURITY_INFORMATION.PROTECTED_DACL_SECURITY_INFORMATION) ||
             rawRequestedInformation.HasFlag(SECURITY_INFORMATION.UNPROTECTED_DACL_SECURITY_INFORMATION))
         {
             sect |= AccessControlSections.Access;
         }
+
         if (rawRequestedInformation.HasFlag(SECURITY_INFORMATION.SACL_SECURITY_INFORMATION) ||
             rawRequestedInformation.HasFlag(SECURITY_INFORMATION.PROTECTED_SACL_SECURITY_INFORMATION) ||
             rawRequestedInformation.HasFlag(SECURITY_INFORMATION.UNPROTECTED_SACL_SECURITY_INFORMATION))
         {
             sect |= AccessControlSections.Audit;
         }
+
         try
         {
             if (logger.DebugEnabled)
@@ -1218,22 +1222,26 @@ internal sealed class DokanOperationProxy
         {
             sect |= AccessControlSections.Owner;
         }
+
         if (rawSecurityInformation.HasFlag(SECURITY_INFORMATION.GROUP_SECURITY_INFORMATION))
         {
             sect |= AccessControlSections.Group;
         }
+
         if (rawSecurityInformation.HasFlag(SECURITY_INFORMATION.DACL_SECURITY_INFORMATION) ||
             rawSecurityInformation.HasFlag(SECURITY_INFORMATION.PROTECTED_DACL_SECURITY_INFORMATION) ||
             rawSecurityInformation.HasFlag(SECURITY_INFORMATION.UNPROTECTED_DACL_SECURITY_INFORMATION))
         {
             sect |= AccessControlSections.Access;
         }
+
         if (rawSecurityInformation.HasFlag(SECURITY_INFORMATION.SACL_SECURITY_INFORMATION) ||
             rawSecurityInformation.HasFlag(SECURITY_INFORMATION.PROTECTED_SACL_SECURITY_INFORMATION) ||
             rawSecurityInformation.HasFlag(SECURITY_INFORMATION.UNPROTECTED_SACL_SECURITY_INFORMATION))
         {
             sect |= AccessControlSections.Audit;
         }
+
         var buffer = new byte[rawSecurityDescriptorLength];
         try
         {
@@ -1278,14 +1286,11 @@ internal sealed class DokanOperationProxy
     /// </returns>
     /// \see <a href="https://msdn.microsoft.com/en-us/library/windows/desktop/aa365739(v=vs.85).aspx">WIN32_FILE_ATTRIBUTE_DATA structure (MSDN)</a>
     [Pure]
-    private static long ToFileTime(DateTime? dateTime)
-    {
-        return dateTime.HasValue && (dateTime.Value >= DateTime.FromFileTime(0))
+    private static long ToFileTime(DateTime? dateTime) => dateTime.HasValue && (dateTime.Value >= DateTime.FromFileTime(0))
             ? dateTime.Value.ToFileTime()
             : 0;
-    }
 
-#region Nested type: FILL_FIND_FILE_DATA
+    #region Nested type: FILL_FIND_FILE_DATA
 
     /// <summary>
     /// Used to add an entry in <see cref="DokanOperationProxy.FindFilesProxy"/> and <see cref="DokanOperationProxy.FindFilesWithPatternProxy"/>.

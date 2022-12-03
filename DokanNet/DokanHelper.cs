@@ -147,6 +147,7 @@ public static class DokanHelper
                             ni++;
                         }
                     }
+
                     ei++;
                     break;
                 case QUESTION_MARK:
