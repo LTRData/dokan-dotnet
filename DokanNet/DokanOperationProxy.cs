@@ -25,22 +25,22 @@ internal sealed class DokanOperationProxy
 {
 #if NET6_0_OR_GREATER
     
-    private static unsafe ReadOnlySpan<char> SpanFromIntPtr(IntPtr ptr)
-        => MemoryMarshal.CreateReadOnlySpanFromNullTerminated((char*)ptr.ToPointer());
+    private static unsafe ReadOnlySpan<char> SpanFromIntPtr(nint ptr)
+        => MemoryMarshal.CreateReadOnlySpanFromNullTerminated((char*)ptr);
 
 #else
 
     [DllImport("msvcrt", CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
-    private static extern int wcslen(IntPtr ptr);
+    private static extern int wcslen(nint ptr);
 
-    private static unsafe ReadOnlySpan<char> SpanFromIntPtr(IntPtr ptr)
+    private static unsafe ReadOnlySpan<char> SpanFromIntPtr(nint ptr)
     {
-        if (ptr == IntPtr.Zero)
+        if (ptr == 0)
         {
             return default;
         }
 
-        return new(ptr.ToPointer(), wcslen(ptr));
+        return new((void*)ptr, wcslen(ptr));
     }
 
 #endif
@@ -142,8 +142,8 @@ internal sealed class DokanOperationProxy
     /// \see <a href="https://msdn.microsoft.com/en-us/library/windows/hardware/ff566424(v=vs.85).aspx">ZwCreateFile routine (MSDN)</a>
     /// <see cref="DokanNet.IDokanOperations.CreateFile"/>
     public NtStatus ZwCreateFileProxy(
-        IntPtr rawFileName,
-        IntPtr securityContext,
+        nint rawFileName,
+        nint securityContext,
         uint rawDesiredAccess,
         uint rawFileAttributes,
         uint rawShareAccess,
@@ -203,7 +203,7 @@ internal sealed class DokanOperationProxy
 
     ////
 
-    public void CleanupProxy(IntPtr rawFileName, ref DokanFileInfo rawFileInfo)
+    public void CleanupProxy(nint rawFileName, ref DokanFileInfo rawFileInfo)
     {
         try
         {
@@ -228,7 +228,7 @@ internal sealed class DokanOperationProxy
 
     ////
 
-    public void CloseFileProxy(IntPtr rawFileName, ref DokanFileInfo rawFileInfo)
+    public void CloseFileProxy(nint rawFileName, ref DokanFileInfo rawFileInfo)
     {
         try
         {
@@ -258,8 +258,8 @@ internal sealed class DokanOperationProxy
     ////
 
     unsafe public NtStatus ReadFileProxy(
-        IntPtr rawFileName,
-        IntPtr rawBuffer,
+        nint rawFileName,
+        nint rawBuffer,
         uint rawBufferLength,
         ref int rawReadLength,
         long rawOffset,
@@ -276,8 +276,8 @@ internal sealed class DokanOperationProxy
             }
 
             // Check if the file system has implemented the unsafe Dokan interface.
-            // If so, pass the raw IntPtr through instead of marshaling.
-            var result = operations.ReadFile(SpanFromIntPtr(rawFileName), new(rawBuffer.ToPointer(), (int)rawBufferLength), out rawReadLength, rawOffset, rawFileInfo);
+            // If so, pass the raw nint through instead of marshaling.
+            var result = operations.ReadFile(SpanFromIntPtr(rawFileName), new((void*)rawBuffer, (int)rawBufferLength), out rawReadLength, rawOffset, rawFileInfo);
 
             if (logger.DebugEnabled)
             {
@@ -296,8 +296,8 @@ internal sealed class DokanOperationProxy
     ////
 
     unsafe public NtStatus WriteFileProxy(
-        IntPtr rawFileName,
-        IntPtr rawBuffer,
+        nint rawFileName,
+        nint rawBuffer,
         uint rawNumberOfBytesToWrite,
         ref int rawNumberOfBytesWritten,
         long rawOffset,
@@ -314,8 +314,8 @@ internal sealed class DokanOperationProxy
             }
 
             // Check if the file system has implemented the unsafe Dokan interface.
-            // If so, pass the raw IntPtr through instead of marshalling.
-            var result = operations.WriteFile(SpanFromIntPtr(rawFileName), new(rawBuffer.ToPointer(), (int)rawNumberOfBytesToWrite), out rawNumberOfBytesWritten, rawOffset, rawFileInfo);
+            // If so, pass the raw nint through instead of marshalling.
+            var result = operations.WriteFile(SpanFromIntPtr(rawFileName), new((void*)rawBuffer, (int)rawNumberOfBytesToWrite), out rawNumberOfBytesWritten, rawOffset, rawFileInfo);
 
             if (logger.DebugEnabled)
             {
@@ -333,7 +333,7 @@ internal sealed class DokanOperationProxy
 
     ////
 
-    public NtStatus FlushFileBuffersProxy(IntPtr rawFileName, in DokanFileInfo rawFileInfo)
+    public NtStatus FlushFileBuffersProxy(nint rawFileName, in DokanFileInfo rawFileInfo)
     {
         try
         {
@@ -362,7 +362,7 @@ internal sealed class DokanOperationProxy
     ////
 
     public NtStatus GetFileInformationProxy(
-        IntPtr rawFileName,
+        nint rawFileName,
         ref BY_HANDLE_FILE_INFORMATION rawHandleFileInformation,
         in DokanFileInfo rawFileInfo)
     {
@@ -441,7 +441,7 @@ internal sealed class DokanOperationProxy
 
     ////
 
-    public NtStatus FindFilesProxy(IntPtr rawFileName, IntPtr rawFillFindData, in DokanFileInfo rawFileInfo)
+    public NtStatus FindFilesProxy(nint rawFileName, nint rawFillFindData, in DokanFileInfo rawFileInfo)
     {
         var startTime = Environment.TickCount;
 
@@ -460,8 +460,6 @@ internal sealed class DokanOperationProxy
             if (result == DokanResult.Success)
             {
                 Debug.Assert(files is not null, "Files must not be null");
-
-                var fill = GetDataFromPointer<FILL_FIND_FILE_DATA>(rawFillFindData);
 
                 var count = 0L;
 
@@ -486,7 +484,7 @@ internal sealed class DokanOperationProxy
                         logger.Debug($"\t\tLength\t{fi.Length}");
                     }
 
-                    AddTo(fill, rawFileInfo, fi);
+                    AddFileFindDataTo(rawFillFindData, rawFileInfo, fi);
                 }
             }
 
@@ -505,9 +503,9 @@ internal sealed class DokanOperationProxy
     }
 
     public NtStatus FindFilesWithPatternProxy(
-        IntPtr rawFileName,
-        IntPtr rawSearchPattern,
-        IntPtr rawFillFindData,
+        nint rawFileName,
+        nint rawSearchPattern,
+        nint rawFillFindData,
         in DokanFileInfo rawFileInfo)
     {
         var startTime = Environment.TickCount;
@@ -530,8 +528,6 @@ internal sealed class DokanOperationProxy
             Debug.Assert(files is not null, "Files must not be null");
             if (result == DokanResult.Success)
             {
-                var fill = GetDataFromPointer<FILL_FIND_FILE_DATA>(rawFillFindData);
-
                 var count = 0L;
 
                 // used a single entry call to speed up the "enumeration" of the list
@@ -555,7 +551,7 @@ internal sealed class DokanOperationProxy
                         logger.Debug($"\t\tLength\t{fi.Length}");
                     }
 
-                    AddTo(fill, rawFileInfo, fi);
+                    AddFileFindDataTo(rawFillFindData, rawFileInfo, fi);
                 }
             }
 
@@ -574,13 +570,15 @@ internal sealed class DokanOperationProxy
     }
 
     /// <summary>
-    /// Call the delegate <paramref name="fill"/> using data in <paramref name="rawFileInfo"/> and <paramref name="fi"/>.
+    /// Call the function pointer <paramref name="rawFillFindData"/> using data in <paramref name="rawFileInfo"/> and <paramref name="fi"/>.
     /// </summary>
-    /// <param name="fill">The delegate of type <see cref="FILL_FIND_FILE_DATA"/> to be called.</param>
+    /// <param name="rawFillFindData">Pointer to unmanaged function of type <see cref="FILL_FIND_FILE_DATA"/> to be called.</param>
     /// <param name="rawFileInfo">A <see cref="DokanFileInfo"/> to be used when calling <paramref name="fill"/>.</param>
     /// <param name="fi">A <see cref="ByHandleFileInformation"/> with information to be used when calling <paramref name="fill"/>.</param>
-    private static void AddTo(FILL_FIND_FILE_DATA fill, in DokanFileInfo rawFileInfo, in FindFileInformation fi)
+    private unsafe static void AddFileFindDataTo(nint rawFillFindData, in DokanFileInfo rawFileInfo, in FindFileInformation fi)
     {
+        var fill = (delegate* unmanaged[Stdcall]<in WIN32_FIND_DATA, in DokanFileInfo, long>)rawFillFindData;
+
         Debug.Assert(!fi.FileName.IsEmpty, "FileName must not be empty or null");
         var ctime = ToFileTime(fi.CreationTime);
         var atime = ToFileTime(fi.LastAccessTime);
@@ -609,10 +607,10 @@ internal sealed class DokanOperationProxy
             AlternateFileName = fi.ShortFileName.Span
         };
 
-        fill(ref data, rawFileInfo);
+        fill(data, rawFileInfo);
     }
 
-    public NtStatus FindStreamsProxy(IntPtr rawFileName, IntPtr rawFillFindData, IntPtr findStreamContext, in DokanFileInfo rawFileInfo)
+    public NtStatus FindStreamsProxy(nint rawFileName, nint rawFillFindData, nint findStreamContext, in DokanFileInfo rawFileInfo)
     {
         var startTime = Environment.TickCount;
 
@@ -631,8 +629,6 @@ internal sealed class DokanOperationProxy
             Debug.Assert(!(result == DokanResult.NotImplemented && files is null));
             if (result == DokanResult.Success)
             {
-                var fill = GetDataFromPointer<FILL_FIND_STREAM_DATA>(rawFillFindData);
-
                 var count = 0L;
 
                 // used a single entry call to speed up the "enumeration" of the list
@@ -652,7 +648,7 @@ internal sealed class DokanOperationProxy
                         logger.Debug($"\t\tLength\t{fi.Length}");
                     }
 
-                    AddTo(fill, rawFileInfo, fi);
+                    AddFindStreamDataTo(rawFillFindData, rawFileInfo, fi);
                 }
             }
 
@@ -670,24 +666,18 @@ internal sealed class DokanOperationProxy
         }
     }
 
-    /// <summary>Converts an unmanaged function pointer to a delegate of a specified type. </summary>
-    /// <returns>A instance of the specified delegate type.</returns>
-    /// <param name="rawDelegate">The unmanaged function pointer to convert. </param>
-    /// <typeparam name="TDelegate">The type of the delegate to return. </typeparam>
-    /// <exception cref="System.ArgumentException">The <typeparam name="TDelegate" /> generic parameter is not a delegate, or it is an open generic type.</exception>
-    /// <exception cref="System.ArgumentNullException">The <paramref name="rawDelegate" /> parameter is null.</exception>
-    private static TDelegate GetDataFromPointer<TDelegate>(IntPtr rawDelegate) where TDelegate : class =>
-        Marshal.GetDelegateForFunctionPointer<TDelegate>(rawDelegate);
-
     /// <summary>
-    /// Call the delegate <paramref name="fill"/> using data in <paramref name="rawFileInfo"/> and <paramref name="fi"/>.
+    /// Call the function pointer <paramref name="rawFillStreamData"/> using data in <paramref name="rawFileInfo"/> and <paramref name="fi"/>.
     /// </summary>
-    /// <param name="fill">The delegate of type <see cref="FILL_FIND_STREAM_DATA"/> to be called.</param>
+    /// <param name="rawFillFindData">Pointer to unmanaged function of type <see cref="FILL_FIND_STREAM_DATA"/> to be called.</param>
     /// <param name="rawFileInfo">A <see cref="DokanFileInfo"/> to be used when calling <paramref name="fill"/>.</param>
     /// <param name="fi">A <see cref="ByHandleFileInformation"/> with information to be used when calling <paramref name="fill"/>.</param>
-    private static void AddTo(FILL_FIND_STREAM_DATA fill, in DokanFileInfo rawFileInfo, FindFileInformation fi)
+    private unsafe static void AddFindStreamDataTo(nint rawFillStreamData, in DokanFileInfo rawFileInfo, FindFileInformation fi)
     {
+        var fill = (delegate* unmanaged[Stdcall]<in WIN32_FIND_STREAM_DATA, in DokanFileInfo, long>)rawFillStreamData;
+
         Debug.Assert(!fi.FileName.IsEmpty, "FileName must not be empty or null");
+
         var data = new WIN32_FIND_STREAM_DATA
         {
             StreamSize = fi.Length,
@@ -695,12 +685,12 @@ internal sealed class DokanOperationProxy
         };
         //ZeroMemory(&data, sizeof(WIN32_FIND_DATAW));
 
-        fill(ref data, rawFileInfo);
+        fill(data, rawFileInfo);
     }
 
     ////
 
-    public NtStatus SetEndOfFileProxy(IntPtr rawFileName, long rawByteOffset, in DokanFileInfo rawFileInfo)
+    public NtStatus SetEndOfFileProxy(nint rawFileName, long rawByteOffset, in DokanFileInfo rawFileInfo)
     {
         try
         {
@@ -727,7 +717,7 @@ internal sealed class DokanOperationProxy
         }
     }
 
-    public NtStatus SetAllocationSizeProxy(IntPtr rawFileName, long rawLength, in DokanFileInfo rawFileInfo)
+    public NtStatus SetAllocationSizeProxy(nint rawFileName, long rawLength, in DokanFileInfo rawFileInfo)
     {
         try
         {
@@ -756,7 +746,7 @@ internal sealed class DokanOperationProxy
 
     ////
 
-    public NtStatus SetFileAttributesProxy(IntPtr rawFileName, uint rawAttributes, in DokanFileInfo rawFileInfo)
+    public NtStatus SetFileAttributesProxy(nint rawFileName, uint rawAttributes, in DokanFileInfo rawFileInfo)
     {
         try
         {
@@ -786,7 +776,7 @@ internal sealed class DokanOperationProxy
     ////
 
     public NtStatus SetFileTimeProxy(
-        IntPtr rawFileName,
+        nint rawFileName,
         ref FILETIME rawCreationTime,
         ref FILETIME rawLastAccessTime,
         ref FILETIME rawLastWriteTime,
@@ -837,7 +827,7 @@ internal sealed class DokanOperationProxy
 
     ////
 
-    public NtStatus DeleteFileProxy(IntPtr rawFileName, in DokanFileInfo rawFileInfo)
+    public NtStatus DeleteFileProxy(nint rawFileName, in DokanFileInfo rawFileInfo)
     {
         try
         {
@@ -865,7 +855,7 @@ internal sealed class DokanOperationProxy
 
     ////
 
-    public NtStatus DeleteDirectoryProxy(IntPtr rawFileName, in DokanFileInfo rawFileInfo)
+    public NtStatus DeleteDirectoryProxy(nint rawFileName, in DokanFileInfo rawFileInfo)
     {
         try
         {
@@ -894,8 +884,8 @@ internal sealed class DokanOperationProxy
     ////
 
     public NtStatus MoveFileProxy(
-        IntPtr rawFileName,
-        IntPtr rawNewFileName,
+        nint rawFileName,
+        nint rawNewFileName,
         bool rawReplaceIfExisting,
         ref DokanFileInfo rawFileInfo)
     {
@@ -927,7 +917,7 @@ internal sealed class DokanOperationProxy
 
     ////
 
-    public NtStatus LockFileProxy(IntPtr rawFileName, long rawByteOffset, long rawLength, in DokanFileInfo rawFileInfo)
+    public NtStatus LockFileProxy(nint rawFileName, long rawByteOffset, long rawLength, in DokanFileInfo rawFileInfo)
     {
         try
         {
@@ -958,7 +948,7 @@ internal sealed class DokanOperationProxy
     ////
 
     public NtStatus UnlockFileProxy(
-        IntPtr rawFileName,
+        nint rawFileName,
         long rawByteOffset,
         long rawLength,
         in DokanFileInfo rawFileInfo)
@@ -1082,7 +1072,7 @@ internal sealed class DokanOperationProxy
         }
     }
 
-    public NtStatus MountedProxy(IntPtr mountPoint, in DokanFileInfo rawFileInfo)
+    public NtStatus MountedProxy(nint mountPoint, in DokanFileInfo rawFileInfo)
     {
         try
         {
@@ -1136,9 +1126,9 @@ internal sealed class DokanOperationProxy
     }
 
     public NtStatus GetFileSecurityProxy(
-        IntPtr rawFileName,
+        nint rawFileName,
         ref SECURITY_INFORMATION rawRequestedInformation,
-        IntPtr rawSecurityDescriptor,
+        nint rawSecurityDescriptor,
         uint rawSecurityDescriptorLength,
         ref uint rawSecurityDescriptorLengthNeeded,
         in DokanFileInfo rawFileInfo)
@@ -1211,9 +1201,9 @@ internal sealed class DokanOperationProxy
     }
 
     public NtStatus SetFileSecurityProxy(
-        IntPtr rawFileName,
+        nint rawFileName,
         ref SECURITY_INFORMATION rawSecurityInformation,
-        IntPtr rawSecurityDescriptor,
+        nint rawSecurityDescriptor,
         uint rawSecurityDescriptorLength,
         in DokanFileInfo rawFileInfo)
     {
