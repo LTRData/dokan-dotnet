@@ -3,18 +3,18 @@
   <PropertyGroup>
     <LangVersion>Latest</LangVersion>
 
-    <GeneratePackageOnBuild Condition="'$(Configuration)' == 'Release'">true</GeneratePackageOnBuild>
     <PackageId>LTRData.$(MSBuildProjectName)</PackageId>
     <Company>LTR Data</Company>
 	<PackageOutputPath>$(LocalNuGetPath)</PackageOutputPath>
-    <Copyright>Copyright (C) 2017-2022</Copyright>
-    <Version>1.5.2.0</Version>
-    <AssemblyVersion>1.5.2.0</AssemblyVersion>
-    <FileVersion>1.5.2.0</FileVersion>
-    <Company>Dokan-dev</Company>
+    <Copyright>Copyright (c) 2017 - 2023</Copyright>
+    <Version>1.5.3.0</Version>
+    <AssemblyVersion>$(Version)</AssemblyVersion>
+    <FileVersion>$(Version)</FileVersion>
+    <Company>LTR Data</Company>
     <Authors>AdrienJ, MaximeC, Hiroki Asakawa. Olof Lagerkvist</Authors>
     <PackageProjectUrl>https://github.com/LTRData/dokan-dotnet</PackageProjectUrl>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageVersion>$(Version)</PackageVersion>
     <!-- <PackageIcon>dokan_logo.png</PackageIcon> -->
     <RepositoryUrl>https://github.com/LTRData/dokan-dotnet</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
