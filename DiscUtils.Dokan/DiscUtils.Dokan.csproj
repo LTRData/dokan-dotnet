@@ -8,6 +8,7 @@
     <EnableNETAnalyzers>true</EnableNETAnalyzers>
     <OutputPath>..\$(Configuration)\</OutputPath>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <GeneratePackageOnBuild Condition="'$(Configuration)' == 'Release'">true</GeneratePackageOnBuild>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)'=='Release'">

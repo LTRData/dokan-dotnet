@@ -11,6 +11,7 @@ This is a .NET wrapper over Dokan, and allows you to create your own file system
     <RunAnalyzersDuringBuild>false</RunAnalyzersDuringBuild>
     <OutputPath>..\$(Configuration)\</OutputPath>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <GeneratePackageOnBuild Condition="'$(Configuration)' == 'Release'">true</GeneratePackageOnBuild>
   </PropertyGroup>
 
   <ItemGroup>
