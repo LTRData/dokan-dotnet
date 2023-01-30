@@ -88,7 +88,7 @@ public static class DokanHelper
                     var endReached = false;
                     while (!endReached)
                     {
-                        endReached = (ni >= name.Length || lastDotIndex > -1 && ni > lastDotIndex);
+                        endReached = ni >= name.Length || lastDotIndex > -1 && ni > lastDotIndex;
 
                         if (!endReached)
                         {

@@ -262,7 +262,7 @@ internal class RFS : IDokanOperations
     public NtStatus SetFileSecurity(ReadOnlySpan<char> fileName, FileSystemSecurity security, AccessControlSections sections,
         in DokanFileInfo info) => DokanResult.Error;
 
-    public NtStatus EnumerateNamedStreams(string _1, IntPtr _2, out string streamName,
+    public NtStatus EnumerateNamedStreams(string _1, nint _2, out string streamName,
         out long streamSize, ref DokanFileInfo _5)
     {
         streamName = string.Empty;

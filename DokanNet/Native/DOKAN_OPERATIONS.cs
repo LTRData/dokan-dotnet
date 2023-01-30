@@ -26,8 +26,8 @@ internal sealed class DOKAN_OPERATIONS
     #region Delegates
 
     public delegate NtStatus ZwCreateFileDelegate(
-        IntPtr rawFileName,
-        IntPtr securityContext,
+        nint rawFileName,
+        nint securityContext,
         uint rawDesiredAccess,
         uint rawFileAttributes,
         uint rawShareAccess,
@@ -36,92 +36,92 @@ internal sealed class DOKAN_OPERATIONS
         ref DokanFileInfo dokanFileInfo);
 
     public delegate void CleanupDelegate(
-        IntPtr rawFileName,
+        nint rawFileName,
         ref DokanFileInfo rawFileInfo);
 
     public delegate void CloseFileDelegate(
-        IntPtr rawFileName,
+        nint rawFileName,
         ref DokanFileInfo rawFileInfo);
 
     public delegate NtStatus ReadFileDelegate(
-        IntPtr rawFileName,
-        IntPtr rawBuffer,
+        nint rawFileName,
+        nint rawBuffer,
         uint rawBufferLength,
         ref int rawReadLength,
         long rawOffset,
         in DokanFileInfo rawFileInfo);
 
     public delegate NtStatus WriteFileDelegate(
-        IntPtr rawFileName,
-        IntPtr rawBuffer,
+        nint rawFileName,
+        nint rawBuffer,
         uint rawNumberOfBytesToWrite,
         ref int rawNumberOfBytesWritten,
         long rawOffset,
         in DokanFileInfo rawFileInfo);
 
     public delegate NtStatus FlushFileBuffersDelegate(
-        IntPtr rawFileName,
+        nint rawFileName,
         in DokanFileInfo rawFileInfo);
 
     public delegate NtStatus GetFileInformationDelegate(
-        IntPtr rawFileName,
+        nint rawFileName,
         ref BY_HANDLE_FILE_INFORMATION handleFileInfo,
         in DokanFileInfo fileInfo);
 
     public delegate NtStatus FindFilesDelegate(
-        IntPtr rawFileName,
-        IntPtr rawFillFindData,
+        nint rawFileName,
+        nint rawFillFindData,
         in DokanFileInfo rawFileInfo);
 
     public delegate NtStatus FindFilesWithPatternDelegate(
-        IntPtr rawFileName,
-        IntPtr rawSearchPattern,
-        IntPtr rawFillFindData,
+        nint rawFileName,
+        nint rawSearchPattern,
+        nint rawFillFindData,
         in DokanFileInfo rawFileInfo);
 
     public delegate NtStatus SetFileAttributesDelegate(
-        IntPtr rawFileName,
+        nint rawFileName,
         uint rawAttributes,
         in DokanFileInfo rawFileInfo);
 
     public delegate NtStatus SetFileTimeDelegate(
-        IntPtr rawFileName,
+        nint rawFileName,
         ref FILETIME rawCreationTime,
         ref FILETIME rawLastAccessTime,
         ref FILETIME rawLastWriteTime,
         in DokanFileInfo rawFileInfo);
 
     public delegate NtStatus DeleteFileDelegate(
-        IntPtr rawFileName,
+        nint rawFileName,
         in DokanFileInfo rawFileInfo);
 
     public delegate NtStatus DeleteDirectoryDelegate(
-        IntPtr rawFileName,
+        nint rawFileName,
         in DokanFileInfo rawFileInfo);
 
     public delegate NtStatus MoveFileDelegate(
-        IntPtr rawFileName,
-        IntPtr rawNewFileName,
+        nint rawFileName,
+        nint rawNewFileName,
         [MarshalAs(UnmanagedType.Bool)] bool rawReplaceIfExisting,
         ref DokanFileInfo rawFileInfo);
 
     public delegate NtStatus SetEndOfFileDelegate(
-        IntPtr rawFileName,
+        nint rawFileName,
         long rawByteOffset,
         in DokanFileInfo rawFileInfo);
 
     public delegate NtStatus SetAllocationSizeDelegate(
-        IntPtr rawFileName,
+        nint rawFileName,
         long rawLength,
         in DokanFileInfo rawFileInfo);
 
     public delegate NtStatus LockFileDelegate(
-        IntPtr rawFileName,
+        nint rawFileName,
         long rawByteOffset, long rawLength,
         in DokanFileInfo rawFileInfo);
 
     public delegate NtStatus UnlockFileDelegate(
-        IntPtr rawFileName,
+        nint rawFileName,
         long rawByteOffset, long rawLength,
         in DokanFileInfo rawFileInfo);
 
@@ -140,17 +140,17 @@ internal sealed class DOKAN_OPERATIONS
         in DokanFileInfo rawFileInfo);
 
     public delegate NtStatus GetFileSecurityDelegate(
-        IntPtr rawFileName,
+        nint rawFileName,
         [In] ref SECURITY_INFORMATION rawRequestedInformation,
-        IntPtr rawSecurityDescriptor,
+        nint rawSecurityDescriptor,
         uint rawSecurityDescriptorLength,
         ref uint rawSecurityDescriptorLengthNeeded,
         in DokanFileInfo rawFileInfo);
 
     public delegate NtStatus SetFileSecurityDelegate(
-        IntPtr rawFileName,
+        nint rawFileName,
         [In] ref SECURITY_INFORMATION rawSecurityInformation,
-        IntPtr rawSecurityDescriptor,
+        nint rawSecurityDescriptor,
         uint rawSecurityDescriptorLength,
         in DokanFileInfo rawFileInfo);
 
@@ -161,17 +161,17 @@ internal sealed class DOKAN_OPERATIONS
     /// <remarks>Supported since 0.8.0. 
     /// You must specify the version at <see cref="DOKAN_OPTIONS.Version"/>.</remarks>
     /// <param name="rawFileName">Filename</param>
-    /// <param name="rawFillFindData">A <see cref="IntPtr"/> to a <see cref="FILL_FIND_STREAM_DATA"/>.</param>
+    /// <param name="rawFillFindData">A <see cref="nint"/> to a <see cref="FILL_FIND_STREAM_DATA"/>.</param>
     /// <param name="rawFileInfo">A <see cref="DokanFileInfo"/>.</param>
     /// <returns></returns>
     public delegate NtStatus FindStreamsDelegate(
-        IntPtr rawFileName,
-        IntPtr rawFillFindData,
-        IntPtr findStreamContext,
+        nint rawFileName,
+        nint rawFillFindData,
+        nint findStreamContext,
         in DokanFileInfo rawFileInfo);
 
     public delegate NtStatus MountedDelegate(
-        IntPtr rawFileName,
+        nint rawFileName,
         in DokanFileInfo rawFileInfo);
 
     public delegate NtStatus UnmountedDelegate(

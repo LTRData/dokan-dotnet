@@ -71,7 +71,7 @@ internal static partial class NativeMethods
     /// </summary>
     /// <param name="dokanInstance">The dokan mount context created by <see cref="DokanCreateFileSystem"/>.</param>
     [LibraryImport(DOKAN_DLL)]
-    public static partial void DokanCloseHandle(IntPtr dokanInstance);
+    public static partial void DokanCloseHandle(nint dokanInstance);
 
     /// <summary>
     /// Unmount a dokan device from a driver letter.
@@ -253,7 +253,7 @@ internal static partial class NativeMethods
     /// </summary>
     /// <param name="dokanInstance">The dokan mount context created by <see cref="DokanCreateFileSystem"/>.</param>
     [DllImport(DOKAN_DLL, ExactSpelling = true)]
-    public static extern void DokanCloseHandle(IntPtr dokanInstance);
+    public static extern void DokanCloseHandle(nint dokanInstance);
 
     /// <summary>
     /// Unmount a dokan device from a driver letter.

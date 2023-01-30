@@ -150,7 +150,7 @@ internal class Mirror : IDokanOperations
 
             try
             {
-                pathExists = (Directory.Exists(filePath) || File.Exists(filePath));
+                pathExists = Directory.Exists(filePath) || File.Exists(filePath);
                 pathIsDirectory = pathExists && File.GetAttributes(filePath).HasFlag(FileAttributes.Directory);
             }
             catch (IOException)
@@ -212,7 +212,7 @@ internal class Mirror : IDokanOperations
             try
             {
                 info.Context = new FileStream(filePath, mode,
-                    readAccess ? System.IO.FileAccess.Read : System.IO.FileAccess.ReadWrite, share, 4096, options);
+                    readAccess ? FileAccess.Read : FileAccess.ReadWrite, share, 4096, options);
 
                 if (pathExists && (mode == FileMode.OpenOrCreate
                                    || mode == FileMode.Create))
@@ -232,7 +232,7 @@ internal class Mirror : IDokanOperations
             }
             catch (UnauthorizedAccessException) // don't have access rights
             {
-                if (info.Context is FileStream fileStream)
+                if (info.Context is IDisposable fileStream)
                 {
                     // returning AccessDenied cleanup and close won't be called,
                     // so we have to take care of the stream now
@@ -268,7 +268,7 @@ internal class Mirror : IDokanOperations
 
     public void Cleanup(ReadOnlySpan<char> fileName, ref DokanFileInfo info)
     {
-        (info.Context as FileStream)?.Dispose();
+        (info.Context as IDisposable)?.Dispose();
         info.Context = null;
 
         if (info.DeleteOnClose)
@@ -288,7 +288,7 @@ internal class Mirror : IDokanOperations
 
     public void CloseFile(ReadOnlySpan<char> fileName, ref DokanFileInfo info)
     {
-        (info.Context as FileStream)?.Dispose();
+        (info.Context as IDisposable)?.Dispose();
         info.Context = null;
         Trace(nameof(CloseFile), fileName, info, DokanResult.Success);
         // could recreate cleanup code here but this is not called sometimes
@@ -306,7 +306,7 @@ internal class Mirror : IDokanOperations
         }
         else // memory mapped read
         {
-            using var fstream = new FileStream(GetPath(fileName), FileMode.Open, System.IO.FileAccess.Read);
+            using var fstream = new FileStream(GetPath(fileName), FileMode.Open, FileAccess.Read);
             fstream.Position = offset;
             bytesRead = fstream.Read(buffer);
         }
@@ -347,7 +347,7 @@ internal class Mirror : IDokanOperations
         }
         else
         {
-            using var fstream = new FileStream(GetPath(fileName), append ? FileMode.Append : FileMode.Open, System.IO.FileAccess.Write);
+            using var fstream = new FileStream(GetPath(fileName), append ? FileMode.Append : FileMode.Open, FileAccess.Write);
             if (!append) // Offset of -1 is an APPEND: https://docs.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-writefile
             {
                 fstream.Position = offset;
@@ -365,7 +365,7 @@ internal class Mirror : IDokanOperations
     {
         try
         {
-            ((FileStream)(info.Context)).Flush();
+            ((FileStream)info.Context).Flush();
             return Trace(nameof(FlushFileBuffers), fileName, info, DokanResult.Success);
         }
         catch (IOException)
@@ -571,7 +571,7 @@ internal class Mirror : IDokanOperations
     {
         try
         {
-            ((FileStream)(info.Context)).SetLength(length);
+            ((FileStream)info.Context).SetLength(length);
             return Trace(nameof(SetEndOfFile), fileName, info, DokanResult.Success,
                 length.ToString(CultureInfo.InvariantCulture));
         }
@@ -616,7 +616,7 @@ internal class Mirror : IDokanOperations
     {
         try
         {
-            ((FileStream)(info.Context)).Unlock(offset, length);
+            ((FileStream)info.Context).Unlock(offset, length);
             return Trace(nameof(UnlockFile), fileName, info, DokanResult.Success,
                 offset.ToString(CultureInfo.InvariantCulture), length.ToString(CultureInfo.InvariantCulture));
         }
@@ -706,7 +706,7 @@ internal class Mirror : IDokanOperations
         return ntStatus;
     }
 
-    public NtStatus FindStreams(ReadOnlySpan<char> fileName, IntPtr enumContext, out string streamName, out long streamSize,
+    public NtStatus FindStreams(ReadOnlySpan<char> fileName, nint enumContext, out string streamName, out long streamSize,
         DokanFileInfo info)
     {
         streamName = string.Empty;
