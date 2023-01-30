@@ -18,7 +18,7 @@ namespace DokanNet;
 [StructLayout(LayoutKind.Sequential, Pack = 4)]
 public struct DokanFileInfo
 {
-    private ulong context;
+    private long context;
 
     /// <summary>
     /// Used internally, never modify.
@@ -28,14 +28,14 @@ public struct DokanFileInfo
     /// <summary>
     /// A pointer to the <see cref="DOKAN_OPTIONS"/> which was passed to <see cref="DokanNet.Native.NativeMethods.DokanMain"/>.
     /// </summary>
-    private readonly IntPtr dokanOptions;
+    private readonly nint dokanOptions;
 
     /// <summary>
     /// Reserved. Used internally by Dokan library. Never modify.
     /// If the processing for the event requires extra data to be associated with it
     /// then a pointer to that data can be placed here
     /// </summary>
-    private readonly IntPtr processingContext;
+    private readonly nint processingContext;
 
     /// <summary>
     /// Process id for the thread that originally requested a given I/O
@@ -88,7 +88,7 @@ public struct DokanFileInfo
         {
             if (context != 0)
             {
-                return GCHandle.FromIntPtr((IntPtr)context).Target;
+                return ((GCHandle)(nint)context).Target;
             }
 
             return null;
@@ -98,13 +98,13 @@ public struct DokanFileInfo
         {
             if (context != 0)
             {
-                GCHandle.FromIntPtr((IntPtr)context).Free();
+                ((GCHandle)(nint)context).Free();
                 context = 0;
             }
 
             if (value != null)
             {
-                context = (ulong)(IntPtr)GCHandle.Alloc(value);
+                context = (nint)GCHandle.Alloc(value);
             }
         }
     }
