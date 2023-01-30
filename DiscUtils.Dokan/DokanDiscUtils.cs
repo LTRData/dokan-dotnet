@@ -1232,7 +1232,7 @@ public class DokanDiscUtils : IDokanOperations, IDisposable
 
     public IEnumerable<FindFileInformation> FindFilesHelper(ReadOnlySpan<char> pathPtr, ReadOnlySpan<char> searchPatternPtr)
     {
-        var OSPath = pathPtr.ToString();
+        var OSPath = pathPtr.Trim('\\').ToString();
         var path = TranslatePath(OSPath);
 
         var searchPattern = searchPatternPtr.ToString().Replace('<', '*');
