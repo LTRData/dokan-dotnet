@@ -118,9 +118,28 @@ public struct DokanFileInfo
     {
         try
         {
-            using var sfh = NativeMethods.DokanOpenRequestorToken(ref this);
+            using var sfh = GetRequestorToken();
 
             return new(sfh.DangerousGetHandle());
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// This method needs to be called in <see cref="IDokanOperations.CreateFile"/>.
+    /// </summary>
+    /// <returns>A <c><see cref="SafeAccessTokenHandle"/></c> with the access token, 
+    /// -or- <c>null</c> if the operation was not successful.</returns>
+    public SafeAccessTokenHandle GetRequestorToken()
+    {
+        try
+        {
+            var sfh = NativeMethods.DokanOpenRequestorToken(ref this);
+            
+            return sfh;
         }
         catch
         {
