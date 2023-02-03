@@ -1,6 +1,7 @@
 ﻿using DiscUtils.Streams.Compatibility;
 using DokanNet;
 using DokanNet.Logging;
+using Microsoft.Win32.SafeHandles;
 using System;
 using System.Buffers;
 using System.Collections.Generic;
@@ -43,9 +44,11 @@ public class DokanDiscUtils : IDokanOperations, IDisposable
 
     private readonly List<KeyValuePair<string, string>> _transl = new();
 
-    public FileSecurity ForcedFileSecurity { get; set; }
+    public event EventHandler<AccessCheckEventArgs>? AccessCheck;
 
-    public DirectorySecurity DirectorySecurity { get; set; }
+    public FileSecurity? ForcedFileSecurity { get; set; }
+
+    public DirectorySecurity? DirectorySecurity { get; set; }
 
     public bool CaseSensitive { get; }
 
@@ -61,7 +64,7 @@ public class DokanDiscUtils : IDokanOperations, IDisposable
 
     public ReadOnlyCollection<KeyValuePair<string, string>> Translations => _transl.AsReadOnly();
 
-    private NtStatus Trace(string method, string fileName, in DokanFileInfo info, NtStatus result)
+    private NtStatus Trace(string method, string? fileName, in DokanFileInfo info, NtStatus result)
     {
         if (logger.DebugEnabled)
         {
@@ -125,7 +128,7 @@ public class DokanDiscUtils : IDokanOperations, IDisposable
         return result;
     }
 
-    private NtStatus Trace<TParam1, TParam2, TParam3>(string method, string fileName, in DokanFileInfo info, NtStatus result,
+    private NtStatus Trace<TParam1, TParam2, TParam3>(string method, string? fileName, in DokanFileInfo info, NtStatus result,
         TParam1 parameter1, TParam2 parameter2, TParam3 parameter3)
     {
         if (logger.DebugEnabled)
@@ -207,7 +210,7 @@ public class DokanDiscUtils : IDokanOperations, IDisposable
         if (options.HasFlag(DokanDiscUtilsOptions.AccessCheck))
         {
             throw new NotImplementedException("Access check not implemented");
-            //AccessCheck = true;
+            //AccessCheck += ValidateFileAccess;
         }
 
         if (options.HasFlag(DokanDiscUtilsOptions.HiddenAsNormal))
@@ -433,6 +436,31 @@ public class DokanDiscUtils : IDokanOperations, IDisposable
     {
         var fileName = TranslatePath(fileNamePtr);
 
+        if (AccessCheck is not null)
+        {
+            using var accessToken = info.GetRequestorToken();
+
+            var e = new AccessCheckEventArgs
+            {
+                Path = fileName,
+                IsDirectory = info.IsDirectory,
+                RequestorToken = accessToken,
+                SynchronousIo = info.SynchronousIo,
+                DeleteOnClose = info.DeleteOnClose,
+                NoCache = info.NoCache,
+                PagingIo = info.PagingIo,
+                ProcessId = info.ProcessId,
+                WriteToEndOfFile = info.WriteToEndOfFile
+            };
+
+            AccessCheck(this, e);
+
+            if (e.Status != NtStatus.Success)
+            {
+                return e.Status;
+            }
+        }
+
         if (info.IsDirectory)
         {
             return CreateDirectory(fileName, access, share, mode, options, attributes, info);
@@ -448,7 +476,7 @@ public class DokanDiscUtils : IDokanOperations, IDisposable
                 result);
         }
 
-        DiscFileSystemInfo fileInfo = null;
+        DiscFileSystemInfo? fileInfo = null;
         var pathExists = true;
         var pathIsDirectory = false;
 
@@ -1037,7 +1065,7 @@ public class DokanDiscUtils : IDokanOperations, IDisposable
             totalNumberOfBytes, totalNumberOfFreeBytes);
     }
 
-    public NtStatus GetVolumeInformation(out string volumeLabel, out FileSystemFeatures features,
+    public NtStatus GetVolumeInformation(out string? volumeLabel, out FileSystemFeatures features,
         out string fileSystemName, out uint maximumComponentLength, ref uint volumeSerialNumber, in DokanFileInfo info)
     {
         volumeLabel = (FileSystem as DiscFileSystem)?.VolumeLabel;
@@ -1098,7 +1126,7 @@ public class DokanDiscUtils : IDokanOperations, IDisposable
             features, fileSystemName);
     }
 
-    public NtStatus GetFileSecurity(ReadOnlySpan<char> fileNamePtr, out FileSystemSecurity security, AccessControlSections sections,
+    public NtStatus GetFileSecurity(ReadOnlySpan<char> fileNamePtr, out FileSystemSecurity? security, AccessControlSections sections,
         in DokanFileInfo info)
     {
         try
