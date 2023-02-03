@@ -236,7 +236,7 @@ internal static partial class NativeMethods
     /// <param name="dokanInstance">The dokan mount context created by <see cref="DokanCreateFileSystem"/>.</param>
     /// <returns>Whether the FileSystem is still running or not.</returns>
     [DllImport(DOKAN_DLL, ExactSpelling = true)]
-    public static extern bool DokanIsFileSystemRunning(DokanHandle dokanInstance);
+    public static extern bool DokanIsFileSystemRunning(DokanHandle? dokanInstance);
 
     /// <summary>
     /// Wait until the FileSystem is unmount.
@@ -246,7 +246,7 @@ internal static partial class NativeMethods
     /// the function does not enter a wait state if the object is not signaled; it always returns immediately. If <param name="milliSeconds"> is INFINITE, the function will return only when the object is signaled.</param>
     /// <returns>See <a href="https://docs.microsoft.com/en-us/windows/win32/api/synchapi/nf-synchapi-waitforsingleobject">WaitForSingleObject</a> for a description of return values.</returns>
     [DllImport(DOKAN_DLL, ExactSpelling = true)]
-    public static extern uint DokanWaitForFileSystemClosed(DokanHandle dokanInstance, uint milliSeconds);
+    public static extern uint DokanWaitForFileSystemClosed(DokanHandle? dokanInstance, uint milliSeconds);
 
     /// <summary>
     /// Unmount and wait until all resources of the \c DokanInstance are released.
@@ -382,7 +382,7 @@ internal static partial class NativeMethods
     /// <returns>If the operation was successful.</returns>
     [DllImport(DOKAN_DLL, ExactSpelling = true)]
     [return: MarshalAs(UnmanagedType.Bool)]
-    public static extern bool DokanResetTimeout(uint timeout, ref DokanFileInfo rawFileInfo);
+    public static extern bool DokanResetTimeout(uint timeout, in DokanFileInfo rawFileInfo);
 
     /// <summary>
     /// Get the handle to Access Token.
@@ -396,7 +396,7 @@ internal static partial class NativeMethods
     /// A handle to the account token for the user on whose behalf the code is running.
     /// </returns>
     [DllImport(DOKAN_DLL, ExactSpelling = true)]
-    public static extern SafeAccessTokenHandle DokanOpenRequestorToken(ref DokanFileInfo rawFileInfo);
+    public static extern SafeAccessTokenHandle DokanOpenRequestorToken(in DokanFileInfo rawFileInfo);
 
     /// <summary>
     /// Mount a new Dokan Volume.

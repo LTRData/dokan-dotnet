@@ -13,13 +13,13 @@ namespace DokanNet;
 /// </summary>
 public class DokanInstance : IDisposable
 {
-    internal NativeStructWrapper<DOKAN_OPTIONS> DokanOptions;
-    internal NativeStructWrapper<DOKAN_OPERATIONS> DokanOperations;
-    internal DokanHandle DokanHandle;
+    internal NativeStructWrapper<DOKAN_OPTIONS> DokanOptions = null!;
+    internal NativeStructWrapper<DOKAN_OPERATIONS> DokanOperations = null!;
+    internal DokanHandle DokanHandle = null!;
 
-    public event EventHandler Disposing;
+    public event EventHandler? Disposing;
 
-    public event EventHandler Disposed;
+    public event EventHandler? Disposed;
 
     public bool IsDisposing { get; private set; }
 
@@ -50,9 +50,9 @@ public class DokanInstance : IDisposable
             // Free unmanaged resources (unmanaged objects) and override finalizer
 
             // Set fields to null
-            DokanOptions = null;
-            DokanOperations = null;
-            DokanHandle = null;
+            DokanOptions = null!;
+            DokanOperations = null!;
+            DokanHandle = null!;
 
             IsDisposed = true;
         }

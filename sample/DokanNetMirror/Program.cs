@@ -18,11 +18,11 @@ internal class Program
                .ToDictionary(x => x[0], x => x.Length > 1 ? x[1] as object : true, StringComparer.OrdinalIgnoreCase);
 
             var mirrorPath = arguments.ContainsKey(MirrorKey)
-               ? arguments[MirrorKey] as string
+               ? (arguments[MirrorKey] as string)!
                : @"C:\";
 
             var mountPath = arguments.ContainsKey(MountKey)
-               ? arguments[MountKey] as string
+               ? (arguments[MountKey] as string)!
                : @"N:\";
 
             var mirror = new Mirror(mirrorPath);

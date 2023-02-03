@@ -15,7 +15,7 @@ public class ConsoleLogger : ILogger, IDisposable
     private readonly string _loggerName;
     private readonly BlockingCollection<(string Message, ConsoleColor Color)> _PendingLogs = new();
 
-    private readonly Thread _WriterTask = null;
+    private readonly Thread? _WriterTask = null;
     /// <summary>
     /// Initializes a new instance of the <see cref="ConsoleLogger"/> class.
     /// </summary>

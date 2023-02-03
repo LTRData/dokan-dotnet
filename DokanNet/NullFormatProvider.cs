@@ -42,7 +42,7 @@ public class FormatProviders : IFormatProvider, ICustomFormatter
     /// that type of object; otherwise, <c>null</c>.</returns>
     /// <param name="formatType">An object that specifies the type of format
     /// object to return. </param>
-    public object GetFormat(Type formatType) => formatType == typeof(ICustomFormatter) ? this : null;
+    public object? GetFormat(Type? formatType) => formatType == typeof(ICustomFormatter) ? this : null;
 
     /// <summary>
     /// Converts the value of a specified object to an equivalent string
@@ -58,7 +58,7 @@ public class FormatProviders : IFormatProvider, ICustomFormatter
     /// <param name="arg">An object to format. </param>
     /// <param name="formatProvider">An object that supplies format
     /// information about the current instance. </param>
-    public string Format(string format, object arg, IFormatProvider formatProvider)
+    public string Format(string? format, object? arg, IFormatProvider? formatProvider)
     {
         if (arg == null)
         {
@@ -67,6 +67,6 @@ public class FormatProviders : IFormatProvider, ICustomFormatter
 
         var formattable = arg as IFormattable;
         return formattable?.ToString(format, formatProvider)
-            ?? arg.ToString();
+            ?? arg.ToString() ?? "";
     }
 }

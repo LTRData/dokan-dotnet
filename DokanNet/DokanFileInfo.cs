@@ -82,7 +82,7 @@ public struct DokanFileInfo
     /// The Context can carry whatever type like <c><see cref="System.IO.FileStream"/></c>, <c>struct</c>, <c>int</c>,
     /// or internal reference that will help the implementation understand the request context of the event.
     /// </summary>
-    public object Context
+    public object? Context
     {
         get
         {
@@ -112,47 +112,26 @@ public struct DokanFileInfo
     /// <summary>
     /// This method needs to be called in <see cref="IDokanOperations.CreateFile"/>.
     /// </summary>
-    /// <returns>An <c><see cref="WindowsIdentity"/></c> with the access token, 
-    /// -or- <c>null</c> if the operation was not successful.</returns>
+    /// <returns>An <c><see cref="WindowsIdentity"/></c> with the access token.</returns>
     public WindowsIdentity GetRequestor()
     {
-        try
-        {
-            using var sfh = GetRequestorToken();
+        using var sfh = GetRequestorToken();
 
-            return new(sfh.DangerousGetHandle());
-        }
-        catch
-        {
-            return null;
-        }
+        return new(sfh.DangerousGetHandle());
     }
 
     /// <summary>
     /// This method needs to be called in <see cref="IDokanOperations.CreateFile"/>.
     /// </summary>
-    /// <returns>A <c><see cref="SafeAccessTokenHandle"/></c> with the access token, 
-    /// -or- <c>null</c> if the operation was not successful.</returns>
-    public SafeAccessTokenHandle GetRequestorToken()
-    {
-        try
-        {
-            var sfh = NativeMethods.DokanOpenRequestorToken(ref this);
-            
-            return sfh;
-        }
-        catch
-        {
-            return null;
-        }
-    }
+    /// <returns>A <c><see cref="SafeAccessTokenHandle"/></c> with the access token.</returns>
+    public SafeAccessTokenHandle GetRequestorToken() => NativeMethods.DokanOpenRequestorToken(this);
 
     /// <summary>
     /// Extends the time out of the current IO operation in driver.
     /// </summary>
     /// <param name="milliseconds">Number of milliseconds to extend with.</param>
     /// <returns>If the operation was successful.</returns>
-    public bool TryResetTimeout(int milliseconds) => NativeMethods.DokanResetTimeout((uint)milliseconds, ref this);
+    public bool TryResetTimeout(int milliseconds) => NativeMethods.DokanResetTimeout((uint)milliseconds, this);
 
     /// <summary>Returns a string that represents the current object.</summary>
     /// <returns>A string that represents the current object.</returns>

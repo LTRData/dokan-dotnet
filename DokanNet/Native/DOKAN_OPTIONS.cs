@@ -36,13 +36,13 @@ internal sealed class DOKAN_OPTIONS
     /// Can be <c>M:\\</c>(drive letter) or <c>C:\\mount\\dokan</c> (path in NTFS).
     /// </summary>
     [MarshalAs(UnmanagedType.LPWStr)]
-    public string MountPoint;
+    public string? MountPoint;
 
     /// <summary>
     /// UNC name used for network volume.
     /// </summary>
     [MarshalAs(UnmanagedType.LPWStr)]
-    public string UNCName;
+    public string? UNCName;
 
     /// <summary>
     /// Max timeout in milliseconds of each request before Dokan give up.
@@ -67,5 +67,5 @@ internal sealed class DOKAN_OPTIONS
     /// Optional Volume Security descriptor. See <a href="https://docs.microsoft.com/en-us/windows/win32/api/securitybaseapi/nf-securitybaseapi-initializesecuritydescriptor">InitializeSecurityDescriptor</a>
     /// <summary>
     [MarshalAs(UnmanagedType.ByValArray, SizeConst = 16384, ArraySubType = UnmanagedType.U1)]
-    public byte[] VolumeSecurityDescriptor;
+    public byte[]? VolumeSecurityDescriptor;
 }

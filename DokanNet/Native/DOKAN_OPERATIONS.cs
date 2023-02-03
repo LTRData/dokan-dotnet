@@ -179,36 +179,36 @@ internal sealed class DOKAN_OPERATIONS
 
     #endregion Delegates
 
-    public ZwCreateFileDelegate ZwCreateFile;
-    public CleanupDelegate Cleanup;
-    public CloseFileDelegate CloseFile;
-    public ReadFileDelegate ReadFile;
-    public WriteFileDelegate WriteFile;
-    public FlushFileBuffersDelegate FlushFileBuffers;
-    public GetFileInformationDelegate GetFileInformation;
-    public FindFilesDelegate FindFiles;
+    public ZwCreateFileDelegate ZwCreateFile = null!;
+    public CleanupDelegate Cleanup = null!;
+    public CloseFileDelegate CloseFile = null!;
+    public ReadFileDelegate ReadFile = null!;
+    public WriteFileDelegate WriteFile = null!;
+    public FlushFileBuffersDelegate FlushFileBuffers = null!;
+    public GetFileInformationDelegate GetFileInformation = null!;
+    public FindFilesDelegate FindFiles = null!;
 
-    public FindFilesWithPatternDelegate FindFilesWithPattern;
+    public FindFilesWithPatternDelegate FindFilesWithPattern = null!;
 
-    public SetFileAttributesDelegate SetFileAttributes;
-    public SetFileTimeDelegate SetFileTime;
-    public DeleteFileDelegate DeleteFile;
-    public DeleteDirectoryDelegate DeleteDirectory;
-    public MoveFileDelegate MoveFile;
-    public SetEndOfFileDelegate SetEndOfFile;
-    public SetAllocationSizeDelegate SetAllocationSize;
+    public SetFileAttributesDelegate SetFileAttributes = null!;
+    public SetFileTimeDelegate SetFileTime = null!;
+    public DeleteFileDelegate DeleteFile = null!;
+    public DeleteDirectoryDelegate DeleteDirectory = null!;
+    public MoveFileDelegate MoveFile = null!;
+    public SetEndOfFileDelegate SetEndOfFile = null!;
+    public SetAllocationSizeDelegate SetAllocationSize = null!;
 
     // Lockfile & Unlockfile are only used if dokan option UserModeLock is enabled
-    public LockFileDelegate LockFile;
-    public UnlockFileDelegate UnlockFile;
+    public LockFileDelegate LockFile = null!;
+    public UnlockFileDelegate UnlockFile = null!;
 
-    public GetDiskFreeSpaceDelegate GetDiskFreeSpace;
-    public GetVolumeInformationDelegate GetVolumeInformation;
-    public MountedDelegate Mounted;
-    public UnmountedDelegate Unmounted;
+    public GetDiskFreeSpaceDelegate GetDiskFreeSpace = null!;
+    public GetVolumeInformationDelegate GetVolumeInformation = null!;
+    public MountedDelegate Mounted = null!;
+    public UnmountedDelegate Unmounted = null!;
 
-    public GetFileSecurityDelegate GetFileSecurity;
-    public SetFileSecurityDelegate SetFileSecurity;
+    public GetFileSecurityDelegate GetFileSecurity = null!;
+    public SetFileSecurityDelegate SetFileSecurity = null!;
 
-    public FindStreamsDelegate FindStreams;
+    public FindStreamsDelegate FindStreams = null!;
 }

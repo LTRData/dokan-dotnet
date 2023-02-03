@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Security.AccessControl;
 
@@ -341,7 +342,7 @@ namespace DokanNet
         /// <returns><see cref="NtStatus"/> or <see cref="DokanResult"/> appropriate to the request result.</returns>
         /// \see <a href="https://msdn.microsoft.com/en-us/library/windows/desktop/aa364993(v=vs.85).aspx"> GetVolumeInformation function (MSDN)</a>
         NtStatus GetVolumeInformation(
-            out string volumeLabel,
+            out string? volumeLabel,
             out FileSystemFeatures features,
             out string fileSystemName,
             out uint maximumComponentLength,
@@ -366,7 +367,7 @@ namespace DokanNet
         /// \see <a href="https://msdn.microsoft.com/en-us/library/windows/desktop/aa446639(v=vs.85).aspx">GetFileSecurity function (MSDN)</a>
         NtStatus GetFileSecurity(
             ReadOnlySpan<char> fileNamePtr,
-            out FileSystemSecurity security,
+            out FileSystemSecurity? security,
             AccessControlSections sections,
             in DokanFileInfo info);
 

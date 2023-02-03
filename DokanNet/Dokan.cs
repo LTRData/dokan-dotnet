@@ -47,7 +47,7 @@ public static class Dokan
     /// <param name="mountPoint">Mount point. Can be <c>M:\\</c> (drive letter) or <c>C:\\mount\\dokan</c> (path in NTFS).</param>
     /// <param name="logger"><see cref="ILogger"/> that will log all DokanNet debug informations</param>
     /// <exception cref="DokanException">If the mount fails.</exception>
-    public static void Mount(this IDokanOperations operations, string mountPoint, ILogger logger = null)
+    public static void Mount(this IDokanOperations operations, string mountPoint, ILogger? logger = null)
         => Mount(operations, mountPoint, DokanOptions.FixedDrive, logger);
 
     /// <summary>
@@ -61,7 +61,7 @@ public static class Dokan
     /// <param name="logger"><see cref="ILogger"/> that will log all DokanNet debug informations.</param>
     /// <exception cref="DokanException">If the mount fails.</exception>
     public static void Mount(this IDokanOperations operations, string mountPoint, DokanOptions mountOptions,
-        ILogger logger = null) => Mount(operations, mountPoint, mountOptions, false, logger);
+        ILogger? logger = null) => Mount(operations, mountPoint, mountOptions, false, logger);
 
     /// <summary>
     /// Mount a new %Dokan Volume.
@@ -75,7 +75,7 @@ public static class Dokan
     /// <param name="logger"><see cref="ILogger"/> that will log all DokanNet debug informations.</param>
     /// <exception cref="DokanException">If the mount fails.</exception>
     public static void Mount(this IDokanOperations operations, string mountPoint, DokanOptions mountOptions,
-        bool singleThread, ILogger logger = null)
+        bool singleThread, ILogger? logger = null)
         => Mount(operations, mountPoint, mountOptions, singleThread, DOKAN_VERSION, logger);
 
     /// <summary>
@@ -91,7 +91,7 @@ public static class Dokan
     /// <param name="logger"><see cref="ILogger"/> that will log all DokanNet debug informations.</param>
     /// <exception cref="DokanException">If the mount fails.</exception>
     public static void Mount(this IDokanOperations operations, string mountPoint, DokanOptions mountOptions,
-        bool singleThread, int version, ILogger logger = null)
+        bool singleThread, int version, ILogger? logger = null)
         => Mount(operations, mountPoint, mountOptions, singleThread, version, TimeSpan.FromSeconds(20), string.Empty,
             512, 512, logger);
 
@@ -109,7 +109,7 @@ public static class Dokan
     /// <param name="logger"><see cref="ILogger"/> that will log all DokanNet debug informations.</param>
     /// <exception cref="DokanException">If the mount fails.</exception>
     public static void Mount(this IDokanOperations operations, string mountPoint, DokanOptions mountOptions,
-        bool singleThread, int version, TimeSpan timeout, ILogger logger = null) => Mount(operations, mountPoint, mountOptions, singleThread, version, timeout, string.Empty, 512, 512, logger);
+        bool singleThread, int version, TimeSpan timeout, ILogger? logger = null) => Mount(operations, mountPoint, mountOptions, singleThread, version, timeout, string.Empty, 512, 512, logger);
 
     /// <summary>
     /// Mount a new %Dokan Volume.
@@ -126,7 +126,7 @@ public static class Dokan
     /// <param name="logger"><see cref="ILogger"/> that will log all DokanNet debug informations.</param>
     /// <exception cref="DokanException">If the mount fails.</exception>
     public static void Mount(this IDokanOperations operations, string mountPoint, DokanOptions mountOptions,
-        bool singleThread, int version, TimeSpan timeout, string uncName, ILogger logger = null)
+        bool singleThread, int version, TimeSpan timeout, string uncName, ILogger? logger = null)
         => Mount(operations, mountPoint, mountOptions, singleThread, version, timeout, uncName, 512, 512, logger);
 
     /// <summary>
@@ -146,8 +146,8 @@ public static class Dokan
     /// <param name="logger"><see cref="ILogger"/> that will log all DokanNet debug informations.</param>
     /// <exception cref="DokanException">If the mount fails.</exception>
     public static void Mount(this IDokanOperations operations, string mountPoint, DokanOptions mountOptions,
-        bool singleThread, int version, TimeSpan timeout, string uncName = null, int allocationUnitSize = 512,
-        int sectorSize = 512, ILogger logger = null)
+        bool singleThread, int version, TimeSpan timeout, string? uncName = null, int allocationUnitSize = 512,
+        int sectorSize = 512, ILogger? logger = null)
     {
         var logger_created = false;
 
@@ -233,7 +233,7 @@ public static class Dokan
     /// <param name="logger"><see cref="ILogger"/> that will log all DokanNet debug informations</param>
     /// <exception cref="DokanException">If the mount fails.</exception>
     /// <returns>Dokan mount instance context that can be used for related instance calls like <see cref="IsFileSystemRunning"/></returns>
-    public static DokanInstance CreateFileSystem(this IDokanOperations operations, string mountPoint, ILogger logger = null)
+    public static DokanInstance CreateFileSystem(this IDokanOperations operations, string mountPoint, ILogger? logger = null)
         => CreateFileSystem(operations, mountPoint, DokanOptions.FixedDrive, logger);
 
     /// <summary>
@@ -249,7 +249,7 @@ public static class Dokan
     /// <exception cref="DokanException">If the mount fails.</exception>
     /// <returns>Dokan mount instance context that can be used for related instance calls like <see cref="IsFileSystemRunning"/></returns>
     public static DokanInstance CreateFileSystem(this IDokanOperations operations, string mountPoint, DokanOptions mountOptions,
-        ILogger logger = null)
+        ILogger? logger = null)
         => CreateFileSystem(operations, mountPoint, mountOptions, false, logger);
 
     /// <summary>
@@ -266,7 +266,7 @@ public static class Dokan
     /// <exception cref="DokanException">If the mount fails.</exception>
     /// <returns>Dokan mount instance context that can be used for related instance calls like <see cref="IsFileSystemRunning"/></returns>
     public static DokanInstance CreateFileSystem(this IDokanOperations operations, string mountPoint, DokanOptions mountOptions,
-        bool singleThread, ILogger logger = null)
+        bool singleThread, ILogger? logger = null)
         => CreateFileSystem(operations, mountPoint, mountOptions, singleThread, DOKAN_VERSION, logger);
 
     /// <summary>
@@ -284,7 +284,7 @@ public static class Dokan
     /// <exception cref="DokanException">If the mount fails.</exception>
     /// <returns>Dokan mount instance context that can be used for related instance calls like <see cref="IsFileSystemRunning"/></returns>
     public static DokanInstance CreateFileSystem(this IDokanOperations operations, string mountPoint, DokanOptions mountOptions,
-        bool singleThread, int version, ILogger logger = null)
+        bool singleThread, int version, ILogger? logger = null)
         => CreateFileSystem(operations, mountPoint, mountOptions, singleThread, version, TimeSpan.FromSeconds(20), string.Empty,
             512, 512, logger);
 
@@ -304,7 +304,7 @@ public static class Dokan
     /// <exception cref="DokanException">If the mount fails.</exception>
     /// <returns>Dokan mount instance context that can be used for related instance calls like <see cref="IsFileSystemRunning"/></returns>
     public static DokanInstance CreateFileSystem(this IDokanOperations operations, string mountPoint, DokanOptions mountOptions,
-        bool singleThread, int version, TimeSpan timeout, ILogger logger = null)
+        bool singleThread, int version, TimeSpan timeout, ILogger? logger = null)
         => CreateFileSystem(operations, mountPoint, mountOptions, singleThread, version, timeout, string.Empty, 512, 512, logger);
 
     /// <summary>
@@ -324,7 +324,7 @@ public static class Dokan
     /// <exception cref="DokanException">If the mount fails.</exception>
     /// <returns>Dokan mount instance context that can be used for related instance calls like <see cref="IsFileSystemRunning"/></returns>
     public static DokanInstance CreateFileSystem(this IDokanOperations operations, string mountPoint, DokanOptions mountOptions,
-        bool singleThread, int version, TimeSpan timeout, string uncName, ILogger logger = null)
+        bool singleThread, int version, TimeSpan timeout, string uncName, ILogger? logger = null)
         => CreateFileSystem(operations, mountPoint, mountOptions, singleThread, version, timeout, uncName, 512, 512, logger);
 
     /// <summary>
@@ -346,8 +346,8 @@ public static class Dokan
     /// <exception cref="DokanException">If the mount fails.</exception>
     /// <returns>Dokan mount instance context that can be used for related instance calls like <see cref="IsFileSystemRunning"/></returns>
     public static DokanInstance CreateFileSystem(this IDokanOperations operations, string mountPoint, DokanOptions mountOptions,
-        bool singleThread, int version, TimeSpan timeout, string uncName = null, int allocationUnitSize = 512,
-        int sectorSize = 512, ILogger logger = null)
+        bool singleThread, int version, TimeSpan timeout, string? uncName = null, int allocationUnitSize = 512,
+        int sectorSize = 512, ILogger? logger = null)
     {
         var logger_created = false;
 

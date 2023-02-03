@@ -59,7 +59,7 @@ internal class RFS : IDokanOperations
 
     public NtStatus DeleteFile(ReadOnlySpan<char> filename, in DokanFileInfo info) => DokanResult.Error;
 
-    private RegistryKey GetRegistoryEntry(ReadOnlySpan<char> name)
+    private RegistryKey? GetRegistoryEntry(ReadOnlySpan<char> name)
     {
         var top = name.Slice(1).IndexOf('\\');
         if (top < 0)
@@ -113,7 +113,7 @@ internal class RFS : IDokanOperations
             
             if (key == null)
             {
-                files = null;
+                files = null!;
                 return DokanResult.Error;
             }
 
@@ -252,7 +252,7 @@ internal class RFS : IDokanOperations
         return DokanResult.Error;
     }
 
-    public NtStatus GetFileSecurity(ReadOnlySpan<char> fileName, out FileSystemSecurity security, AccessControlSections sections,
+    public NtStatus GetFileSecurity(ReadOnlySpan<char> fileName, out FileSystemSecurity? security, AccessControlSections sections,
         in DokanFileInfo info)
     {
         security = null;

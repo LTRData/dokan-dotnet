@@ -18,7 +18,7 @@ public static class LoggerExtensions
     /// <returns>A formated log message.</returns>
     public static string FormatMessageForLogging(
         this FormattableString message,
-        string category = null,
+        string? category = null,
         string loggerName = "") => message.FormatMessageForLogging(addDateTime: false, threadId: null, category, loggerName);
 
     /// <summary>
@@ -33,7 +33,7 @@ public static class LoggerExtensions
         this FormattableString message,
         bool addDateTime = false,
         int? threadId = null,
-        string category = null,
+        string? category = null,
         string loggerName = "")
     {
         var stringBuilder = new StringBuilder();

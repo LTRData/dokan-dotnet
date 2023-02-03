@@ -10,12 +10,12 @@ namespace DokanNetMirror;
 
 internal class Notify
 {
-    private string sourcePath;
-    private string targetPath;
-    private DokanInstance dokanCurrentInstance;
-    private FileSystemWatcher commonFsWatcher;
-    private FileSystemWatcher fileFsWatcher;
-    private FileSystemWatcher dirFsWatcher;
+    private string sourcePath = null!;
+    private string targetPath = null!;
+    private DokanInstance dokanCurrentInstance = null!;
+    private FileSystemWatcher? commonFsWatcher;
+    private FileSystemWatcher? fileFsWatcher;
+    private FileSystemWatcher? dirFsWatcher;
 
     public void Start(string mirrorPath, string mountPath, DokanInstance dokanInstance)
     {
@@ -133,7 +133,7 @@ internal class Notify
         var directoryName = Path.GetDirectoryName(e.FullPath);
 
         var isDirectory = Directory.Exists(e.FullPath);
-        var isInSameDirectory = oldDirectoryName.Equals(directoryName);
+        var isInSameDirectory = oldDirectoryName == directoryName;
 
         Dokan.Notify.Rename(dokanCurrentInstance, oldFullPath, fullPath, isDirectory, isInSameDirectory);
     }

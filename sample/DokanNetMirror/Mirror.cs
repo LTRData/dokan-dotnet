@@ -49,7 +49,7 @@ internal class Mirror : IDokanOperations
 #endif
 
     protected NtStatus Trace(string method, ReadOnlySpan<char> fileName, in DokanFileInfo info, NtStatus result,
-        params object[] parameters)
+        params object?[] parameters)
     {
 #if CONSOLE_LOGGING
         var extraParameters = parameters != null && parameters.Length > 0
@@ -365,7 +365,7 @@ internal class Mirror : IDokanOperations
     {
         try
         {
-            ((FileStream)info.Context).Flush();
+            ((FileStream)info.Context!).Flush();
             return Trace(nameof(FlushFileBuffers), fileName, info, DokanResult.Success);
         }
         catch (IOException)
@@ -446,7 +446,7 @@ internal class Mirror : IDokanOperations
                     return DokanResult.Success;
                 }
 
-                throw Marshal.GetExceptionForHR(Marshal.GetLastWin32Error());
+                throw Marshal.GetExceptionForHR(Marshal.GetLastWin32Error())!;
             }
 
             var filePath = GetPath(fileName);
@@ -571,7 +571,7 @@ internal class Mirror : IDokanOperations
     {
         try
         {
-            ((FileStream)info.Context).SetLength(length);
+            ((FileStream)info.Context!).SetLength(length);
             return Trace(nameof(SetEndOfFile), fileName, info, DokanResult.Success,
                 length.ToString(CultureInfo.InvariantCulture));
         }
@@ -586,7 +586,7 @@ internal class Mirror : IDokanOperations
     {
         try
         {
-            ((FileStream)info.Context).SetLength(length);
+            ((FileStream)info.Context!).SetLength(length);
             return Trace(nameof(SetAllocationSize), fileName, info, DokanResult.Success,
                 length.ToString(CultureInfo.InvariantCulture));
         }
@@ -601,7 +601,7 @@ internal class Mirror : IDokanOperations
     {
         try
         {
-            ((FileStream)info.Context).Lock(offset, length);
+            ((FileStream)info.Context!).Lock(offset, length);
             return Trace(nameof(LockFile), fileName, info, DokanResult.Success,
                 offset.ToString(CultureInfo.InvariantCulture), length.ToString(CultureInfo.InvariantCulture));
         }
@@ -616,7 +616,7 @@ internal class Mirror : IDokanOperations
     {
         try
         {
-            ((FileStream)info.Context).Unlock(offset, length);
+            ((FileStream)info.Context!).Unlock(offset, length);
             return Trace(nameof(UnlockFile), fileName, info, DokanResult.Success,
                 offset.ToString(CultureInfo.InvariantCulture), length.ToString(CultureInfo.InvariantCulture));
         }
@@ -653,7 +653,7 @@ internal class Mirror : IDokanOperations
             $"out {features}", $"out {fileSystemName}");
     }
 
-    public NtStatus GetFileSecurity(ReadOnlySpan<char> fileName, out FileSystemSecurity security, AccessControlSections sections,
+    public NtStatus GetFileSecurity(ReadOnlySpan<char> fileName, out FileSystemSecurity? security, AccessControlSections sections,
         in DokanFileInfo info)
     {
         try
@@ -673,6 +673,11 @@ internal class Mirror : IDokanOperations
     public NtStatus SetFileSecurity(ReadOnlySpan<char> fileName, FileSystemSecurity security, AccessControlSections sections,
         in DokanFileInfo info)
     {
+        if (security is null)
+        {
+            return Trace(nameof(SetFileSecurity), fileName, info, DokanResult.AccessDenied, sections.ToString());
+        }
+
         try
         {
             if (info.IsDirectory)

@@ -6,9 +6,9 @@ namespace DokanNet;
 
 public class DokanService : IDisposable
 {
-    public event EventHandler Stopped;
+    public event EventHandler? Stopped;
 
-    public event EventHandler<ThreadExceptionEventArgs> Error;
+    public event EventHandler<ThreadExceptionEventArgs>? Error;
 
     public IDokanOperations Operations { get; }
     public string MountPoint { get; }
@@ -16,15 +16,15 @@ public class DokanService : IDisposable
     public bool SingleThread { get; }
     public int Version { get; }
     public TimeSpan Timeout { get; }
-    public string UncName { get; }
+    public string? UncName { get; }
     public int AllocationUnitSize { get; }
     public int SectorSize { get; }
     public bool Running => ServiceThread?.IsAlive ?? false;
 
-    protected Thread ServiceThread { get; private set; }
+    protected Thread? ServiceThread { get; private set; }
 
     public DokanService(IDokanOperations operations, string mountPoint, DokanOptions mountOptions = 0,
-        bool singleThread = true, int version = Dokan.DOKAN_VERSION, TimeSpan? timeout = null, string uncName = null,
+        bool singleThread = true, int version = Dokan.DOKAN_VERSION, TimeSpan? timeout = null, string? uncName = null,
         int allocationUnitSize = 512, int sectorSize = 512)
     {
         Operations = operations;

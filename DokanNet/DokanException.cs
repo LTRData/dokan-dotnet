@@ -67,6 +67,6 @@ public class DokanException : Exception
     protected DokanException(SerializationInfo serializationInfo, StreamingContext streamingContext)
         : base(serializationInfo, streamingContext)
     {
-        ErrorStatus = (DokanStatus)serializationInfo.GetValue("ErrorStatus", typeof(DokanStatus));
+        ErrorStatus = (DokanStatus)serializationInfo.GetValue("ErrorStatus", typeof(DokanStatus))!;
     }
 }

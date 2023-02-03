@@ -464,7 +464,7 @@ internal sealed class DokanOperationProxy
                 var count = 0L;
 
                 // used a single entry call to speed up the "enumeration" of the list
-                foreach (var fi in files)
+                foreach (var fi in files!)
                 {
                     count++;
 
@@ -526,12 +526,13 @@ internal sealed class DokanOperationProxy
             var result = operations.FindFilesWithPattern(fileNamePtr, searchPatternPtr, out var files, rawFileInfo);
 
             Debug.Assert(files is not null, "Files must not be null");
+            
             if (result == DokanResult.Success)
             {
                 var count = 0L;
 
                 // used a single entry call to speed up the "enumeration" of the list
-                foreach (var fi in files)
+                foreach (var fi in files!)
                 {
                     count++;
 
@@ -632,7 +633,7 @@ internal sealed class DokanOperationProxy
                 var count = 0L;
 
                 // used a single entry call to speed up the "enumeration" of the list
-                foreach (var fi in files)
+                foreach (var fi in files!)
                 {
                     count++;
 
@@ -1176,7 +1177,7 @@ internal sealed class DokanOperationProxy
                     logger.Debug($"\tFileSystemSecurity Result : {sec}");
                 }
 
-                var buffer = sec.GetSecurityDescriptorBinaryForm();
+                var buffer = sec!.GetSecurityDescriptorBinaryForm();
                 rawSecurityDescriptorLengthNeeded = (uint)buffer.Length;
                 if (buffer.Length > rawSecurityDescriptorLength)
                 {

@@ -47,7 +47,7 @@ internal class NativeStructWrapper<T> : SafeBuffer where T : class
     /// <summary>
     /// Managed object that was originally marshalled to unmanaged memory.
     /// </summary>
-    public T Object { get; }
+    public T Object { get; } = null!;
 
     /// <summary>
     /// Releases unmanaged memory used by this instance.
