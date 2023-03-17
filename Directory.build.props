@@ -2,12 +2,12 @@
 
   <PropertyGroup>
     <LangVersion>Latest</LangVersion>
-
+    <Nullable>enable</Nullable>
     <PackageId>LTRData.$(MSBuildProjectName)</PackageId>
     <Company>LTR Data</Company>
 	<PackageOutputPath>$(LocalNuGetPath)</PackageOutputPath>
     <Copyright>Copyright (c) 2017 - 2023</Copyright>
-    <Version>1.5.3.0</Version>
+    <Version>1.5.4.0</Version>
     <AssemblyVersion>$(Version)</AssemblyVersion>
     <FileVersion>$(Version)</FileVersion>
     <Company>LTR Data</Company>
