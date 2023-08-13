@@ -1,9 +1,7 @@
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.Contracts;
 using System.IO;
-using System.Linq;
 using System.Runtime.InteropServices;
 using System.Security.AccessControl;
 using System.Text;
@@ -25,22 +23,22 @@ internal sealed class DokanOperationProxy
 {
 #if NET6_0_OR_GREATER
     
-    private static unsafe ReadOnlySpan<char> SpanFromIntPtr(nint ptr)
-        => MemoryMarshal.CreateReadOnlySpanFromNullTerminated((char*)ptr);
+    private static unsafe ReadOnlyDokanMemory<char> MemoryFromIntPtr(nint ptr)
+        => new(ptr, MemoryMarshal.CreateReadOnlySpanFromNullTerminated((char*)ptr).Length);
 
 #else
 
     [DllImport("msvcrt", CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
     private static extern int wcslen(nint ptr);
 
-    private static unsafe ReadOnlySpan<char> SpanFromIntPtr(nint ptr)
+    private static ReadOnlyDokanMemory<char> MemoryFromIntPtr(nint ptr)
     {
         if (ptr == 0)
         {
             return default;
         }
 
-        return new((void*)ptr, wcslen(ptr));
+        return new(ptr, wcslen(ptr));
     }
 
 #endif
@@ -179,7 +177,7 @@ internal sealed class DokanOperationProxy
             }
 
             var result = operations.CreateFile(
-                SpanFromIntPtr(rawFileName),
+                MemoryFromIntPtr(rawFileName),
                 desiredAccess,
                 shareAccess,
                 (FileMode)creationDisposition,
@@ -213,7 +211,7 @@ internal sealed class DokanOperationProxy
                 logger.Debug($"\tContext\t{rawFileInfo}");
             }
 
-            operations.Cleanup(SpanFromIntPtr(rawFileName), ref rawFileInfo);
+            operations.Cleanup(MemoryFromIntPtr(rawFileName), ref rawFileInfo);
 
             if (logger.DebugEnabled)
             {
@@ -238,7 +236,7 @@ internal sealed class DokanOperationProxy
                 logger.Debug($"\tContext\t{rawFileInfo}");
             }
 
-            operations.CloseFile(SpanFromIntPtr(rawFileName), ref rawFileInfo);
+            operations.CloseFile(MemoryFromIntPtr(rawFileName), ref rawFileInfo);
 
             if (logger.DebugEnabled)
             {
@@ -257,7 +255,7 @@ internal sealed class DokanOperationProxy
 
     ////
 
-    unsafe public NtStatus ReadFileProxy(
+    public NtStatus ReadFileProxy(
         nint rawFileName,
         nint rawBuffer,
         uint rawBufferLength,
@@ -275,9 +273,7 @@ internal sealed class DokanOperationProxy
                 logger.Debug($"\tContext\t{rawFileInfo}");
             }
 
-            // Check if the file system has implemented the unsafe Dokan interface.
-            // If so, pass the raw nint through instead of marshaling.
-            var result = operations.ReadFile(SpanFromIntPtr(rawFileName), new((void*)rawBuffer, (int)rawBufferLength), out rawReadLength, rawOffset, rawFileInfo);
+            var result = operations.ReadFile(MemoryFromIntPtr(rawFileName), new(rawBuffer, (int)rawBufferLength), out rawReadLength, rawOffset, rawFileInfo);
 
             if (logger.DebugEnabled)
             {
@@ -295,7 +291,7 @@ internal sealed class DokanOperationProxy
 
     ////
 
-    unsafe public NtStatus WriteFileProxy(
+    public NtStatus WriteFileProxy(
         nint rawFileName,
         nint rawBuffer,
         uint rawNumberOfBytesToWrite,
@@ -313,9 +309,7 @@ internal sealed class DokanOperationProxy
                 logger.Debug($"\tContext\t{rawFileInfo}");
             }
 
-            // Check if the file system has implemented the unsafe Dokan interface.
-            // If so, pass the raw nint through instead of marshalling.
-            var result = operations.WriteFile(SpanFromIntPtr(rawFileName), new((void*)rawBuffer, (int)rawNumberOfBytesToWrite), out rawNumberOfBytesWritten, rawOffset, rawFileInfo);
+            var result = operations.WriteFile(MemoryFromIntPtr(rawFileName), new(rawBuffer, (int)rawNumberOfBytesToWrite), out rawNumberOfBytesWritten, rawOffset, rawFileInfo);
 
             if (logger.DebugEnabled)
             {
@@ -343,7 +337,7 @@ internal sealed class DokanOperationProxy
                 logger.Debug($"\tContext\t{rawFileInfo}");
             }
 
-            var result = operations.FlushFileBuffers(SpanFromIntPtr(rawFileName), rawFileInfo);
+            var result = operations.FlushFileBuffers(MemoryFromIntPtr(rawFileName), rawFileInfo);
 
             if (logger.DebugEnabled)
             {
@@ -374,7 +368,7 @@ internal sealed class DokanOperationProxy
                 logger.Debug($"\tContext\t{rawFileInfo}");
             }
 
-            var result = operations.GetFileInformation(SpanFromIntPtr(rawFileName), out var fi, rawFileInfo);
+            var result = operations.GetFileInformation(MemoryFromIntPtr(rawFileName), out var fi, rawFileInfo);
 
             if (result == DokanResult.Success)
             {
@@ -445,13 +439,13 @@ internal sealed class DokanOperationProxy
     {
         var startTime = Environment.TickCount;
 
-        var fileNamePtr = SpanFromIntPtr(rawFileName);
+        var fileNamePtr = MemoryFromIntPtr(rawFileName);
 
         try
         {
             if (logger.DebugEnabled)
             {
-                logger.Debug($"FindFilesProxy : {fileNamePtr.ToString()}");
+                logger.Debug($"FindFilesProxy : {fileNamePtr}");
                 logger.Debug($"\tContext\t{rawFileInfo}");
             }
 
@@ -470,7 +464,7 @@ internal sealed class DokanOperationProxy
 
                     if (unchecked(Environment.TickCount - startTime) >= 30000)
                     {
-                        logger.Error($"FindFilesProxy : Timed out at {fileNamePtr.ToString()} after {count} files");
+                        logger.Error($"FindFilesProxy : Timed out at {fileNamePtr} after {count} files");
                         return NtStatus.IoTimeout;
                     }
 
@@ -490,14 +484,14 @@ internal sealed class DokanOperationProxy
 
             if (logger.DebugEnabled)
             {
-                logger.Debug($"FindFilesProxy : {fileNamePtr.ToString()} Return : {result}");
+                logger.Debug($"FindFilesProxy : {fileNamePtr} Return : {result}");
             }
 
             return result;
         }
         catch (Exception ex)
         {
-            logger.Error($"FindFilesProxy : {fileNamePtr.ToString()} Throw : {ex.Message}");
+            logger.Error($"FindFilesProxy : {fileNamePtr} Throw : {ex.Message}");
             return DokanResult.InvalidParameter;
         }
     }
@@ -510,15 +504,15 @@ internal sealed class DokanOperationProxy
     {
         var startTime = Environment.TickCount;
 
-        var fileNamePtr = SpanFromIntPtr(rawFileName);
-        var searchPatternPtr = SpanFromIntPtr(rawSearchPattern);
+        var fileNamePtr = MemoryFromIntPtr(rawFileName);
+        var searchPatternPtr = MemoryFromIntPtr(rawSearchPattern);
 
         try
         {
             if (logger.DebugEnabled)
             {
-                logger.Debug($"FindFilesWithPatternProxy : {fileNamePtr.ToString()}");
-                logger.Debug($"\trawSearchPattern\t{searchPatternPtr.ToString()}");
+                logger.Debug($"FindFilesWithPatternProxy : {fileNamePtr}");
+                logger.Debug($"\trawSearchPattern\t{searchPatternPtr}");
                 logger.Debug($"\tContext\t{rawFileInfo}");
             }
 
@@ -538,7 +532,7 @@ internal sealed class DokanOperationProxy
 
                     if (unchecked(Environment.TickCount - startTime) >= 30000)
                     {
-                        logger.Error($"FindFilesWithPatternProxy : Timed out at {fileNamePtr.ToString()} with pattern {searchPatternPtr.ToString()} after {count} files");
+                        logger.Error($"FindFilesWithPatternProxy : Timed out at {fileNamePtr} with pattern {searchPatternPtr} after {count} files");
                         return NtStatus.IoTimeout;
                     }
 
@@ -558,14 +552,14 @@ internal sealed class DokanOperationProxy
 
             if (logger.DebugEnabled)
             {
-                logger.Debug($"FindFilesWithPatternProxy : {fileNamePtr.ToString()} Return : {result}");
+                logger.Debug($"FindFilesWithPatternProxy : {fileNamePtr} Return : {result}");
             }
 
             return result;
         }
         catch (Exception ex)
         {
-            logger.Error($"FindFilesWithPatternProxy : {fileNamePtr.ToString()} Throw : {ex.Message}");
+            logger.Error($"FindFilesWithPatternProxy : {fileNamePtr} Throw : {ex.Message}");
             return DokanResult.InvalidParameter;
         }
     }
@@ -576,7 +570,7 @@ internal sealed class DokanOperationProxy
     /// <param name="rawFillFindData">Pointer to unmanaged function of type <see cref="FILL_FIND_FILE_DATA"/> to be called.</param>
     /// <param name="rawFileInfo">A <see cref="DokanFileInfo"/> to be used when calling <paramref name="fill"/>.</param>
     /// <param name="fi">A <see cref="ByHandleFileInformation"/> with information to be used when calling <paramref name="fill"/>.</param>
-    private unsafe static void AddFileFindDataTo(nint rawFillFindData, in DokanFileInfo rawFileInfo, in FindFileInformation fi)
+    private static unsafe void AddFileFindDataTo(nint rawFillFindData, in DokanFileInfo rawFileInfo, in FindFileInformation fi)
     {
         var fill = (delegate* unmanaged[Stdcall]<in WIN32_FIND_DATA, in DokanFileInfo, long>)rawFillFindData;
 
@@ -615,13 +609,13 @@ internal sealed class DokanOperationProxy
     {
         var startTime = Environment.TickCount;
 
-        var fileNamePtr = SpanFromIntPtr(rawFileName);
+        var fileNamePtr = MemoryFromIntPtr(rawFileName);
 
         try
         {
             if (logger.DebugEnabled)
             {
-                logger.Debug($"FindStreamsProxy: {fileNamePtr.ToString()}");
+                logger.Debug($"FindStreamsProxy: {fileNamePtr}");
                 logger.Debug($"\tContext\t{rawFileInfo}");
             }
 
@@ -639,7 +633,7 @@ internal sealed class DokanOperationProxy
 
                     if (unchecked(Environment.TickCount - startTime) >= 30000)
                     {
-                        logger.Error($"FindStreamsProxy : Timed out at {fileNamePtr.ToString()} after {count} names");
+                        logger.Error($"FindStreamsProxy : Timed out at {fileNamePtr} after {count} names");
                         return NtStatus.IoTimeout;
                     }
 
@@ -655,14 +649,14 @@ internal sealed class DokanOperationProxy
 
             if (logger.DebugEnabled)
             {
-                logger.Debug($"FindStreamsProxy : {fileNamePtr.ToString()} Return : {result}");
+                logger.Debug($"FindStreamsProxy : {fileNamePtr} Return : {result}");
             }
 
             return result;
         }
         catch (Exception ex)
         {
-            logger.Error($"FindStreamsProxy : {fileNamePtr.ToString()} Throw : {ex.Message}");
+            logger.Error($"FindStreamsProxy : {fileNamePtr} Throw : {ex.Message}");
             return DokanResult.InvalidParameter;
         }
     }
@@ -673,7 +667,7 @@ internal sealed class DokanOperationProxy
     /// <param name="rawFillFindData">Pointer to unmanaged function of type <see cref="FILL_FIND_STREAM_DATA"/> to be called.</param>
     /// <param name="rawFileInfo">A <see cref="DokanFileInfo"/> to be used when calling <paramref name="fill"/>.</param>
     /// <param name="fi">A <see cref="ByHandleFileInformation"/> with information to be used when calling <paramref name="fill"/>.</param>
-    private unsafe static void AddFindStreamDataTo(nint rawFillStreamData, in DokanFileInfo rawFileInfo, FindFileInformation fi)
+    private static unsafe void AddFindStreamDataTo(nint rawFillStreamData, in DokanFileInfo rawFileInfo, FindFileInformation fi)
     {
         var fill = (delegate* unmanaged[Stdcall]<in WIN32_FIND_STREAM_DATA, in DokanFileInfo, long>)rawFillStreamData;
 
@@ -702,7 +696,7 @@ internal sealed class DokanOperationProxy
                 logger.Debug($"\tContext\t{rawFileInfo}");
             }
 
-            var result = operations.SetEndOfFile(SpanFromIntPtr(rawFileName), rawByteOffset, rawFileInfo);
+            var result = operations.SetEndOfFile(MemoryFromIntPtr(rawFileName), rawByteOffset, rawFileInfo);
 
             if (logger.DebugEnabled)
             {
@@ -729,7 +723,7 @@ internal sealed class DokanOperationProxy
                 logger.Debug($"\tContext\t{rawFileInfo}");
             }
 
-            var result = operations.SetAllocationSize(SpanFromIntPtr(rawFileName), rawLength, rawFileInfo);
+            var result = operations.SetAllocationSize(MemoryFromIntPtr(rawFileName), rawLength, rawFileInfo);
 
             if (logger.DebugEnabled)
             {
@@ -758,7 +752,7 @@ internal sealed class DokanOperationProxy
                 logger.Debug($"\tContext\t{rawFileInfo}");
             }
 
-            var result = operations.SetFileAttributes(SpanFromIntPtr(rawFileName), (FileAttributes)rawAttributes, rawFileInfo);
+            var result = operations.SetFileAttributes(MemoryFromIntPtr(rawFileName), (FileAttributes)rawAttributes, rawFileInfo);
 
             if (logger.DebugEnabled)
             {
@@ -810,7 +804,7 @@ internal sealed class DokanOperationProxy
                 logger.Debug($"\tContext\t{rawFileInfo}");
             }
 
-            var result = operations.SetFileTime(SpanFromIntPtr(rawFileName), ctime, atime, mtime, rawFileInfo);
+            var result = operations.SetFileTime(MemoryFromIntPtr(rawFileName), ctime, atime, mtime, rawFileInfo);
 
             if (logger.DebugEnabled)
             {
@@ -838,7 +832,7 @@ internal sealed class DokanOperationProxy
                 logger.Debug($"\tContext\t{rawFileInfo}");
             }
 
-            var result = operations.DeleteFile(SpanFromIntPtr(rawFileName), rawFileInfo);
+            var result = operations.DeleteFile(MemoryFromIntPtr(rawFileName), rawFileInfo);
 
             if (logger.DebugEnabled)
             {
@@ -866,7 +860,7 @@ internal sealed class DokanOperationProxy
                 logger.Debug($"\tContext\t{rawFileInfo}");
             }
 
-            var result = operations.DeleteDirectory(SpanFromIntPtr(rawFileName), rawFileInfo);
+            var result = operations.DeleteDirectory(MemoryFromIntPtr(rawFileName), rawFileInfo);
 
             if (logger.DebugEnabled)
             {
@@ -900,7 +894,7 @@ internal sealed class DokanOperationProxy
                 logger.Debug($"\tContext\t{rawFileInfo}");
             }
 
-            var result = operations.MoveFile(SpanFromIntPtr(rawFileName), SpanFromIntPtr(rawNewFileName), rawReplaceIfExisting, ref rawFileInfo);
+            var result = operations.MoveFile(MemoryFromIntPtr(rawFileName), MemoryFromIntPtr(rawNewFileName), rawReplaceIfExisting, ref rawFileInfo);
 
             if (logger.DebugEnabled)
             {
@@ -930,7 +924,7 @@ internal sealed class DokanOperationProxy
                 logger.Debug($"\tContext\t{rawFileInfo}");
             }
 
-            var result = operations.LockFile(SpanFromIntPtr(rawFileName), rawByteOffset, rawLength, rawFileInfo);
+            var result = operations.LockFile(MemoryFromIntPtr(rawFileName), rawByteOffset, rawLength, rawFileInfo);
 
             if (logger.DebugEnabled)
             {
@@ -964,7 +958,7 @@ internal sealed class DokanOperationProxy
                 logger.Debug($"\tContext\t{rawFileInfo}");
             }
 
-            var result = operations.UnlockFile(SpanFromIntPtr(rawFileName), rawByteOffset, rawLength, rawFileInfo);
+            var result = operations.UnlockFile(MemoryFromIntPtr(rawFileName), rawByteOffset, rawLength, rawFileInfo);
 
             if (logger.DebugEnabled)
             {
@@ -1084,7 +1078,7 @@ internal sealed class DokanOperationProxy
                 logger.Debug($"\tContext\t{rawFileInfo}");
             }
 
-            var result = operations.Mounted(SpanFromIntPtr(mountPoint), rawFileInfo);
+            var result = operations.Mounted(MemoryFromIntPtr(mountPoint), rawFileInfo);
 
             if (logger.DebugEnabled)
             {
@@ -1168,7 +1162,7 @@ internal sealed class DokanOperationProxy
                 logger.Debug($"\tContext\t{rawFileInfo}");
             }
 
-            var result = operations.GetFileSecurity(SpanFromIntPtr(rawFileName), out var sec, sect, rawFileInfo);
+            var result = operations.GetFileSecurity(MemoryFromIntPtr(rawFileName), out var sec, sect, rawFileInfo);
             if (result == DokanResult.Success /*&& sec is not null*/)
             {
                 Debug.Assert(sec is not null, $"{nameof(sec)} must not be null");
@@ -1248,7 +1242,7 @@ internal sealed class DokanOperationProxy
                 logger.Debug($"\tContext\t{rawFileInfo}");
             }
 
-            var result = operations.SetFileSecurity(SpanFromIntPtr(rawFileName), sec, sect, rawFileInfo);
+            var result = operations.SetFileSecurity(MemoryFromIntPtr(rawFileName), sec, sect, rawFileInfo);
 
             if (logger.DebugEnabled)
             {

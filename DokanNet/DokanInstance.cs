@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Runtime.ConstrainedExecution;
-using System.Runtime.InteropServices;
-using System.Text;
 using DokanNet.Native;
 
 namespace DokanNet;

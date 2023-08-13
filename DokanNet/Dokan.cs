@@ -1,9 +1,9 @@
 using System;
-using System.Diagnostics.CodeAnalysis;
 using DokanNet.Logging;
 using DokanNet.Native;
 
 #pragma warning disable IDE0079 // Remove unnecessary suppression
+#pragma warning disable CA1707 // Identifiers should not contain underscores
 
 namespace DokanNet;
 
@@ -149,6 +149,11 @@ public static class Dokan
         bool singleThread, int version, TimeSpan timeout, string? uncName = null, int allocationUnitSize = 512,
         int sectorSize = 512, ILogger? logger = null)
     {
+        if (operations is null)
+        {
+            throw new ArgumentNullException(nameof(operations));
+        }
+
         var logger_created = false;
 
         if (logger == null)
@@ -349,6 +354,11 @@ public static class Dokan
         bool singleThread, int version, TimeSpan timeout, string? uncName = null, int allocationUnitSize = 512,
         int sectorSize = 512, ILogger? logger = null)
     {
+        if (operations is null)
+        {
+            throw new ArgumentNullException(nameof(operations));
+        }
+
         var logger_created = false;
 
         if (logger == null)
@@ -435,7 +445,7 @@ public static class Dokan
     /// <param name="dokanInstance">The dokan mount context created by <see cref="CreateFileSystem"/>.</param>
     /// <returns>Whether the FileSystem is still running or not.</returns>
     public static bool IsFileSystemRunning(this DokanInstance dokanInstance)
-        => NativeMethods.DokanIsFileSystemRunning(dokanInstance.DokanHandle);
+        => dokanInstance is not null && NativeMethods.DokanIsFileSystemRunning(dokanInstance.DokanHandle);
 
     /// <summary>
     /// Wait until the FileSystem is unmount.
@@ -445,7 +455,7 @@ public static class Dokan
     /// the function does not enter a wait state if the object is not signaled; it always returns immediately. If <param name="milliSeconds"> is INFINITE, the function will return only when the object is signaled.</param>
     /// <returns>See <a href="https://docs.microsoft.com/en-us/windows/win32/api/synchapi/nf-synchapi-waitforsingleobject">WaitForSingleObject</a> for a description of return values.</returns>
     public static uint WaitForFileSystemClosed(this DokanInstance dokanInstance, uint milliSeconds)
-        => NativeMethods.DokanWaitForFileSystemClosed(dokanInstance.DokanHandle, milliSeconds);
+        => dokanInstance is not null ? NativeMethods.DokanWaitForFileSystemClosed(dokanInstance.DokanHandle, milliSeconds) : 0;
 
     /// <summary>
     /// Unmount a dokan device from a driver letter.
@@ -505,7 +515,14 @@ public static class Dokan
         /// <param name="isDirectory">Indicates if the path is a directory.</param>
         /// <returns>true if the notification succeeded.</returns>
         public static bool Create(DokanInstance dokanInstance, string filePath, bool isDirectory)
-            => NativeMethods.DokanNotifyCreate(dokanInstance.DokanHandle, filePath, isDirectory);
+        {
+            if (dokanInstance is null)
+            {
+                throw new ArgumentNullException(nameof(dokanInstance));
+            }
+
+            return NativeMethods.DokanNotifyCreate(dokanInstance.DokanHandle, filePath, isDirectory);
+        }
 
         /// <summary>
         /// Notify Dokan that a file or directory has been deleted.
@@ -516,7 +533,14 @@ public static class Dokan
         /// <returns>true if notification succeeded.</returns>
         /// <remarks><see cref="DokanOptions.EnableNotificationAPI"/> must be set in the mount options for this to succeed.</remarks>
         public static bool Delete(DokanInstance dokanInstance, string filePath, bool isDirectory)
-            => NativeMethods.DokanNotifyDelete(dokanInstance.DokanHandle, filePath, isDirectory);
+        {
+            if (dokanInstance is null)
+            {
+                throw new ArgumentNullException(nameof(dokanInstance));
+            }
+
+            return NativeMethods.DokanNotifyDelete(dokanInstance.DokanHandle, filePath, isDirectory);
+        }
 
         /// <summary>
         /// Notify Dokan that file or directory attributes have changed.
@@ -526,7 +550,14 @@ public static class Dokan
         /// <returns>true if notification succeeded.</returns>
         /// <remarks><see cref="DokanOptions.EnableNotificationAPI"/> must be set in the mount options for this to succeed.</remarks>
         public static bool Update(DokanInstance dokanInstance, string filePath)
-            => NativeMethods.DokanNotifyUpdate(dokanInstance.DokanHandle, filePath);
+        {
+            if (dokanInstance is null)
+            {
+                throw new ArgumentNullException(nameof(dokanInstance));
+            }
+
+            return NativeMethods.DokanNotifyUpdate(dokanInstance.DokanHandle, filePath);
+        }
 
         /// <summary>
         /// Notify Dokan that file or directory extended attributes have changed.
@@ -536,7 +567,14 @@ public static class Dokan
         /// <returns>true if notification succeeded.</returns>
         /// <remarks><see cref="DokanOptions.EnableNotificationAPI"/> must be set in the mount options for this to succeed.</remarks>
         public static bool XAttrUpdate(DokanInstance dokanInstance, string filePath)
-            => NativeMethods.DokanNotifyXAttrUpdate(dokanInstance.DokanHandle, filePath);
+        {
+            if (dokanInstance is null)
+            {
+                throw new ArgumentNullException(nameof(dokanInstance));
+            }
+
+            return NativeMethods.DokanNotifyXAttrUpdate(dokanInstance.DokanHandle, filePath);
+        }
 
         /// <summary>
         /// Notify Dokan that a file or directory has been renamed.
@@ -550,10 +588,17 @@ public static class Dokan
         /// <returns>true if notification succeeded.</returns>
         /// <remarks><see cref="DokanOptions.EnableNotificationAPI"/> must be set in the mount options for this to succeed.</remarks>
         public static bool Rename(DokanInstance dokanInstance, string oldPath, string newPath, bool isDirectory, bool isInSameDirectory)
-            => NativeMethods.DokanNotifyRename(dokanInstance.DokanHandle, oldPath,
+        {
+            if (dokanInstance is null)
+            {
+                throw new ArgumentNullException(nameof(dokanInstance));
+            }
+
+            return NativeMethods.DokanNotifyRename(dokanInstance.DokanHandle, oldPath,
                 newPath,
                 isDirectory,
                 isInSameDirectory);
+        }
     }
 }
 

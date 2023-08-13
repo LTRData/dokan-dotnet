@@ -1,13 +1,11 @@
 ﻿using DiscUtils.Streams.Compatibility;
 using DokanNet;
 using DokanNet.Logging;
-using Microsoft.Win32.SafeHandles;
 using System;
 using System.Buffers;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Security.AccessControl;
@@ -74,11 +72,11 @@ public class DokanDiscUtils : IDokanOperations, IDisposable
         return result;
     }
 
-    private NtStatus Trace(string method, ReadOnlySpan<char> fileName, in DokanFileInfo info, NtStatus result)
+    private NtStatus Trace(string method, ReadOnlyDokanMemory<char> fileName, in DokanFileInfo info, NtStatus result)
     {
         if (logger.DebugEnabled)
         {
-            logger.Debug($"{method}('{fileName.ToString()}', {info}) -> {result}");
+            logger.Debug($"{method}('{fileName}', {info}) -> {result}");
         }
 
         return result;
@@ -95,12 +93,12 @@ public class DokanDiscUtils : IDokanOperations, IDisposable
         return result;
     }
 
-    private NtStatus Trace<TParam>(string method, ReadOnlySpan<char> fileName, in DokanFileInfo info, NtStatus result,
+    private NtStatus Trace<TParam>(string method, ReadOnlyDokanMemory<char> fileName, in DokanFileInfo info, NtStatus result,
         TParam parameter)
     {
         if (logger.DebugEnabled)
         {
-            logger.Debug($"{method}('{fileName.ToString()}', {info}, {parameter}) -> {result}");
+            logger.Debug($"{method}('{fileName}', {info}, {parameter}) -> {result}");
         }
 
         return result;
@@ -117,12 +115,12 @@ public class DokanDiscUtils : IDokanOperations, IDisposable
         return result;
     }
 
-    private NtStatus Trace<TParam1, TParam2>(string method, ReadOnlySpan<char> fileName, in DokanFileInfo info, NtStatus result,
+    private NtStatus Trace<TParam1, TParam2>(string method, ReadOnlyDokanMemory<char> fileName, in DokanFileInfo info, NtStatus result,
         TParam1 parameter1, TParam2 parameter2)
     {
         if (logger.DebugEnabled)
         {
-            logger.Debug($"{method}('{fileName.ToString()}', {info}, {parameter1}, {parameter2}) -> {result}");
+            logger.Debug($"{method}('{fileName}', {info}, {parameter1}, {parameter2}) -> {result}");
         }
 
         return result;
@@ -139,25 +137,25 @@ public class DokanDiscUtils : IDokanOperations, IDisposable
         return result;
     }
 
-    private NtStatus Trace<TParam1, TParam2, TParam3>(string method, ReadOnlySpan<char> fileName, in DokanFileInfo info, NtStatus result,
+    private NtStatus Trace<TParam1, TParam2, TParam3>(string method, ReadOnlyDokanMemory<char> fileName, in DokanFileInfo info, NtStatus result,
         TParam1 parameter1, TParam2 parameter2, TParam3 parameter3)
     {
         if (logger.DebugEnabled)
         {
-            logger.Debug($"{method}('{fileName.ToString()}', {info}, {parameter1}, {parameter2}, {parameter3}) -> {result}");
+            logger.Debug($"{method}('{fileName}', {info}, {parameter1}, {parameter2}, {parameter3}) -> {result}");
         }
 
         return result;
     }
 
-    private NtStatus Trace(string method, ReadOnlySpan<char> fileName, in DokanFileInfo info,
+    private NtStatus Trace(string method, ReadOnlyDokanMemory<char> fileName, in DokanFileInfo info,
         NativeFileAccess access, FileShare share, FileMode mode, FileOptions options, FileAttributes attributes,
         NtStatus result)
     {
         if (logger.DebugEnabled)
         {
             logger.Debug(
-                $"{method}('{fileName.ToString()}', {info}, [{access}], [{share}], [{mode}], [{options}], [{attributes}]) -> {result}");
+                $"{method}('{fileName}', {info}, [{access}], [{share}], [{mode}], [{options}], [{attributes}]) -> {result}");
         }
 
         return result;
@@ -288,9 +286,9 @@ public class DokanDiscUtils : IDokanOperations, IDisposable
     /// </summary>
     /// <param name="pathstr">OS translated path</param>
     /// <returns>File system original path</returns>
-    private string TranslatePath(ReadOnlySpan<char> path)
+    private string TranslatePath(ReadOnlyDokanMemory<char> pathPtr)
     {
-        path = path.Trim('\\');
+        var path = pathPtr.Span.Trim('\\');
 
         if (path.IsEmpty)
         {
@@ -431,7 +429,7 @@ public class DokanDiscUtils : IDokanOperations, IDisposable
         return newpath;
     }
 
-    public NtStatus CreateFile(ReadOnlySpan<char> fileNamePtr, NativeFileAccess access, FileShare share, FileMode mode,
+    public NtStatus CreateFile(ReadOnlyDokanMemory<char> fileNamePtr, NativeFileAccess access, FileShare share, FileMode mode,
         FileOptions options, FileAttributes attributes, ref DokanFileInfo info)
     {
         var fileName = TranslatePath(fileNamePtr);
@@ -660,7 +658,7 @@ public class DokanDiscUtils : IDokanOperations, IDisposable
             result);
     }
 
-    public void Cleanup(ReadOnlySpan<char> fileNamePtr, ref DokanFileInfo info)
+    public void Cleanup(ReadOnlyDokanMemory<char> fileNamePtr, ref DokanFileInfo info)
     {
         (info.Context as IDisposable)?.Dispose();
         info.Context = null;
@@ -682,7 +680,7 @@ public class DokanDiscUtils : IDokanOperations, IDisposable
         Trace(nameof(Cleanup), fileNamePtr, info, DokanResult.Success);
     }
 
-    public void CloseFile(ReadOnlySpan<char> fileNamePtr, ref DokanFileInfo info)
+    public void CloseFile(ReadOnlyDokanMemory<char> fileNamePtr, ref DokanFileInfo info)
     {
         (info.Context as IDisposable)?.Dispose();
         info.Context = null;
@@ -690,14 +688,14 @@ public class DokanDiscUtils : IDokanOperations, IDisposable
         // could recreate cleanup code here but this is not called sometimes
     }
 
-    public NtStatus ReadFile(ReadOnlySpan<char> fileNamePtr, Span<byte> buffer, out int bytesRead, long offset, in DokanFileInfo info)
+    public NtStatus ReadFile(ReadOnlyDokanMemory<char> fileNamePtr, DokanMemory<byte> buffer, out int bytesRead, long offset, in DokanFileInfo info)
     {
         if (info.Context is CompatibilityStream stream) // normal read
         {
             lock (stream) //Protect from overlapped read
             {
                 stream.Position = offset;
-                bytesRead = stream.Read(buffer);
+                bytesRead = stream.Read(buffer.Span);
             }
         }
         else // memory mapped read
@@ -706,14 +704,14 @@ public class DokanDiscUtils : IDokanOperations, IDisposable
 
             using var fstream = FileSystem.OpenFile(fileName, FileMode.Open, FileAccess.Read);
             fstream.Position = offset;
-            bytesRead = fstream.Read(buffer);
+            bytesRead = fstream.Read(buffer.Span);
         }
 
         return Trace(nameof(ReadFile), fileNamePtr, info, DokanResult.Success, bytesRead,
             offset);
     }
 
-    public NtStatus WriteFile(ReadOnlySpan<char> fileNamePtr, ReadOnlySpan<byte> buffer, out int bytesWritten, long offset, in DokanFileInfo info)
+    public NtStatus WriteFile(ReadOnlyDokanMemory<char> fileNamePtr, ReadOnlyDokanMemory<byte> buffer, out int bytesWritten, long offset, in DokanFileInfo info)
     {
         bytesWritten = 0;
 
@@ -727,7 +725,7 @@ public class DokanDiscUtils : IDokanOperations, IDisposable
             lock (stream) //Protect from overlapped write
             {
                 stream.Position = offset;
-                stream.Write(buffer);
+                stream.Write(buffer.Span);
             }
 
             bytesWritten = buffer.Length;
@@ -738,7 +736,7 @@ public class DokanDiscUtils : IDokanOperations, IDisposable
 
             using var fstream = FileSystem.OpenFile(fileName, FileMode.Open, FileAccess.Write);
             fstream.Position = offset;
-            fstream.Write(buffer);
+            fstream.Write(buffer.Span);
             bytesWritten = buffer.Length;
         }
 
@@ -746,7 +744,7 @@ public class DokanDiscUtils : IDokanOperations, IDisposable
             offset);
     }
 
-    public NtStatus FlushFileBuffers(ReadOnlySpan<char> fileNamePtr, in DokanFileInfo info)
+    public NtStatus FlushFileBuffers(ReadOnlyDokanMemory<char> fileNamePtr, in DokanFileInfo info)
     {
         if (ReadOnly)
         {
@@ -764,7 +762,7 @@ public class DokanDiscUtils : IDokanOperations, IDisposable
         }
     }
 
-    public NtStatus GetFileInformation(ReadOnlySpan<char> fileNamePtr, out ByHandleFileInformation fileInfo, in DokanFileInfo info)
+    public NtStatus GetFileInformation(ReadOnlyDokanMemory<char> fileNamePtr, out ByHandleFileInformation fileInfo, in DokanFileInfo info)
     {
         var fileName = TranslatePath(fileNamePtr);
 
@@ -812,14 +810,14 @@ public class DokanDiscUtils : IDokanOperations, IDisposable
         return Trace(nameof(GetFileInformation), fileName, info, DokanResult.Success);
     }
 
-    public NtStatus FindFiles(ReadOnlySpan<char> fileNamePtr, out IEnumerable<FindFileInformation> files, in DokanFileInfo info)
+    public NtStatus FindFiles(ReadOnlyDokanMemory<char> fileNamePtr, out IEnumerable<FindFileInformation> files, in DokanFileInfo info)
     {
-        files = FindFilesHelper(fileNamePtr, "*".AsSpan());
+        files = FindFilesHelper(fileNamePtr, "*");
 
         return Trace(nameof(FindFiles), fileNamePtr, info, DokanResult.Success);
     }
 
-    public NtStatus SetFileAttributes(ReadOnlySpan<char> fileNamePtr, FileAttributes attributes, in DokanFileInfo info)
+    public NtStatus SetFileAttributes(ReadOnlyDokanMemory<char> fileNamePtr, FileAttributes attributes, in DokanFileInfo info)
     {
         if (ReadOnly)
         {
@@ -853,7 +851,7 @@ public class DokanDiscUtils : IDokanOperations, IDisposable
         }
     }
 
-    public NtStatus SetFileTime(ReadOnlySpan<char> fileNamePtr, DateTime? creationTime, DateTime? lastAccessTime,
+    public NtStatus SetFileTime(ReadOnlyDokanMemory<char> fileNamePtr, DateTime? creationTime, DateTime? lastAccessTime,
         DateTime? lastWriteTime, in DokanFileInfo info)
     {
         if (ReadOnly)
@@ -895,7 +893,7 @@ public class DokanDiscUtils : IDokanOperations, IDisposable
         }
     }
 
-    public NtStatus DeleteFile(ReadOnlySpan<char> fileNamePtr, in DokanFileInfo info)
+    public NtStatus DeleteFile(ReadOnlyDokanMemory<char> fileNamePtr, in DokanFileInfo info)
     {
         if (ReadOnly)
         {
@@ -918,7 +916,7 @@ public class DokanDiscUtils : IDokanOperations, IDisposable
         // we just check here if we could delete the file - the true deletion is in Cleanup
     }
 
-    public NtStatus DeleteDirectory(ReadOnlySpan<char> fileNamePtr, in DokanFileInfo info)
+    public NtStatus DeleteDirectory(ReadOnlyDokanMemory<char> fileNamePtr, in DokanFileInfo info)
     {
         if (ReadOnly)
         {
@@ -941,7 +939,7 @@ public class DokanDiscUtils : IDokanOperations, IDisposable
         // if dir is not empty it can't be deleted
     }
 
-    public NtStatus MoveFile(ReadOnlySpan<char> oldNamePtr, ReadOnlySpan<char> newNamePtr, bool replace, ref DokanFileInfo info)
+    public NtStatus MoveFile(ReadOnlyDokanMemory<char> oldNamePtr, ReadOnlyDokanMemory<char> newNamePtr, bool replace, ref DokanFileInfo info)
     {
         if (ReadOnly)
         {
@@ -1000,7 +998,7 @@ public class DokanDiscUtils : IDokanOperations, IDisposable
             replace);
     }
 
-    public NtStatus SetEndOfFile(ReadOnlySpan<char> fileNamePtr, long length, in DokanFileInfo info)
+    public NtStatus SetEndOfFile(ReadOnlyDokanMemory<char> fileNamePtr, long length, in DokanFileInfo info)
     {
         if (ReadOnly || info.Context is not Stream stream)
         {
@@ -1021,7 +1019,7 @@ public class DokanDiscUtils : IDokanOperations, IDisposable
         }
     }
 
-    public NtStatus SetAllocationSize(ReadOnlySpan<char> fileNamePtr, long length, in DokanFileInfo info)
+    public NtStatus SetAllocationSize(ReadOnlyDokanMemory<char> fileNamePtr, long length, in DokanFileInfo info)
     {
         if (ReadOnly || info.Context is not Stream stream)
         {
@@ -1042,9 +1040,9 @@ public class DokanDiscUtils : IDokanOperations, IDisposable
         }
     }
 
-    public NtStatus LockFile(ReadOnlySpan<char> fileNamePtr, long offset, long length, in DokanFileInfo info) => DokanResult.NotImplemented;
+    public NtStatus LockFile(ReadOnlyDokanMemory<char> fileNamePtr, long offset, long length, in DokanFileInfo info) => DokanResult.NotImplemented;
 
-    public NtStatus UnlockFile(ReadOnlySpan<char> fileNamePtr, long offset, long length, in DokanFileInfo info) => DokanResult.NotImplemented;
+    public NtStatus UnlockFile(ReadOnlyDokanMemory<char> fileNamePtr, long offset, long length, in DokanFileInfo info) => DokanResult.NotImplemented;
 
     public NtStatus GetDiskFreeSpace(out long freeBytesAvailable, out long totalNumberOfBytes, out long totalNumberOfFreeBytes, in DokanFileInfo info)
     {
@@ -1126,7 +1124,7 @@ public class DokanDiscUtils : IDokanOperations, IDisposable
             features, fileSystemName);
     }
 
-    public NtStatus GetFileSecurity(ReadOnlySpan<char> fileNamePtr, out FileSystemSecurity? security, AccessControlSections sections,
+    public NtStatus GetFileSecurity(ReadOnlyDokanMemory<char> fileNamePtr, out FileSystemSecurity? security, AccessControlSections sections,
         in DokanFileInfo info)
     {
         try
@@ -1183,7 +1181,7 @@ public class DokanDiscUtils : IDokanOperations, IDisposable
         }
     }
 
-    public NtStatus SetFileSecurity(ReadOnlySpan<char> fileNamePtr, FileSystemSecurity security, AccessControlSections sections,
+    public NtStatus SetFileSecurity(ReadOnlyDokanMemory<char> fileNamePtr, FileSystemSecurity security, AccessControlSections sections,
         in DokanFileInfo info)
     {
         if (ReadOnly || security is null)
@@ -1213,11 +1211,11 @@ public class DokanDiscUtils : IDokanOperations, IDisposable
         }
     }
 
-    public NtStatus Mounted(ReadOnlySpan<char> mountPoint, in DokanFileInfo info) => Trace(nameof(Mounted), null as string, info, DokanResult.Success);
+    public NtStatus Mounted(ReadOnlyDokanMemory<char> mountPoint, in DokanFileInfo info) => Trace(nameof(Mounted), null as string, info, DokanResult.Success);
 
     public NtStatus Unmounted(in DokanFileInfo info) => Trace(nameof(Unmounted), null as string, info, DokanResult.Success);
 
-    public NtStatus FindStreams(ReadOnlySpan<char> fileNamePtr, out IEnumerable<FindFileInformation> streams, in DokanFileInfo info)
+    public NtStatus FindStreams(ReadOnlyDokanMemory<char> fileNamePtr, out IEnumerable<FindFileInformation> streams, in DokanFileInfo info)
     {
         var fileName = TranslatePath(fileNamePtr);
 
@@ -1258,12 +1256,13 @@ public class DokanDiscUtils : IDokanOperations, IDisposable
         return attributes;
     }
 
-    public IEnumerable<FindFileInformation> FindFilesHelper(ReadOnlySpan<char> pathPtr, ReadOnlySpan<char> searchPatternPtr)
+    public IEnumerable<FindFileInformation> FindFilesHelper(ReadOnlyDokanMemory<char> pathPtr, string searchPattern)
     {
-        var OSPath = pathPtr.Trim('\\').ToString();
+        var OSPath = pathPtr.Span.Trim('\\').ToString();
         var path = TranslatePath(OSPath);
 
-        var searchPattern = searchPatternPtr.ToString().Replace('<', '*');
+        searchPattern ??= "*";
+        searchPattern = searchPattern.Replace('<', '*');
 
         if (FileSystem is IWindowsFileSystem wfs)
         {
@@ -1332,10 +1331,10 @@ public class DokanDiscUtils : IDokanOperations, IDisposable
         }
     }
 
-    public NtStatus FindFilesWithPattern(ReadOnlySpan<char> fileNamePtr, ReadOnlySpan<char> searchPatternPtr, out IEnumerable<FindFileInformation> files,
+    public NtStatus FindFilesWithPattern(ReadOnlyDokanMemory<char> fileNamePtr, ReadOnlyDokanMemory<char> searchPatternPtr, out IEnumerable<FindFileInformation> files,
         in DokanFileInfo info)
     {
-        files = FindFilesHelper(fileNamePtr, searchPatternPtr);
+        files = FindFilesHelper(fileNamePtr, searchPatternPtr.ToString());
 
         return Trace(nameof(FindFilesWithPattern), fileNamePtr, info, DokanResult.Success);
     }

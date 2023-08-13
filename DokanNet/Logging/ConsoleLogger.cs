@@ -1,9 +1,6 @@
 ﻿using System;
 using System.Collections.Concurrent;
-using System.Diagnostics.CodeAnalysis;
-using System.Globalization;
 using System.Threading;
-using System.Threading.Tasks;
 
 namespace DokanNet.Logging;
 

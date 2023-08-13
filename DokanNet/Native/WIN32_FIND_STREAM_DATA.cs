@@ -9,7 +9,7 @@ namespace DokanNet.Native;
 /// </summary>
 /// \see <a href="https://msdn.microsoft.com/en-us/library/windows/desktop/aa365741(v=vs.85).aspx">WIN32_FIND_STREAM_DATA structure (MSDN)</a>
 [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode, Pack = 4)]
-internal unsafe struct WIN32_FIND_STREAM_DATA
+internal struct WIN32_FIND_STREAM_DATA
 {
     /// <summary>
     /// A <c>long</c> value that specifies the size of the stream, in bytes.
@@ -19,15 +19,15 @@ internal unsafe struct WIN32_FIND_STREAM_DATA
     /// <summary>
     /// The name of the stream. The string name format is "<c>:streamname:$streamtype</c>".
     /// </summary>
-    public fixed char cStreamName[260];
+    public unsafe fixed char cStreamName[260];
 
 #if NETSTANDARD2_1_OR_GREATER || NETCOREAPP
-    public ReadOnlySpan<char> StreamName
+    public unsafe ReadOnlySpan<char> StreamName
     {
         set => value.CopyTo(MemoryMarshal.CreateSpan(ref cStreamName[0], 260));
     }
 #else
-    public ReadOnlySpan<char> StreamName
+    public unsafe ReadOnlySpan<char> StreamName
     {
         set
         {

@@ -1,10 +1,9 @@
 ﻿using System;
 using System.Buffers;
 using System.IO;
-using System.Linq;
-using System.Runtime.InteropServices;
 
 #pragma warning disable IDE0079 // Remove unnecessary suppression
+#pragma warning disable IDE0057 // Use range operator
 
 namespace DokanNet;
 
@@ -192,9 +191,9 @@ public static class DokanHelper
                 }
             }
         }
-        
+
         var isNameCurrentCharTheLast = ni == name.Length;
-        
+
         if (ei == expression.Length && isNameCurrentCharTheLast || isNameCurrentCharTheLast && areNextExpressionCharsAllNullMatchers)
         {
             return true;

@@ -13,7 +13,7 @@ namespace DokanNet;
 ///  - <see cref="IDokanOperations.FindFilesWithPattern"/>.
 /// </summary>
 [StructLayout(LayoutKind.Auto)]
-[DebuggerDisplay("{FileName}, {Length}, {CreationTime}, {LastWriteTime}, {LastAccessTime}, {Attributes}")]
+[DebuggerDisplay("{Length}, {CreationTime}, {LastWriteTime}, {LastAccessTime}, {Attributes}")]
 public struct ByHandleFileInformation
 {
     public ByHandleFileInformation()
