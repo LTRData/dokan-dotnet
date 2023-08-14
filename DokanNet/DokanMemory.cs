@@ -52,7 +52,7 @@ public readonly struct DokanMemory<T> where T : unmanaged
     public MemoryManager<T> GetMemoryManager()
         => new UnmanagedMemoryManager<T>(Address, Length);
 
-    public override string ToString()
+    public override unsafe string ToString()
     {
         if (Address == 0)
         {
@@ -61,12 +61,7 @@ public readonly struct DokanMemory<T> where T : unmanaged
 
         if (typeof(T) == typeof(char))
         {
-            if (Length == 0)
-            {
-                return "";
-            }
-
-            return Span.ToString();
+            return DokanHelper.GetStringFromSpan(new ReadOnlySpan<char>((char*)Address, Length));
         }
 
         return $"{typeof(T).Name} 0x{Address:x}[{Length}]";
@@ -124,7 +119,7 @@ public readonly struct ReadOnlyDokanMemory<T> where T : unmanaged
     public MemoryManager<T> GetMemoryManager()
         => new UnmanagedMemoryManager<T>(Address, Length);
 
-    public override string ToString()
+    public override unsafe string ToString()
     {
         if (Address == 0)
         {
@@ -133,12 +128,7 @@ public readonly struct ReadOnlyDokanMemory<T> where T : unmanaged
 
         if (typeof(T) == typeof(char))
         {
-            if (Length == 0)
-            {
-                return "";
-            }
-
-            return Span.ToString();
+            return DokanHelper.GetStringFromSpan(new ReadOnlySpan<char>((char*)Address, Length));
         }
 
         return $"{typeof(T).Name} 0x{Address:x}[{Length}]";
@@ -198,7 +188,7 @@ internal sealed class UnmanagedMemoryManager<T> : MemoryManager<T> where T : unm
         }
     }
 
-    public override string ToString()
+    public override unsafe string ToString()
     {
         if (_pointer == 0)
         {
@@ -207,12 +197,7 @@ internal sealed class UnmanagedMemoryManager<T> : MemoryManager<T> where T : unm
 
         if (typeof(T) == typeof(char))
         {
-            if (_count == 0)
-            {
-                return "";
-            }
-
-            return GetSpan().ToString();
+            return DokanHelper.GetStringFromSpan(new ReadOnlySpan<char>((char*)_pointer, _count));
         }
 
         return $"{typeof(T).Name} 0x{_pointer:x}[{_count}]";

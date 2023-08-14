@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Buffers;
 using System.IO;
+using System.Runtime.CompilerServices;
 
 #pragma warning disable IDE0079 // Remove unnecessary suppression
 #pragma warning disable IDE0057 // Use range operator
@@ -200,6 +201,38 @@ public static class DokanHelper
         }
 
         return false;
+    }
+
+    public static string GetStringFromSpan(ReadOnlySpan<char> span)
+    {
+        if (span.IsEmpty)
+        {
+            return "";
+        }
+        else if (span.Equals("/".AsSpan(), StringComparison.Ordinal))
+        {
+            return "/";
+        }
+        else if (span.Equals(@"\".AsSpan(), StringComparison.Ordinal))
+        {
+            return @"\";
+        }
+        else if (span.Equals("*".AsSpan(), StringComparison.Ordinal))
+        {
+            return "*";
+        }
+        else if (span.Equals("*.*".AsSpan(), StringComparison.Ordinal))
+        {
+            return "*.*";
+        }
+        else if (span.Equals("?".AsSpan(), StringComparison.Ordinal))
+        {
+            return "?";
+        }
+        else
+        {
+            return span.ToString();
+        }
     }
 
 #if NETFRAMEWORK || (NETSTANDARD && !NETSTANDARD2_1_OR_GREATER)
