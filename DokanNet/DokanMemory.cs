@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Buffers;
+using System.IO;
 using System.Net;
+using System.Runtime.InteropServices;
 
 namespace DokanNet;
 
@@ -10,7 +12,7 @@ namespace DokanNet;
 /// <typeparam name="T">Type of elements in the memory</typeparam>
 public readonly struct DokanMemory<T> where T : unmanaged
 {
-    internal DokanMemory(nint pointer, int length)
+    public DokanMemory(nint pointer, int length)
     {
         Address = pointer;
         Length = length;
@@ -52,6 +54,15 @@ public readonly struct DokanMemory<T> where T : unmanaged
     public MemoryManager<T> GetMemoryManager()
         => new UnmanagedMemoryManager<T>(Address, Length);
 
+    /// <summary>
+    /// Gets a disposable <see cref="UnmanagedMemoryStream"/> for this memory block.
+    /// Remember though, that the memory is invalid after return to Dokan API
+    /// so make sure that no asynchronous operations use the memory after returning from
+    /// implementation methods.
+    /// </summary>
+    public unsafe UnmanagedMemoryStream GetStream()
+        => new((byte*)Address, Length * sizeof(T));
+
     public override unsafe string ToString()
     {
         if (Address == 0)
@@ -77,7 +88,7 @@ public readonly struct ReadOnlyDokanMemory<T> where T : unmanaged
     public static implicit operator ReadOnlyDokanMemory<T>(DokanMemory<T> origin)
         => new(origin.Address, origin.Length);
 
-    internal ReadOnlyDokanMemory(nint pointer, int length)
+    public ReadOnlyDokanMemory(nint pointer, int length)
     {
         Address = pointer;
         Length = length;
@@ -118,6 +129,15 @@ public readonly struct ReadOnlyDokanMemory<T> where T : unmanaged
     /// </summary>
     public MemoryManager<T> GetMemoryManager()
         => new UnmanagedMemoryManager<T>(Address, Length);
+
+    /// <summary>
+    /// Gets a disposable <see cref="UnmanagedMemoryStream"/> for this memory block.
+    /// Remember though, that the memory is invalid after return to Dokan API
+    /// so make sure that no asynchronous operations use the memory after returning from
+    /// implementation methods.
+    /// </summary>
+    public unsafe UnmanagedMemoryStream GetStream()
+        => new((byte*)Address, Length * sizeof(T), Length * sizeof(T), FileAccess.Read);
 
     public override unsafe string ToString()
     {
