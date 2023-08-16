@@ -1,7 +1,11 @@
 ﻿using System;
 using System.Buffers;
+using System.ComponentModel;
 using System.IO;
+using System.Reflection;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
+using System.Threading;
 
 #pragma warning disable IDE0079 // Remove unnecessary suppression
 #pragma warning disable IDE0057 // Use range operator
@@ -233,6 +237,53 @@ public static class DokanHelper
         {
             return span.ToString();
         }
+    }
+
+    public static NtStatus ToNtStatus(this Exception? ex)
+    {
+        while (ex is TargetInvocationException or AggregateException)
+        {
+            ex = ex!.InnerException;
+        }
+
+        if (ex is null)
+        {
+            return NtStatus.Unsuccessful;
+        }
+        
+        if (ex is Win32Exception win32Exception)
+        {
+            return win32Exception.NativeErrorCode switch
+            {
+                1 => NtStatus.NotImplemented,
+                2 or 18 => NtStatus.ObjectNameNotFound,
+                3 => NtStatus.ObjectPathNotFound,
+                4 => NtStatus.TooManyOpenedFiles,
+                5 or 12 => NtStatus.AccessDenied,
+                6 => NtStatus.InvalidHandle,
+                8 or 14 => NtStatus.NoMemory,
+                10 => NtStatus.MediaWriteProtected,
+                50 => NtStatus.NotImplemented,
+                _ => NtStatus.Unsuccessful
+            };
+        }
+
+        ex = Marshal.GetExceptionForHR(ex.HResult);
+
+        return ex switch
+        {
+            FileNotFoundException => NtStatus.ObjectNameNotFound,
+            UnauthorizedAccessException => NtStatus.AccessDenied,
+            DirectoryNotFoundException => NtStatus.ObjectPathNotFound,
+            InvalidOperationException => NtStatus.NotImplemented,
+            NotSupportedException or NotImplementedException => NtStatus.NotImplemented,
+            PathTooLongException => NtStatus.ObjectPathInvalid,
+            OutOfMemoryException => NtStatus.NoMemory,
+            ThreadAbortException or ThreadInterruptedException or OperationCanceledException => NtStatus.Cancelled,
+            ArgumentException or ArgumentOutOfRangeException or IndexOutOfRangeException or
+            ArgumentNullException or NullReferenceException => NtStatus.InvalidParameter,
+            _ => NtStatus.Unsuccessful
+        };
     }
 
 #if NETFRAMEWORK || (NETSTANDARD && !NETSTANDARD2_1_OR_GREATER)

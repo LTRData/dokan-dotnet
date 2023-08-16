@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Security.AccessControl;
 
+#pragma warning disable IDE0079 // Remove unnecessary suppression
 #pragma warning disable CA1021 // Avoid out parameters
 #pragma warning disable CA1045 // Do not pass types by reference
 

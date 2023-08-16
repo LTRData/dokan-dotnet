@@ -58,7 +58,7 @@ public static class LoggerExtensions
             stringBuilder.Append($"{category} ");
         }
 
-        stringBuilder.Append(message.ToString(CultureInfo.InvariantCulture));
+        stringBuilder.Append(message?.ToString(CultureInfo.InvariantCulture));
 
         return stringBuilder.ToString();
     }

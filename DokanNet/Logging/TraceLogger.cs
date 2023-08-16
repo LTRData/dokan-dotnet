@@ -13,17 +13,17 @@ public class TraceLogger : ILogger
     public bool DebugEnabled => true;
 
     /// <inheritdoc />
-    public void Debug(FormattableString message) => Trace.TraceInformation(message.ToString(CultureInfo.InvariantCulture));
+    public void Debug(FormattableString message) => Trace.TraceInformation(message?.ToString(CultureInfo.InvariantCulture));
 
     /// <inheritdoc />
-    public void Info(FormattableString message) => Trace.TraceInformation(message.ToString(CultureInfo.InvariantCulture));
+    public void Info(FormattableString message) => Trace.TraceInformation(message?.ToString(CultureInfo.InvariantCulture));
 
     /// <inheritdoc />
-    public void Warn(FormattableString message) => Trace.TraceWarning(message.ToString(CultureInfo.InvariantCulture));
+    public void Warn(FormattableString message) => Trace.TraceWarning(message?.ToString(CultureInfo.InvariantCulture));
 
     /// <inheritdoc />
-    public void Error(FormattableString message) => Trace.TraceError(message.ToString(CultureInfo.InvariantCulture));
+    public void Error(FormattableString message) => Trace.TraceError(message?.ToString(CultureInfo.InvariantCulture));
 
     /// <inheritdoc />
-    public void Fatal(FormattableString message) => Trace.TraceError(message.ToString(CultureInfo.InvariantCulture));
+    public void Fatal(FormattableString message) => Trace.TraceError(message?.ToString(CultureInfo.InvariantCulture));
 }

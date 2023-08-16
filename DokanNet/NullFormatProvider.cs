@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics.CodeAnalysis;
 
 namespace DokanNet;
 
@@ -29,8 +30,11 @@ public class FormatProviders : IFormatProvider, ICustomFormatter
     /// </summary>
     /// <param name="formattable">The <see cref="FormattableString"/> to format.</param>
     /// <returns>The formated string.</returns>
-    public static string DokanFormat(FormattableString formattable)
-        => formattable.ToString(DefaultFormatProvider);
+#if NETSTANDARD2_1_OR_GREATER || NETCOREAPP
+    [return: NotNullIfNotNull(nameof(formattable))]
+#endif
+    public static string? DokanFormat(FormattableString formattable)
+        => formattable?.ToString(DefaultFormatProvider);
 
     /// <summary>
     /// Returns an object that provides formatting services for the

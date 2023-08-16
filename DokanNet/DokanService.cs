@@ -1,9 +1,13 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Runtime.Versioning;
 using System.Threading;
 
 namespace DokanNet;
 
+#if NET5_0_OR_GREATER
+[SupportedOSPlatform("windows")]
+#endif
 public class DokanService : IDisposable
 {
     public event EventHandler? Stopped;
@@ -74,7 +78,7 @@ public class DokanService : IDisposable
     public void WaitExit()
     {
         if (ServiceThread == null ||
-            ServiceThread.ManagedThreadId == Thread.CurrentThread.ManagedThreadId)
+            ServiceThread.ManagedThreadId == Environment.CurrentManagedThreadId)
         {
             return;
         }
@@ -104,7 +108,7 @@ public class DokanService : IDisposable
 
                     Dokan.RemoveMountPoint(MountPoint);
 
-                    if (ServiceThread.ManagedThreadId != Thread.CurrentThread.ManagedThreadId)
+                    if (ServiceThread.ManagedThreadId != Environment.CurrentManagedThreadId)
                     {
                         Trace.WriteLine($"Waiting for Dokan file system '{MountPoint}' service thread to stop");
 

@@ -1,14 +1,21 @@
 ﻿using Microsoft.Win32.SafeHandles;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
+using System.Runtime.Versioning;
 
 /// <summary>
 /// Namespace for structures and classes related to native API.
 /// </summary>
 namespace DokanNet.Native;
 
+#pragma warning disable IDE0079 // Remove unnecessary suppression
+
 /// <summary>
 /// Native API to the kernel Dokan driver.
 /// </summary>
+#if NET5_0_OR_GREATER
+[SupportedOSPlatform("windows")]
+#endif
 internal static partial class NativeMethods
 {
     private const string DOKAN_DLL = "dokan2.dll";
@@ -381,6 +388,7 @@ internal static partial class NativeMethods
     /// <returns>If the operation was successful.</returns>
     [DllImport(DOKAN_DLL, ExactSpelling = true)]
     [return: MarshalAs(UnmanagedType.Bool)]
+    [SuppressMessage("Interoperability", "SYSLIB1054:Use 'LibraryImportAttribute' instead of 'DllImportAttribute' to generate P/Invoke marshalling code at compile time", Justification = "Types not supported")]
     public static extern bool DokanResetTimeout(uint timeout, in DokanFileInfo rawFileInfo);
 
     /// <summary>
@@ -395,6 +403,7 @@ internal static partial class NativeMethods
     /// A handle to the account token for the user on whose behalf the code is running.
     /// </returns>
     [DllImport(DOKAN_DLL, ExactSpelling = true)]
+    [SuppressMessage("Interoperability", "SYSLIB1054:Use 'LibraryImportAttribute' instead of 'DllImportAttribute' to generate P/Invoke marshalling code at compile time", Justification = "Types not supported")]
     public static extern SafeAccessTokenHandle DokanOpenRequestorToken(in DokanFileInfo rawFileInfo);
 
     /// <summary>
@@ -406,5 +415,6 @@ internal static partial class NativeMethods
     /// <param name="operations">Instance of <see cref="DOKAN_OPERATIONS"/> that will be called for each request made by the kernel.</param>
     /// <returns><see cref="DokanStatus"/></returns>
     [DllImport(DOKAN_DLL, ExactSpelling = true)]
+    [SuppressMessage("Interoperability", "SYSLIB1054:Use 'LibraryImportAttribute' instead of 'DllImportAttribute' to generate P/Invoke marshalling code at compile time", Justification = "Types not supported")]
     public static extern DokanStatus DokanMain([In] DOKAN_OPTIONS options, [In] DOKAN_OPERATIONS operations);
 }

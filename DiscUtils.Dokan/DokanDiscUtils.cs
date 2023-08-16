@@ -8,6 +8,7 @@ using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Runtime.Versioning;
 using System.Security.AccessControl;
 using NativeFileAccess = DokanNet.NativeFileAccess;
 
@@ -19,6 +20,9 @@ using NativeFileAccess = DokanNet.NativeFileAccess;
 
 namespace DiscUtils.Dokan;
 
+#if NET5_0_OR_GREATER
+[SupportedOSPlatform("windows")]
+#endif
 public class DokanDiscUtils : IDokanOperations, IDisposable
 {
     public IFileSystem FileSystem { get; }

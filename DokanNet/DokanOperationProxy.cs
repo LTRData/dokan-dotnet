@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Diagnostics.Contracts;
 using System.IO;
 using System.Runtime.InteropServices;
+using System.Runtime.Versioning;
 using System.Security.AccessControl;
 using System.Text;
 
@@ -19,6 +20,9 @@ namespace DokanNet;
 /// <summary>
 /// The dokan operation proxy.
 /// </summary>
+#if NET5_0_OR_GREATER
+[SupportedOSPlatform("windows")]
+#endif
 internal sealed class DokanOperationProxy
 {
 #if NET6_0_OR_GREATER
@@ -195,7 +199,7 @@ internal sealed class DokanOperationProxy
         catch (Exception ex)
         {
             logger.Error($"CreateFileProxy : {rawFileName} Throw : {ex.Message}");
-            return DokanResult.Unsuccessful;
+            return ex.ToNtStatus();
         }
     }
 
@@ -285,7 +289,7 @@ internal sealed class DokanOperationProxy
         catch (Exception ex)
         {
             logger.Error($"ReadFileProxy : {rawFileName} Throw : {ex.Message}");
-            return DokanResult.InvalidParameter;
+            return ex.ToNtStatus();
         }
     }
 
@@ -321,7 +325,7 @@ internal sealed class DokanOperationProxy
         catch (Exception ex)
         {
             logger.Error($"WriteFileProxy : {rawFileName} Throw : {ex.Message}");
-            return DokanResult.InvalidParameter;
+            return ex.ToNtStatus();
         }
     }
 
@@ -349,7 +353,7 @@ internal sealed class DokanOperationProxy
         catch (Exception ex)
         {
             logger.Error($"FlushFileBuffersProxy : {rawFileName} Throw : {ex.Message}");
-            return DokanResult.InvalidParameter;
+            return ex.ToNtStatus();
         }
     }
 
@@ -429,7 +433,7 @@ internal sealed class DokanOperationProxy
         catch (Exception ex)
         {
             logger.Error($"GetFileInformationProxy : {rawFileName} Throw : {ex.Message}");
-            return DokanResult.InvalidParameter;
+            return ex.ToNtStatus();
         }
     }
 
@@ -492,7 +496,7 @@ internal sealed class DokanOperationProxy
         catch (Exception ex)
         {
             logger.Error($"FindFilesProxy : {fileNamePtr} Throw : {ex.Message}");
-            return DokanResult.InvalidParameter;
+            return ex.ToNtStatus();
         }
     }
 
@@ -560,7 +564,7 @@ internal sealed class DokanOperationProxy
         catch (Exception ex)
         {
             logger.Error($"FindFilesWithPatternProxy : {fileNamePtr} Throw : {ex.Message}");
-            return DokanResult.InvalidParameter;
+            return ex.ToNtStatus();
         }
     }
 
@@ -657,7 +661,7 @@ internal sealed class DokanOperationProxy
         catch (Exception ex)
         {
             logger.Error($"FindStreamsProxy : {fileNamePtr} Throw : {ex.Message}");
-            return DokanResult.InvalidParameter;
+            return ex.ToNtStatus();
         }
     }
 
@@ -708,7 +712,7 @@ internal sealed class DokanOperationProxy
         catch (Exception ex)
         {
             logger.Error($"SetEndOfFileProxy : {rawFileName} Throw : {ex.Message}");
-            return DokanResult.InvalidParameter;
+            return ex.ToNtStatus();
         }
     }
 
@@ -735,7 +739,7 @@ internal sealed class DokanOperationProxy
         catch (Exception ex)
         {
             logger.Error($"SetAllocationSizeProxy : {rawFileName} Throw : {ex.Message}");
-            return DokanResult.InvalidParameter;
+            return ex.ToNtStatus();
         }
     }
 
@@ -764,7 +768,7 @@ internal sealed class DokanOperationProxy
         catch (Exception ex)
         {
             logger.Error($"SetFileAttributesProxy : {rawFileName} Throw : {ex.Message}");
-            return DokanResult.InvalidParameter;
+            return ex.ToNtStatus();
         }
     }
 
@@ -816,7 +820,7 @@ internal sealed class DokanOperationProxy
         catch (Exception ex)
         {
             logger.Error($"SetFileTimeProxy : {rawFileName} Throw : {ex.Message}");
-            return DokanResult.InvalidParameter;
+            return ex.ToNtStatus();
         }
     }
 
@@ -844,7 +848,7 @@ internal sealed class DokanOperationProxy
         catch (Exception ex)
         {
             logger.Error($"DeleteFileProxy : {rawFileName} Throw : {ex.Message}");
-            return DokanResult.InvalidParameter;
+            return ex.ToNtStatus();
         }
     }
 
@@ -872,7 +876,7 @@ internal sealed class DokanOperationProxy
         catch (Exception ex)
         {
             logger.Error($"DeleteDirectoryProxy : {rawFileName} Throw : {ex.Message}");
-            return DokanResult.InvalidParameter;
+            return ex.ToNtStatus();
         }
     }
 
@@ -906,7 +910,7 @@ internal sealed class DokanOperationProxy
         catch (Exception ex)
         {
             logger.Error($"MoveFileProxy : {rawFileName} Throw : {ex.Message}");
-            return DokanResult.InvalidParameter;
+            return ex.ToNtStatus();
         }
     }
 
@@ -936,7 +940,7 @@ internal sealed class DokanOperationProxy
         catch (Exception ex)
         {
             logger.Error($"LockFileProxy : {rawFileName} Throw : {ex.Message}");
-            return DokanResult.InvalidParameter;
+            return ex.ToNtStatus();
         }
     }
 
@@ -970,7 +974,7 @@ internal sealed class DokanOperationProxy
         catch (Exception ex)
         {
             logger.Error($"UnlockFileProxy : {rawFileName} Throw : {ex.Message}");
-            return DokanResult.InvalidParameter;
+            return ex.ToNtStatus();
         }
     }
 
@@ -1009,7 +1013,7 @@ internal sealed class DokanOperationProxy
         catch (Exception ex)
         {
             logger.Error($"GetDiskFreeSpaceProxy Throw : {ex.Message}");
-            return DokanResult.InvalidParameter;
+            return ex.ToNtStatus();
         }
     }
 
@@ -1063,7 +1067,7 @@ internal sealed class DokanOperationProxy
         catch (Exception ex)
         {
             logger.Error($"GetVolumeInformationProxy Throw : {ex.Message}");
-            return DokanResult.InvalidParameter;
+            return ex.ToNtStatus();
         }
     }
 
@@ -1090,7 +1094,7 @@ internal sealed class DokanOperationProxy
         catch (Exception ex)
         {
             logger.Error($"MountedProxy Throw : {ex.Message}");
-            return DokanResult.InvalidParameter;
+            return ex.ToNtStatus();
         }
     }
 
@@ -1116,7 +1120,7 @@ internal sealed class DokanOperationProxy
         catch (Exception ex)
         {
             logger.Error($"UnmountedProxy Throw : {ex.Message}");
-            return DokanResult.InvalidParameter;
+            return ex.ToNtStatus();
         }
     }
 
@@ -1191,7 +1195,7 @@ internal sealed class DokanOperationProxy
         catch (Exception ex)
         {
             logger.Error($"GetFileSecurityProxy : {rawFileName} Throw : {ex.Message}");
-            return DokanResult.InvalidParameter;
+            return ex.ToNtStatus();
         }
     }
 
@@ -1254,7 +1258,7 @@ internal sealed class DokanOperationProxy
         catch (Exception ex)
         {
             logger.Error($"SetFileSecurityProxy : {rawFileName} Throw : {ex.Message}");
-            return DokanResult.InvalidParameter;
+            return ex.ToNtStatus();
         }
     }
 

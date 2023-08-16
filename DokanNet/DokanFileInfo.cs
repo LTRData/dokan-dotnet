@@ -1,4 +1,5 @@
 ﻿using System.Runtime.InteropServices;
+using System.Runtime.Versioning;
 using System.Security.Principal;
 using DokanNet.Native;
 using Microsoft.Win32.SafeHandles;
@@ -13,6 +14,9 @@ namespace DokanNet;
 /// This class cannot be instantiated in C#, it is created by the kernel %Dokan driver.
 /// This is the same structure as <c>_DOKAN_FILE_INFO</c> (dokan.h) in the C version of Dokan.
 /// </remarks>
+#if NET5_0_OR_GREATER
+[SupportedOSPlatform("windows")]
+#endif
 [StructLayout(LayoutKind.Sequential, Pack = 4)]
 public struct DokanFileInfo
 {
@@ -82,7 +86,7 @@ public struct DokanFileInfo
     /// </summary>
     public object? Context
     {
-        get
+        readonly get
         {
             if (context != 0)
             {
@@ -111,7 +115,7 @@ public struct DokanFileInfo
     /// This method needs to be called in <see cref="IDokanOperations.CreateFile"/>.
     /// </summary>
     /// <returns>An <c><see cref="WindowsIdentity"/></c> with the access token.</returns>
-    public WindowsIdentity GetRequestor()
+    public readonly WindowsIdentity GetRequestor()
     {
         using var sfh = GetRequestorToken();
 
@@ -122,17 +126,17 @@ public struct DokanFileInfo
     /// This method needs to be called in <see cref="IDokanOperations.CreateFile"/>.
     /// </summary>
     /// <returns>A <c><see cref="SafeAccessTokenHandle"/></c> with the access token.</returns>
-    public SafeAccessTokenHandle GetRequestorToken() => NativeMethods.DokanOpenRequestorToken(this);
+    public readonly SafeAccessTokenHandle GetRequestorToken() => NativeMethods.DokanOpenRequestorToken(this);
 
     /// <summary>
     /// Extends the time out of the current IO operation in driver.
     /// </summary>
     /// <param name="milliseconds">Number of milliseconds to extend with.</param>
     /// <returns>If the operation was successful.</returns>
-    public bool TryResetTimeout(int milliseconds) => NativeMethods.DokanResetTimeout((uint)milliseconds, this);
+    public readonly bool TryResetTimeout(int milliseconds) => NativeMethods.DokanResetTimeout((uint)milliseconds, this);
 
     /// <summary>Returns a string that represents the current object.</summary>
     /// <returns>A string that represents the current object.</returns>
-    public override string ToString() => DokanFormat(
-                $"{{{Context}, {DeleteOnClose}, {IsDirectory}, {NoCache}, {PagingIo}, #{ProcessId}, {SynchronousIo}, {WriteToEndOfFile}}}");
+    public override readonly string ToString() => DokanFormat(
+        $"{{{Context}, {DeleteOnClose}, {IsDirectory}, {NoCache}, {PagingIo}, #{ProcessId}, {SynchronousIo}, {WriteToEndOfFile}}}")!;
 }

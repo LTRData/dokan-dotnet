@@ -12,9 +12,9 @@ namespace DokanNet;
 /// <typeparam name="T">Type of elements in the memory</typeparam>
 public readonly struct DokanMemory<T> where T : unmanaged
 {
-    public DokanMemory(nint pointer, int length)
+    public DokanMemory(nint address, int length)
     {
-        Address = pointer;
+        Address = address;
         Length = length;
     }
 
@@ -67,7 +67,7 @@ public readonly struct DokanMemory<T> where T : unmanaged
     {
         if (Address == 0)
         {
-            return "(null)";
+            return "<null>";
         }
 
         if (typeof(T) == typeof(char))
@@ -88,9 +88,9 @@ public readonly struct ReadOnlyDokanMemory<T> where T : unmanaged
     public static implicit operator ReadOnlyDokanMemory<T>(DokanMemory<T> origin)
         => new(origin.Address, origin.Length);
 
-    public ReadOnlyDokanMemory(nint pointer, int length)
+    public ReadOnlyDokanMemory(nint address, int length)
     {
-        Address = pointer;
+        Address = address;
         Length = length;
     }
 
@@ -143,7 +143,7 @@ public readonly struct ReadOnlyDokanMemory<T> where T : unmanaged
     {
         if (Address == 0)
         {
-            return "(null)";
+            return "<null>";
         }
 
         if (typeof(T) == typeof(char))
@@ -212,7 +212,7 @@ internal sealed class UnmanagedMemoryManager<T> : MemoryManager<T> where T : unm
     {
         if (_pointer == 0)
         {
-            return "(null)";
+            return "<null>";
         }
 
         if (typeof(T) == typeof(char))

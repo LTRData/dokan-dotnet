@@ -1,4 +1,5 @@
 using System;
+using System.Runtime.Versioning;
 using DokanNet.Logging;
 using DokanNet.Native;
 
@@ -10,6 +11,9 @@ namespace DokanNet;
 /// <summary>
 /// Helper and extension methods to %Dokan.
 /// </summary>
+#if NET5_0_OR_GREATER
+[SupportedOSPlatform("windows")]
+#endif
 public static class Dokan
 {
     #region Dokan Driver Options

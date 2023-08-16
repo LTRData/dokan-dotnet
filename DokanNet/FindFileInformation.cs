@@ -60,5 +60,5 @@ public struct FindFileInformation
 
     public ReadOnlyMemory<char> ShortFileName { get; set; }
 
-    public override string ToString() => FileName.ToString();
+    public override readonly string ToString() => FileName.ToString();
 }

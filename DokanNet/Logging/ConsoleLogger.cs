@@ -24,7 +24,7 @@ public class ConsoleLogger : ILogger, IDisposable
         {
             foreach (var (Message, Color) in _PendingLogs.GetConsumingEnumerable())
             {
-                WriteMessage(Message, Color);
+                ConsoleLogger.WriteMessage(Message, Color);
             }
         });
         _WriterTask.Start();
@@ -54,7 +54,7 @@ public class ConsoleLogger : ILogger, IDisposable
 
     private static readonly object _lock = new();
 
-    private void WriteMessage(string message, ConsoleColor newColor)
+    private static void WriteMessage(string message, ConsoleColor newColor)
     {
         lock (_lock)
         {
