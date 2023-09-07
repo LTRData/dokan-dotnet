@@ -151,7 +151,7 @@ public static class Dokan
     /// <exception cref="DokanException">If the mount fails.</exception>
     public static void Mount(this IDokanOperations operations, string mountPoint, DokanOptions mountOptions,
         bool singleThread, int version, TimeSpan timeout, string? uncName = null, int allocationUnitSize = 512,
-        int sectorSize = 512, ILogger? logger = null)
+        int sectorSize = 512, ILogger? logger = null, byte[]? volumeSecurityDescriptor = null)
     {
         if (operations is null)
         {
@@ -180,11 +180,17 @@ public static class Dokan
             UNCName = string.IsNullOrEmpty(uncName) ? null : uncName,
             SingleThread = singleThread,
             Options = (uint)mountOptions,
-            Timeout = (uint)timeout.TotalMilliseconds,
-            AllocationUnitSize = (uint)allocationUnitSize,
-            SectorSize = (uint)sectorSize,
-            VolumeSecurityDescriptorLength = 0
+            Timeout = (int)timeout.TotalMilliseconds,
+            AllocationUnitSize = allocationUnitSize,
+            SectorSize = sectorSize,
+            VolumeSecurityDescriptorLength = volumeSecurityDescriptor?.Length ?? 0
         };
+
+        if (volumeSecurityDescriptor is not null)
+        {
+            Array.Resize(ref volumeSecurityDescriptor, 16384);
+            dokanOptions.VolumeSecurityDescriptor = volumeSecurityDescriptor;
+        }
 
         var dokanOperations = new DOKAN_OPERATIONS
         {
@@ -356,7 +362,7 @@ public static class Dokan
     /// <returns>Dokan mount instance context that can be used for related instance calls like <see cref="IsFileSystemRunning"/></returns>
     public static DokanInstance CreateFileSystem(this IDokanOperations operations, string mountPoint, DokanOptions mountOptions,
         bool singleThread, int version, TimeSpan timeout, string? uncName = null, int allocationUnitSize = 512,
-        int sectorSize = 512, ILogger? logger = null)
+        int sectorSize = 512, ILogger? logger = null, byte[]? volumeSecurityDescriptor = null)
     {
         if (operations is null)
         {
@@ -387,11 +393,17 @@ public static class Dokan
             UNCName = string.IsNullOrEmpty(uncName) ? null : uncName,
             SingleThread = singleThread,
             Options = (uint)mountOptions,
-            Timeout = (uint)timeout.TotalMilliseconds,
-            AllocationUnitSize = (uint)allocationUnitSize,
-            SectorSize = (uint)sectorSize,
-            VolumeSecurityDescriptorLength = 0
+            Timeout = (int)timeout.TotalMilliseconds,
+            AllocationUnitSize = allocationUnitSize,
+            SectorSize = sectorSize,
+            VolumeSecurityDescriptorLength = volumeSecurityDescriptor?.Length ?? 0
         };
+
+        if (volumeSecurityDescriptor is not null)
+        {
+            Array.Resize(ref volumeSecurityDescriptor, 16384);
+            dokanOptions.VolumeSecurityDescriptor = volumeSecurityDescriptor;
+        }
 
         instance.DokanOptions = new NativeStructWrapper<DOKAN_OPTIONS>(dokanOptions);
 

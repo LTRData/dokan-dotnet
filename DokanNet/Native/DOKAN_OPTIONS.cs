@@ -47,21 +47,21 @@ internal sealed class DOKAN_OPTIONS
     /// <summary>
     /// Max timeout in milliseconds of each request before Dokan give up.
     /// </summary>
-    public uint Timeout;
+    public int Timeout;
 
     /// <summary>
     /// Allocation Unit Size of the volume. This will behave on the file size.
     /// </summary>
-    public uint AllocationUnitSize;
+    public int AllocationUnitSize;
 
     /// <summary>
     /// Sector Size of the volume. This will behave on the file size.
     /// </summary>
-    public uint SectorSize;
+    public int SectorSize;
     /// <summary>
     /// Length of the optional VolumeSecurityDescriptor provided. Set 0 will disable the option.
     /// <summary>
-    public uint VolumeSecurityDescriptorLength;
+    public int VolumeSecurityDescriptorLength;
 
     /// <summary>
     /// Optional Volume Security descriptor. See <a href="https://docs.microsoft.com/en-us/windows/win32/api/securitybaseapi/nf-securitybaseapi-initializesecuritydescriptor">InitializeSecurityDescriptor</a>
