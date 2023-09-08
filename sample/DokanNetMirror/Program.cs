@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using System.Threading.Tasks;
 using DokanNet;
 
 namespace DokanNetMirror;
@@ -9,7 +10,7 @@ internal class Program
     private const string MirrorKey = "-what";
     private const string MountKey = "-where";
 
-    private static int Main(string[] args)
+    private static async Task<int> Main(string[] args)
     {
         try
         {
@@ -33,7 +34,7 @@ internal class Program
             {
                 var notify = new Notify();
                 notify.Start(mirrorPath, mountPath, dokanInstance);
-                dokanInstance.WaitForFileSystemClosed(uint.MaxValue);
+                await dokanInstance.WaitForFileSystemClosedAsync();
             }
 
             Dokan.Shutdown();
