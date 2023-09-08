@@ -2,11 +2,7 @@
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Runtime.Versioning;
-using System.Threading;
 using DokanNet.Native;
-
-#pragma warning disable IDE0079 // Remove unnecessary suppression
-#pragma warning disable CA1707 // Identifiers should not contain underscores
 
 namespace DokanNet;
 
