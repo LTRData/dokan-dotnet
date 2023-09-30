@@ -1,12 +1,8 @@
 using System;
-using System.ComponentModel;
-using System.Runtime.CompilerServices;
 using System.Runtime.Versioning;
-using System.Threading;
 using System.Threading.Tasks;
 using DokanNet.Logging;
 using DokanNet.Native;
-using Microsoft.Win32.SafeHandles;
 
 #pragma warning disable IDE0079 // Remove unnecessary suppression
 #pragma warning disable CA1707 // Identifiers should not contain underscores
@@ -34,7 +30,7 @@ public static partial class Dokan
     /// <summary>
     /// Initialize all required Dokan internal resources.
     /// 
-    /// This needs to be called only once before trying to use <see cref="Mount"/> or <see cref="CreateFileSystem"/> for the first time.
+    /// This needs to be called only once before trying to use <see cref="Mount(IDokanOperations, string, DokanOptions, bool, int, TimeSpan, string, int, int, ILogger, byte[])"/> or <see cref="CreateFileSystem(IDokanOperations, string, DokanOptions, bool, int, TimeSpan, string?, int, int, ILogger?, byte[])"/> for the first time.
     /// Otherwise both will fail and raise an exception.
     /// </summary>
     public static void Init() => NativeMethods.DokanInit();
@@ -43,14 +39,14 @@ public static partial class Dokan
     /// Release all allocated resources by <see cref="Init"/> when they are no longer needed.
     ///
     /// This should be called when the application no longer expects to create a new FileSystem with
-    /// <see cref="Mount"/> or <see cref="CreateFileSystem"/> and after all devices are unmount.
+    /// <see cref="Mount(IDokanOperations, string, DokanOptions, bool, int, TimeSpan, string?, int, int, ILogger, byte[])"/> or <see cref="CreateFileSystem(IDokanOperations, string, DokanOptions, bool, int, TimeSpan, string?, int, int, ILogger?, byte[])"/> and after all devices are unmount.
     /// </summary>
     public static void Shutdown() => NativeMethods.DokanShutdown();
 
     /// <summary>
     /// Mount a new %Dokan Volume.
     /// This function block until the device is unmount.
-    /// It is mandatory to have called <see cref="DokanInit"/> previously to use this API.
+    /// It is mandatory to have called <see cref="Init"/> previously to use this API.
     /// </summary>
     /// <param name="operations">Instance of <see cref="IDokanOperations"/> that will be called for each request made by the kernel.</param>
     /// <param name="mountPoint">Mount point. Can be <c>M:\\</c> (drive letter) or <c>C:\\mount\\dokan</c> (path in NTFS).</param>
@@ -62,7 +58,7 @@ public static partial class Dokan
     /// <summary>
     /// Mount a new %Dokan Volume.
     /// This function block until the device is unmount.
-    /// It is mandatory to have called <see cref="DokanInit"/> previously to use this API.
+    /// It is mandatory to have called <see cref="Init"/> previously to use this API.
     /// </summary>
     /// <param name="operations">Instance of <see cref="IDokanOperations"/> that will be called for each request made by the kernel.</param>
     /// <param name="mountPoint">Mount point. Can be <c>M:\\</c> (drive letter) or <c>C:\\mount\\dokan</c> (path in NTFS).</param>
@@ -75,7 +71,7 @@ public static partial class Dokan
     /// <summary>
     /// Mount a new %Dokan Volume.
     /// This function block until the device is unmount.
-    /// It is mandatory to have called <see cref="DokanInit"/> previously to use this API.
+    /// It is mandatory to have called <see cref="Init"/> previously to use this API.
     /// </summary>
     /// <param name="operations">Instance of <see cref="IDokanOperations"/> that will be called for each request made by the kernel.</param>
     /// <param name="mountPoint">Mount point. Can be <c>M:\\</c> (drive letter) or <c>C:\\mount\\dokan</c> (path in NTFS).</param>
@@ -90,7 +86,7 @@ public static partial class Dokan
     /// <summary>
     /// Mount a new %Dokan Volume.
     /// This function block until the device is unmount.
-    /// It is mandatory to have called <see cref="DokanInit"/> previously to use this API.
+    /// It is mandatory to have called <see cref="Init"/> previously to use this API.
     /// </summary>
     /// <param name="operations">Instance of <see cref="IDokanOperations"/> that will be called for each request made by the kernel.</param>
     /// <param name="mountPoint">Mount point. Can be <c>M:\\</c> (drive letter) or <c>C:\\mount\\dokan</c> (path in NTFS).</param>
@@ -107,7 +103,7 @@ public static partial class Dokan
     /// <summary>
     /// Mount a new %Dokan Volume.
     /// This function block until the device is unmount.
-    /// It is mandatory to have called <see cref="DokanInit"/> previously to use this API.
+    /// It is mandatory to have called <see cref="Init"/> previously to use this API.
     /// </summary>
     /// <param name="operations">Instance of <see cref="IDokanOperations"/> that will be called for each request made by the kernel.</param>
     /// <param name="mountPoint">Mount point. Can be <c>M:\\</c> (drive letter) or <c>C:\\mount\\dokan</c> (path in NTFS).</param>
@@ -123,7 +119,7 @@ public static partial class Dokan
     /// <summary>
     /// Mount a new %Dokan Volume.
     /// This function block until the device is unmount.
-    /// It is mandatory to have called <see cref="DokanInit"/> previously to use this API.
+    /// It is mandatory to have called <see cref="Init"/> previously to use this API.
     /// </summary>
     /// <param name="operations">Instance of <see cref="IDokanOperations"/> that will be called for each request made by the kernel.</param>
     /// <param name="mountPoint">Mount point. Can be <c>M:\\</c> (drive letter) or <c>C:\\mount\\dokan</c> (path in NTFS).</param>
@@ -141,7 +137,7 @@ public static partial class Dokan
     /// <summary>
     /// Mount a new %Dokan Volume.
     /// This function block until the device is unmount.
-    /// It is mandatory to have called <see cref="DokanInit"/> previously to use this API.
+    /// It is mandatory to have called <see cref="Init"/> previously to use this API.
     /// </summary>
     /// <param name="operations">Instance of <see cref="IDokanOperations"/> that will be called for each request made by the kernel.</param>
     /// <param name="mountPoint">Mount point. Can be <c>M:\\</c> (drive letter) or <c>C:\\mount\\dokan</c> (path in NTFS).</param>
@@ -153,6 +149,7 @@ public static partial class Dokan
     /// <param name="allocationUnitSize">Allocation Unit Size of the volume. This will behave on the file size.</param>
     /// <param name="sectorSize">Sector Size of the volume. This will behave on the file size.</param>
     /// <param name="logger"><see cref="ILogger"/> that will log all DokanNet debug informations.</param>
+    /// <param name="volumeSecurityDescriptor"></param>
     /// <exception cref="DokanException">If the mount fails.</exception>
     public static void Mount(this IDokanOperations operations, string mountPoint, DokanOptions mountOptions,
         bool singleThread, int version, TimeSpan timeout, string? uncName = null, int allocationUnitSize = 512,
@@ -244,7 +241,7 @@ public static partial class Dokan
 
     /// <summary>
     /// Mount a new %Dokan Volume.
-    /// It is mandatory to have called <see cref="DokanInit"/> previously to use this API.
+    /// It is mandatory to have called <see cref="Init"/> previously to use this API.
     /// This function returns directly on device mount or on failure.
     /// <see cref="WaitForFileSystemClosed"/> can be used to wait until the device is unmount.
     /// </summary>
@@ -258,7 +255,7 @@ public static partial class Dokan
 
     /// <summary>
     /// Mount a new %Dokan Volume.
-    /// It is mandatory to have called <see cref="DokanInit"/> previously to use this API.
+    /// It is mandatory to have called <see cref="Init"/> previously to use this API.
     /// This function returns directly on device mount or on failure.
     /// <see cref="WaitForFileSystemClosed"/> can be used to wait until the device is unmount.
     /// </summary>
@@ -274,7 +271,7 @@ public static partial class Dokan
 
     /// <summary>
     /// Mount a new %Dokan Volume.
-    /// It is mandatory to have called <see cref="DokanInit"/> previously to use this API.
+    /// It is mandatory to have called <see cref="Init"/> previously to use this API.
     /// This function returns directly on device mount or on failure.
     /// <see cref="WaitForFileSystemClosed"/> can be used to wait until the device is unmount.
     /// </summary>
@@ -291,7 +288,7 @@ public static partial class Dokan
 
     /// <summary>
     /// Mount a new %Dokan Volume.
-    /// It is mandatory to have called <see cref="DokanInit"/> previously to use this API.
+    /// It is mandatory to have called <see cref="Init"/> previously to use this API.
     /// This function returns directly on device mount or on failure.
     /// <see cref="WaitForFileSystemClosed"/> can be used to wait until the device is unmount.
     /// </summary>
@@ -310,7 +307,7 @@ public static partial class Dokan
 
     /// <summary>
     /// Mount a new %Dokan Volume.
-    /// It is mandatory to have called <see cref="DokanInit"/> previously to use this API.
+    /// It is mandatory to have called <see cref="Init"/> previously to use this API.
     /// This function returns directly on device mount or on failure.
     /// <see cref="WaitForFileSystemClosed"/> can be used to wait until the device is unmount.
     /// </summary>
@@ -329,7 +326,7 @@ public static partial class Dokan
 
     /// <summary>
     /// Mount a new %Dokan Volume.
-    /// It is mandatory to have called <see cref="DokanInit"/> previously to use this API.
+    /// It is mandatory to have called <see cref="Init"/> previously to use this API.
     /// This function returns directly on device mount or on failure.
     /// <see cref="WaitForFileSystemClosed"/> can be used to wait until the device is unmount.
     /// </summary>
@@ -349,7 +346,7 @@ public static partial class Dokan
 
     /// <summary>
     /// Mount a new %Dokan Volume.
-    /// It is mandatory to have called <see cref="DokanInit"/> previously to use this API.
+    /// It is mandatory to have called <see cref="Init"/> previously to use this API.
     /// This function returns directly on device mount or on failure.
     /// <see cref="WaitForFileSystemClosed"/> can be used to wait until the device is unmount.
     /// </summary>
@@ -363,6 +360,7 @@ public static partial class Dokan
     /// <param name="allocationUnitSize">Allocation Unit Size of the volume. This will behave on the file size.</param>
     /// <param name="sectorSize">Sector Size of the volume. This will behave on the file size.</param>
     /// <param name="logger"><see cref="ILogger"/> that will log all DokanNet debug informations.</param>
+    /// <param name="volumeSecurityDescriptor"></param>
     /// <exception cref="DokanException">If the mount fails.</exception>
     /// <returns>Dokan mount instance context that can be used for related instance calls like <see cref="IsFileSystemRunning"/></returns>
     public static DokanInstance CreateFileSystem(this IDokanOperations operations, string mountPoint, DokanOptions mountOptions,
@@ -463,7 +461,7 @@ public static partial class Dokan
     /// <summary>
     /// Check if the FileSystem is still running or not.
     /// </summary>
-    /// <param name="dokanInstance">The dokan mount context created by <see cref="CreateFileSystem"/>.</param>
+    /// <param name="dokanInstance">The dokan mount context created by <see cref="CreateFileSystem(IDokanOperations, string, DokanOptions, bool, int, TimeSpan, string?, int, int, ILogger?, byte[])"/>.</param>
     /// <returns>Whether the FileSystem is still running or not.</returns>
     public static bool IsFileSystemRunning(this DokanInstance dokanInstance)
         => dokanInstance is not null && NativeMethods.DokanIsFileSystemRunning(dokanInstance.DokanHandle);
@@ -471,9 +469,9 @@ public static partial class Dokan
     /// <summary>
     /// Wait until the FileSystem is unmount.
     /// </summary>
-    /// <param name="dokanInstance">The dokan mount context created by <see cref="CreateFileSystem"/>.</param>
-    /// <param name="milliSeconds">The time-out interval, in milliseconds. If a nonzero value is specified, the function waits until the object is signaled or the interval elapses. If <param name="milliSeconds"> is zero,
-    /// the function does not enter a wait state if the object is not signaled; it always returns immediately. If <param name="milliSeconds"> is INFINITE, the function will return only when the object is signaled.</param>
+    /// <param name="dokanInstance">The dokan mount context created by <see cref="CreateFileSystem(IDokanOperations, string, DokanOptions, bool, int, TimeSpan, string?, int, int, ILogger?, byte[])"/>.</param>
+    /// <param name="milliSeconds">The time-out interval, in milliseconds. If a nonzero value is specified, the function waits until the object is signaled or the interval elapses. If <paramref name="milliSeconds" /> is zero,
+    /// the function does not enter a wait state if the object is not signaled; it always returns immediately. If <paramref name="milliSeconds" /> is INFINITE, the function will return only when the object is signaled.</param>
     /// <returns>See <a href="https://docs.microsoft.com/en-us/windows/win32/api/synchapi/nf-synchapi-waitforsingleobject">WaitForSingleObject</a> for a description of return values.</returns>
     public static uint WaitForFileSystemClosed(this DokanInstance dokanInstance, int milliSeconds = -1)
         => dokanInstance is not null ? NativeMethods.DokanWaitForFileSystemClosed(dokanInstance.DokanHandle, milliSeconds) : 0;
@@ -481,9 +479,9 @@ public static partial class Dokan
     /// <summary>
     /// Wait asynchronously until the FileSystem is unmounted.
     /// </summary>
-    /// <param name="dokanInstance">The dokan mount context created by <see cref="CreateFileSystem"/>.</param>
-    /// <param name="milliSeconds">The time-out interval, in milliseconds. If a nonzero value is specified, the function waits until the object is signaled or the interval elapses. If <param name="milliSeconds"> is zero,
-    /// the function does not enter a wait state if the object is not signaled; it always returns immediately. If <param name="milliSeconds"> is INFINITE, the function will return only when the object is signaled.</param>
+    /// <param name="dokanInstance">The dokan mount context created by <see cref="CreateFileSystem(IDokanOperations, string, DokanOptions, bool, int, TimeSpan, string?, int, int, ILogger?, byte[])"/>.</param>
+    /// <param name="milliSeconds">The time-out interval, in milliseconds. If a nonzero value is specified, the function waits until the object is signaled or the interval elapses. If <paramref name="milliSeconds" /> is zero,
+    /// the function does not enter a wait state if the object is not signaled; it always returns immediately. If <paramref name="milliSeconds" /> is INFINITE, the function will return only when the object is signaled.</param>
     /// <returns>True if instance was dismounted or false if time out occurred.</returns>
     public static async Task<bool> WaitForFileSystemClosedAsync(this DokanInstance dokanInstance, int milliSeconds = -1)
         => dokanInstance is null || await new DokanInstanceNotifyCompletion(dokanInstance, milliSeconds);
@@ -521,7 +519,7 @@ public static partial class Dokan
     /// <summary>
     /// Dokan User FS file-change notifications
     /// </summary>
-    /// <remarks> If <see cref="DokanOptions.EnableNotificationAPI"/> is passed to <see cref="Dokan.Mount"/>,
+    /// <remarks> If <see cref="DokanOptions.EnableNotificationAPI"/> is passed to <see cref="Dokan.Mount(IDokanOperations, string, DokanOptions, bool, int, TimeSpan, string?, int, int, ILogger?, byte[])"/>,
     /// the application implementing the user file system can notify
     /// the Dokan kernel driver of external file- and directory-changes.
     /// 
@@ -541,7 +539,7 @@ public static partial class Dokan
         /// <summary>
         /// Notify Dokan that a file or directory has been created.
         /// </summary>
-        /// <param name="dokanInstance">The dokan mount context created by <see cref="DokanCreateFileSystem"/></param>
+        /// <param name="dokanInstance">The dokan mount context created by <see cref="CreateFileSystem(IDokanOperations, string, DokanOptions, bool, int, TimeSpan, string?, int, int, ILogger?, byte[])"/></param>
         /// <param name="filePath">Absolute path to the file or directory, including the mount-point of the file system.</param>
         /// <param name="isDirectory">Indicates if the path is a directory.</param>
         /// <returns>true if the notification succeeded.</returns>
@@ -558,7 +556,7 @@ public static partial class Dokan
         /// <summary>
         /// Notify Dokan that a file or directory has been deleted.
         /// </summary>
-        /// <param name="dokanInstance">The dokan mount context created by <see cref="DokanCreateFileSystem"/></param>
+        /// <param name="dokanInstance">The dokan mount context created by <see cref="CreateFileSystem(IDokanOperations, string, DokanOptions, bool, int, TimeSpan, string?, int, int, ILogger?, byte[])"/></param>
         /// <param name="filePath">Absolute path to the file or directory, including the mount-point of the file system.</param>
         /// <param name="isDirectory">Indicates if the path is a directory.</param>
         /// <returns>true if notification succeeded.</returns>
@@ -576,7 +574,7 @@ public static partial class Dokan
         /// <summary>
         /// Notify Dokan that file or directory attributes have changed.
         /// </summary>
-        /// <param name="dokanInstance">The dokan mount context created by <see cref="DokanCreateFileSystem"/></param>
+        /// <param name="dokanInstance">The dokan mount context created by <see cref="CreateFileSystem(IDokanOperations, string, DokanOptions, bool, int, TimeSpan, string?, int, int, ILogger?, byte[])"/></param>
         /// <param name="filePath">Absolute path to the file or directory, including the mount-point of the file system.</param>
         /// <returns>true if notification succeeded.</returns>
         /// <remarks><see cref="DokanOptions.EnableNotificationAPI"/> must be set in the mount options for this to succeed.</remarks>
@@ -593,7 +591,7 @@ public static partial class Dokan
         /// <summary>
         /// Notify Dokan that file or directory extended attributes have changed.
         /// </summary>
-        /// <param name="dokanInstance">The dokan mount context created by <see cref="DokanCreateFileSystem"/></param>
+        /// <param name="dokanInstance">The dokan mount context created by <see cref="CreateFileSystem(IDokanOperations, string, DokanOptions, bool, int, TimeSpan, string?, int, int, ILogger?, byte[])"/></param>
         /// <param name="filePath">Absolute path to the file or directory, including the mount-point of the file system.</param>
         /// <returns>true if notification succeeded.</returns>
         /// <remarks><see cref="DokanOptions.EnableNotificationAPI"/> must be set in the mount options for this to succeed.</remarks>
@@ -611,7 +609,7 @@ public static partial class Dokan
         /// Notify Dokan that a file or directory has been renamed.
         /// This method supports in-place rename for file/directory within the same parent.
         /// </summary>
-        /// <param name="dokanInstance">The dokan mount context created by <see cref="DokanCreateFileSystem"/></param>
+        /// <param name="dokanInstance">The dokan mount context created by <see cref="Dokan.CreateFileSystem(IDokanOperations, string, DokanOptions, bool, int, TimeSpan, string?, int, int, ILogger?, byte[])"/></param>
         /// <param name="oldPath">Old, absolute path to the file or directory, including the mount-point of the file system.</param>
         /// <param name="newPath">New, absolute path to the file or directory, including the mount-point of the file system.</param>
         /// <param name="isDirectory">Indicates if the path is a directory.</param>

@@ -160,7 +160,8 @@ internal sealed class DOKAN_OPERATIONS
     /// <remarks>Supported since 0.8.0. 
     /// You must specify the version at <see cref="DOKAN_OPTIONS.Version"/>.</remarks>
     /// <param name="rawFileName">Filename</param>
-    /// <param name="rawFillFindData">A <see cref="nint"/> to a <see cref="FILL_FIND_STREAM_DATA"/>.</param>
+    /// <param name="rawFillFindData">A <see cref="nint"/> to a <see cref="WIN32_FIND_STREAM_DATA"/>.</param>
+    /// <param name="findStreamContext"></param>
     /// <param name="rawFileInfo">A <see cref="DokanFileInfo"/>.</param>
     /// <returns></returns>
     public delegate NtStatus FindStreamsDelegate(

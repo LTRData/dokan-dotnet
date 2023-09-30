@@ -1,7 +1,8 @@
 {
   "profiles": {
     "RegistryFS": {
-      "commandName": "Project"
+      "commandName": "Project",
+      "nativeDebugging": true
     }
   }
 }

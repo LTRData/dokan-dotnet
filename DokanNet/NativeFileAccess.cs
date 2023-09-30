@@ -1,6 +1,9 @@
 ﻿using System;
+using System.Diagnostics.CodeAnalysis;
 
 namespace DokanNet;
+
+#pragma warning disable CA1069 // Enums values should not be duplicated
 
 /// <summary>
 /// Defines standard, specific, and generic rights. 
@@ -27,7 +30,7 @@ public enum NativeFileAccess : uint
     /// </summary>
     /// \native
     /// \table
-    /// \nativeconst{FILE_READ_DATA,0x00000001,File & pipe}
+    /// \nativeconst{FILE_READ_DATA,0x00000001,FileAndPipe}
     /// \nativeconst{FILE_LIST_DIRECTORY,0x00000001,Directory}
     /// \endtable
     /// \endnative
@@ -38,7 +41,7 @@ public enum NativeFileAccess : uint
     /// </summary>
     /// \native
     /// \table
-    /// \nativeconst{FILE_WRITE_DATA,0x00000002,File & pipe}
+    /// \nativeconst{FILE_WRITE_DATA,0x00000002,FileAndPipe}
     /// \nativeconst{FILE_ADD_FILE,0x00000002,Directory}
     /// \endtable
     /// \endnative
@@ -61,7 +64,7 @@ public enum NativeFileAccess : uint
     /// </summary>
     /// \native
     /// \table
-    /// \nativeconst{FILE_READ_EA,0x00000008,File & directory}
+    /// \nativeconst{FILE_READ_EA,0x00000008,FileAndDirectory}
     /// \endtable
     /// \endnative
     ReadExtendedAttributes = 1U << 3,
@@ -71,7 +74,7 @@ public enum NativeFileAccess : uint
     /// </summary>
     /// \native
     /// \table
-    /// \nativeconst{FILE_WRITE_EA,0x00000010,File & directory}
+    /// \nativeconst{FILE_WRITE_EA,0x00000010,FileAndDirectory}
     /// \endtable
     /// \endnative
     WriteExtendedAttributes = 1U << 4,
@@ -176,6 +179,7 @@ public enum NativeFileAccess : uint
     /// Obsolete, use <see cref="NativeFileAccess.AccessSystemSecurity"/> instead. 
     /// </summary>
     [Obsolete("Use AccessSystemSecurity instead")]
+    [SuppressMessage("Naming", "CA1700:Do not name enum values 'Reserved'", Justification = "Legacy")]
     Reserved = AccessSystemSecurity,
 
     /// <summary>

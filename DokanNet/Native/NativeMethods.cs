@@ -1,13 +1,8 @@
 ﻿using Microsoft.Win32.SafeHandles;
-using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
-using System.Threading;
 
-/// <summary>
-/// Namespace for structures and classes related to native API.
-/// </summary>
 namespace DokanNet.Native;
 
 #pragma warning disable IDE0079 // Remove unnecessary suppression
@@ -72,8 +67,8 @@ internal static partial class NativeMethods
     /// <param name="handle">Wait handle representing the registered wait. Needs to be freed by calling <see cref="DokanUnregisterWaitForFileSystemClosed"/>.</param>
     /// <param name="callback">Callback function to be called when file system is unmounted or timeout occurs.</param>
     /// <param name="context">Parameter to send to callback function.</param>
-    /// <param name="milliSeconds">The time-out interval, in milliseconds. If a nonzero value is specified, the function waits until the object is signaled or the interval elapses. If <param name="milliSeconds"> is zero,
-    /// the function does not enter a wait state if the object is not signaled; it always returns immediately. If <param name="milliSeconds"> is INFINITE, the function will return only when the object is signaled.</param>
+    /// <param name="milliSeconds">The time-out interval, in milliseconds. If a nonzero value is specified, the function waits until the object is signaled or the interval elapses. If <paramref name="milliSeconds" /> is zero,
+    /// the function does not enter a wait state if the object is not signaled; it always returns immediately. If <paramref name="milliSeconds" /> is INFINITE, the function will return only when the object is signaled.</param>
     /// <returns>See <a href="https://docs.microsoft.com/en-us/windows/win32/api/synchapi/nf-synchapi-waitforsingleobject">WaitForSingleObject</a> for a description of return values.</returns>
     [LibraryImport(DOKAN_DLL)]
     [return: MarshalAs(UnmanagedType.Bool)]
@@ -82,7 +77,7 @@ internal static partial class NativeMethods
     /// <summary>
     /// Unregister a callback for when the FileSystem is unmounted.
     /// </summary>
-    /// <param name="handle">Handle returned in handle parameter in previous call to <see cref="DokanRegisterWaitForFileSystemClosed"</param>.
+    /// <param name="handle">Handle returned in handle parameter in previous call to <see cref="DokanRegisterWaitForFileSystemClosed"/></param>.
     /// <param name="waitForCallbacks">Indicates whether to wait for callbacks to complete before returning. Normally true unless called from same thread as callback function.</param>
     /// <returns></returns>
     [LibraryImport(DOKAN_DLL)]
@@ -102,8 +97,8 @@ internal static partial class NativeMethods
     /// Wait until the FileSystem is unmount.
     /// </summary>
     /// <param name="dokanInstance">The dokan mount context created by <see cref="DokanCreateFileSystem"/>.</param>
-    /// <param name="milliSeconds">The time-out interval, in milliseconds. If a nonzero value is specified, the function waits until the object is signaled or the interval elapses. If <param name="milliSeconds"> is zero,
-    /// the function does not enter a wait state if the object is not signaled; it always returns immediately. If <param name="milliSeconds"> is INFINITE, the function will return only when the object is signaled.</param>
+    /// <param name="milliSeconds">The time-out interval, in milliseconds. If a nonzero value is specified, the function waits until the object is signaled or the interval elapses. If <paramref name="milliSeconds" /> is zero,
+    /// the function does not enter a wait state if the object is not signaled; it always returns immediately. If <paramref name="milliSeconds" /> is INFINITE, the function will return only when the object is signaled.</param>
     /// <returns>See <a href="https://docs.microsoft.com/en-us/windows/win32/api/synchapi/nf-synchapi-waitforsingleobject">WaitForSingleObject</a> for a description of return values.</returns>
     [LibraryImport(DOKAN_DLL)]
     public static partial uint DokanWaitForFileSystemClosed(DokanHandle dokanInstance, int milliSeconds);
@@ -151,12 +146,12 @@ internal static partial class NativeMethods
     public static partial bool DokanRemoveMountPoint([MarshalAs(UnmanagedType.LPWStr)] string mountPoint);
 
     /// <summary>
-    /// Convert <see cref="DokanOperationProxy.ZwCreateFileDelegate"/> parameters to <see cref="IDokanOperations.CreateFile"/> parameters.
+    /// Convert <see cref="DokanOperationProxy.ZwCreateFileProxy(nint, nint, uint, uint, uint, uint, uint, ref DokanFileInfo)"/> parameters to <see cref="IDokanOperations.CreateFile"/> parameters.
     /// </summary>
-    /// <param name="desiredAccess">DesiredAccess from <see cref="DokanOperationProxy.ZwCreateFileDelegate"/>.</param>
-    /// <param name="fileAttributes">FileAttributes from <see cref="DokanOperationProxy.ZwCreateFileDelegate"/>.</param>
-    /// <param name="createOptions">CreateOptions from <see cref="DokanOperationProxy.ZwCreateFileDelegate"/>.</param>
-    /// <param name="createDisposition">CreateDisposition from <see cref="DokanOperationProxy.ZwCreateFileDelegate"/>.</param>
+    /// <param name="desiredAccess">DesiredAccess from <see cref="DokanOperationProxy.ZwCreateFileProxy(nint, nint, uint, uint, uint, uint, uint, ref DokanFileInfo)"/>.</param>
+    /// <param name="fileAttributes">FileAttributes from <see cref="DokanOperationProxy.ZwCreateFileProxy(nint, nint, uint, uint, uint, uint, uint, ref DokanFileInfo)"/>.</param>
+    /// <param name="createOptions">CreateOptions from <see cref="DokanOperationProxy.ZwCreateFileProxy(nint, nint, uint, uint, uint, uint, uint, ref DokanFileInfo)"/>.</param>
+    /// <param name="createDisposition">CreateDisposition from <see cref="DokanOperationProxy.ZwCreateFileProxy(nint, nint, uint, uint, uint, uint, uint, ref DokanFileInfo)"/>.</param>
     /// <param name="outDesiredAccess">New <a href="https://msdn.microsoft.com/en-us/library/windows/desktop/aa363858(v=vs.85).aspx">CreateFile (MSDN)</a> dwDesiredAccess.</param>
     /// <param name="outFileAttributesAndFlags">New <a href="https://msdn.microsoft.com/en-us/library/windows/desktop/aa363858(v=vs.85).aspx">CreateFile (MSDN)</a> dwFlagsAndAttributes.</param>
     /// <param name="outCreationDisposition">New <a href="https://msdn.microsoft.com/en-us/library/windows/desktop/aa363858(v=vs.85).aspx">CreateFile (MSDN)</a> dwCreationDisposition.</param>
@@ -292,8 +287,8 @@ internal static partial class NativeMethods
     /// Wait until the FileSystem is unmount.
     /// </summary>
     /// <param name="dokanInstance">The dokan mount context created by <see cref="DokanCreateFileSystem"/>.</param>
-    /// <param name="milliSeconds">The time-out interval, in milliseconds. If a nonzero value is specified, the function waits until the object is signaled or the interval elapses. If <param name="milliSeconds"> is zero,
-    /// the function does not enter a wait state if the object is not signaled; it always returns immediately. If <param name="milliSeconds"> is INFINITE, the function will return only when the object is signaled.</param>
+    /// <param name="milliSeconds">The time-out interval, in milliseconds. If a nonzero value is specified, the function waits until the object is signaled or the interval elapses. If <paramref name="milliSeconds" /> is zero,
+    /// the function does not enter a wait state if the object is not signaled; it always returns immediately. If <paramref name="milliSeconds" /> is INFINITE, the function will return only when the object is signaled.</param>
     /// <returns>See <a href="https://docs.microsoft.com/en-us/windows/win32/api/synchapi/nf-synchapi-waitforsingleobject">WaitForSingleObject</a> for a description of return values.</returns>
     [DllImport(DOKAN_DLL, ExactSpelling = true)]
     public static extern uint DokanWaitForFileSystemClosed(DokanHandle? dokanInstance, int milliSeconds);
@@ -305,8 +300,8 @@ internal static partial class NativeMethods
     /// <param name="handle">Wait handle representing the registered wait. Needs to be freed by calling <see cref="DokanUnregisterWaitForFileSystemClosed"/>.</param>
     /// <param name="callback">Callback function to be called when file system is unmounted or timeout occurs.</param>
     /// <param name="context">Parameter to send to callback function.</param>
-    /// <param name="milliSeconds">The time-out interval, in milliseconds. If a nonzero value is specified, the function waits until the object is signaled or the interval elapses. If <param name="milliSeconds"> is zero,
-    /// the function does not enter a wait state if the object is not signaled; it always returns immediately. If <param name="milliSeconds"> is INFINITE, the function will return only when the object is signaled.</param>
+    /// <param name="milliSeconds">The time-out interval, in milliseconds. If a nonzero value is specified, the function waits until the object is signaled or the interval elapses. If <paramref name="milliSeconds" /> is zero,
+    /// the function does not enter a wait state if the object is not signaled; it always returns immediately. If <paramref name="milliSeconds" /> is INFINITE, the function will return only when the object is signaled.</param>
     /// <returns>See <a href="https://docs.microsoft.com/en-us/windows/win32/api/synchapi/nf-synchapi-waitforsingleobject">WaitForSingleObject</a> for a description of return values.</returns>
     [DllImport(DOKAN_DLL, ExactSpelling = true)]
     public static extern bool DokanRegisterWaitForFileSystemClosed(DokanHandle? dokanInstance, out nint handle, NativeWaitOrTimerCallback callback, nint context, int milliSeconds);
@@ -314,7 +309,7 @@ internal static partial class NativeMethods
     /// <summary>
     /// Unregister a callback for when the FileSystem is unmounted.
     /// </summary>
-    /// <param name="handle">Handle returned in handle parameter in previous call to <see cref="DokanRegisterWaitForFileSystemClosed"</param>.
+    /// <param name="handle">Handle returned in handle parameter in previous call to <see cref="DokanRegisterWaitForFileSystemClosed" /></param>.
     /// <param name="waitForCallbacks">Indicates whether to wait for callbacks to complete before returning. Normally true unless called from same thread as callback function.</param>
     /// <returns></returns>
     [DllImport(DOKAN_DLL, ExactSpelling = true)]
@@ -361,12 +356,12 @@ internal static partial class NativeMethods
     public static extern bool DokanRemoveMountPoint([MarshalAs(UnmanagedType.LPWStr)] string mountPoint);
 
     /// <summary>
-    /// Convert <see cref="DokanOperationProxy.ZwCreateFileDelegate"/> parameters to <see cref="IDokanOperations.CreateFile"/> parameters.
+    /// Convert <see cref="DokanOperationProxy.ZwCreateFileProxy(nint, nint, uint, uint, uint, uint, uint, ref DokanFileInfo)"/> parameters to <see cref="IDokanOperations.CreateFile"/> parameters.
     /// </summary>
-    /// <param name="desiredAccess">DesiredAccess from <see cref="DokanOperationProxy.ZwCreateFileDelegate"/>.</param>
-    /// <param name="fileAttributes">FileAttributes from <see cref="DokanOperationProxy.ZwCreateFileDelegate"/>.</param>
-    /// <param name="createOptions">CreateOptions from <see cref="DokanOperationProxy.ZwCreateFileDelegate"/>.</param>
-    /// <param name="createDisposition">CreateDisposition from <see cref="DokanOperationProxy.ZwCreateFileDelegate"/>.</param>
+    /// <param name="desiredAccess">DesiredAccess from <see cref="DokanOperationProxy.ZwCreateFileProxy(nint, nint, uint, uint, uint, uint, uint, ref DokanFileInfo)"/>.</param>
+    /// <param name="fileAttributes">FileAttributes from <see cref="DokanOperationProxy.ZwCreateFileProxy(nint, nint, uint, uint, uint, uint, uint, ref DokanFileInfo)"/>.</param>
+    /// <param name="createOptions">CreateOptions from <see cref="DokanOperationProxy.ZwCreateFileProxy(nint, nint, uint, uint, uint, uint, uint, ref DokanFileInfo)"/>.</param>
+    /// <param name="createDisposition">CreateDisposition from <see cref="DokanOperationProxy.ZwCreateFileProxy(nint, nint, uint, uint, uint, uint, uint, ref DokanFileInfo)"/>.</param>
     /// <param name="outDesiredAccess">New <a href="https://msdn.microsoft.com/en-us/library/windows/desktop/aa363858(v=vs.85).aspx">CreateFile (MSDN)</a> dwDesiredAccess.</param>
     /// <param name="outFileAttributesAndFlags">New <a href="https://msdn.microsoft.com/en-us/library/windows/desktop/aa363858(v=vs.85).aspx">CreateFile (MSDN)</a> dwFlagsAndAttributes.</param>
     /// <param name="outCreationDisposition">New <a href="https://msdn.microsoft.com/en-us/library/windows/desktop/aa363858(v=vs.85).aspx">CreateFile (MSDN)</a> dwCreationDisposition.</param>

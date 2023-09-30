@@ -60,12 +60,12 @@ internal sealed class DOKAN_OPTIONS
     public int SectorSize;
     /// <summary>
     /// Length of the optional VolumeSecurityDescriptor provided. Set 0 will disable the option.
-    /// <summary>
+    /// </summary>
     public int VolumeSecurityDescriptorLength;
 
     /// <summary>
     /// Optional Volume Security descriptor. See <a href="https://docs.microsoft.com/en-us/windows/win32/api/securitybaseapi/nf-securitybaseapi-initializesecuritydescriptor">InitializeSecurityDescriptor</a>
-    /// <summary>
+    /// </summary>
     [MarshalAs(UnmanagedType.ByValArray, SizeConst = 16384, ArraySubType = UnmanagedType.U1)]
     public byte[]? VolumeSecurityDescriptor;
 }

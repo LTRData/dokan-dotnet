@@ -288,7 +288,7 @@ public class DokanDiscUtils : IDokanOperations, IDisposable
     /// <summary>
     /// Translates a path from OS representation to file system representation
     /// </summary>
-    /// <param name="pathstr">OS translated path</param>
+    /// <param name="pathPtr">OS translated path</param>
     /// <returns>File system original path</returns>
     private string TranslatePath(ReadOnlyDokanMemory<char> pathPtr)
     {

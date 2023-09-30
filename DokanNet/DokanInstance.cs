@@ -4,7 +4,7 @@ using DokanNet.Native;
 namespace DokanNet;
 
 /// <summary>
-/// Created by <see cref="Dokan.CreateFileSystem"/>.
+/// Created by <see cref="Dokan.CreateFileSystem(DokanNet.IDokanOperations, string, DokanNet.DokanOptions, bool, int, TimeSpan, string?, int, int, DokanNet.Logging.ILogger?, byte[])"/>.
 /// It holds all the resources required to be alive for the time of the mount.
 /// </summary>
 public class DokanInstance : IDisposable
