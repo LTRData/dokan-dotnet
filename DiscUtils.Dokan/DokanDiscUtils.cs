@@ -1,6 +1,7 @@
 ﻿using DiscUtils.Streams.Compatibility;
 using DokanNet;
 using DokanNet.Logging;
+using LTRData.Extensions.Buffers;
 using System;
 using System.Buffers;
 using System.Collections.Generic;

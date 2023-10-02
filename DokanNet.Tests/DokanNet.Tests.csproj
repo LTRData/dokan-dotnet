@@ -21,7 +21,7 @@
     <AssemblyName>$(MSBuildProjectName).$(TargetFramework)</AssemblyName>
     <CLSCompliant>True</CLSCompliant>
     <!-- We need to sign the test assembly to use it in InternalsVisibleTo for DokanNet.dll. -->
-    <SignAssembly>true</SignAssembly>
+    <SignAssembly>false</SignAssembly>
     <AssemblyOriginatorKeyFile>..\DokanNet\Dokan.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
   <ItemGroup>

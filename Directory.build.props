@@ -7,7 +7,7 @@
     <Company>LTR Data</Company>
 	<PackageOutputPath>$(LocalNuGetPath)</PackageOutputPath>
     <Copyright>Copyright (c) 2017 - 2023 Olof Lagerkvist, LTR Data</Copyright>
-    <Version>2.0.6.3</Version>
+    <Version>2.0.6.4</Version>
     <AssemblyVersion>$(Version)</AssemblyVersion>
     <FileVersion>$(Version)</FileVersion>
     <Company>LTR Data</Company>
@@ -19,12 +19,14 @@
     <RepositoryUrl>https://github.com/LTRData/dokan-dotnet</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageTags>dokan file files disk directory storage filesystem io filestore FAT NTFS FUSE</PackageTags>
-    <SignAssembly>True</SignAssembly>
+    <SignAssembly>false</SignAssembly>
     <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
     <AssemblyOriginatorKeyFile>..\DokanNet\Dokan.snk</AssemblyOriginatorKeyFile>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <NeutralLanguage>en-US</NeutralLanguage>
+	<GenerateDocumentationFile>true</GenerateDocumentationFile>
+  <NoWarn>1591</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
