@@ -2,6 +2,7 @@
 using System.Diagnostics;
 using System.Runtime.Versioning;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace DokanNet;
 
@@ -23,9 +24,10 @@ public class DokanService : IDisposable
     public string? UncName { get; }
     public int AllocationUnitSize { get; }
     public int SectorSize { get; }
-    public bool Running => ServiceThread?.IsAlive ?? false;
+    public bool Running => Instance is not null &&
+        Instance.WaitForFileSystemClosed(0) != 0;
 
-    protected Thread? ServiceThread { get; private set; }
+    protected DokanInstance? Instance { get; private set; }
 
     public DokanService(IDokanOperations operations, string mountPoint, DokanOptions mountOptions = 0,
         bool singleThread = true, int version = Dokan.DOKAN_VERSION, TimeSpan? timeout = null, string? uncName = null,
@@ -49,19 +51,25 @@ public class DokanService : IDisposable
             throw new ObjectDisposedException(GetType().Name);
         }
 
-        ServiceThread = new Thread(ServiceThreadProcedure)
+        try
         {
-            Name = "DokanService"
-        };
+            Instance = Operations.CreateFileSystem(MountPoint, MountOptions, SingleThread, Version, Timeout, UncName, AllocationUnitSize, SectorSize);
 
-        ServiceThread.Start();
+            RunService();
+        }
+        catch (Exception ex)
+        {
+            OnError(new ThreadExceptionEventArgs(ex));
+
+            (Operations as IDisposable)?.Dispose();
+        }
     }
 
-    private void ServiceThreadProcedure()
+    private async void RunService()
     {
         try
         {
-            Operations.Mount(MountPoint, MountOptions, SingleThread, Version, Timeout, UncName, AllocationUnitSize, SectorSize);
+            await Instance!.WaitForFileSystemClosedAsync().ConfigureAwait(false);
 
             OnDismounted(EventArgs.Empty);
         }
@@ -75,15 +83,26 @@ public class DokanService : IDisposable
         }
     }
 
-    public void WaitExit()
+    public bool WaitExit(int millisecondsTimeout = -1)
     {
-        if (ServiceThread == null ||
-            ServiceThread.ManagedThreadId == Environment.CurrentManagedThreadId)
+        if (Instance is null)
         {
-            return;
+            return true;
         }
 
-        ServiceThread.Join();
+        return Instance.WaitForFileSystemClosed(millisecondsTimeout) == 0;
+    }
+
+    private static readonly Task<bool> trueResult = Task.FromResult(true);
+
+    public Task<bool> WaitExitAsync(int millisecondsTimeout = -1)
+    {
+        if (Instance is null || Instance.WaitForFileSystemClosed(0) == 0)
+        {
+            return trueResult;
+        }
+
+        return Instance.WaitForFileSystemClosedAsync(millisecondsTimeout);
     }
 
     protected virtual void OnError(ThreadExceptionEventArgs e) => Error?.Invoke(this, e);
@@ -102,20 +121,17 @@ public class DokanService : IDisposable
             if (disposing)
             {
                 // TODO: dispose managed state (managed objects).
-                if (ServiceThread != null && ServiceThread.IsAlive)
+                if (Instance is not null && Instance.WaitForFileSystemClosed(0) != 0)
                 {
                     Trace.WriteLine($"Requesting dismount for Dokan file system '{MountPoint}'");
 
                     Dokan.RemoveMountPoint(MountPoint);
 
-                    if (ServiceThread.ManagedThreadId != Environment.CurrentManagedThreadId)
-                    {
-                        Trace.WriteLine($"Waiting for Dokan file system '{MountPoint}' service thread to stop");
+                    Trace.WriteLine($"Waiting for Dokan file system '{MountPoint}' service thread to stop");
 
-                        ServiceThread.Join();
+                    Instance.WaitForFileSystemClosed();
 
-                        Trace.WriteLine($"Dokan file system '{MountPoint}' service thread stopped.");
-                    }
+                    Trace.WriteLine($"Dokan file system '{MountPoint}' service thread stopped.");
                 }
 
                 (Operations as IDisposable)?.Dispose();
@@ -124,7 +140,7 @@ public class DokanService : IDisposable
             // TODO: free unmanaged resources (unmanaged objects) and override a finalizer below.
 
             // TODO: set large fields to null.
-            ServiceThread = null;
+            Instance = null;
         }
     }
 
