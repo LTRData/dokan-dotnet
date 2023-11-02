@@ -464,7 +464,7 @@ public static partial class Dokan
     /// <param name="dokanInstance">The dokan mount context created by <see cref="CreateFileSystem(IDokanOperations, string, DokanOptions, bool, int, TimeSpan, string?, int, int, ILogger?, byte[])"/>.</param>
     /// <returns>Whether the FileSystem is still running or not.</returns>
     public static bool IsFileSystemRunning(this DokanInstance dokanInstance)
-        => dokanInstance is not null && NativeMethods.DokanIsFileSystemRunning(dokanInstance.DokanHandle);
+        => dokanInstance is not null && !dokanInstance.IsDisposed && NativeMethods.DokanIsFileSystemRunning(dokanInstance.DokanHandle);
 
     /// <summary>
     /// Wait until the FileSystem is unmount.

@@ -9,7 +9,12 @@ namespace DokanNet;
 #if NET5_0_OR_GREATER
 [SupportedOSPlatform("windows")]
 #endif
-public class DokanService : IDisposable
+public class DokanService
+#if NET461_OR_GREATER || NETSTANDARD || NETCOREAPP
+     : IDisposable, IAsyncDisposable
+#else
+     : IDisposable
+#endif
 {
     public event EventHandler? Stopped;
 
@@ -44,7 +49,7 @@ public class DokanService : IDisposable
         SectorSize = sectorSize;
     }
 
-    public void Start()
+    public async void Start()
     {
         if (IsDisposed)
         {
@@ -54,22 +59,19 @@ public class DokanService : IDisposable
         try
         {
             Instance = Operations.CreateFileSystem(MountPoint, MountOptions, SingleThread, Version, Timeout, UncName, AllocationUnitSize, SectorSize);
-
-            RunService();
         }
         catch (Exception ex)
         {
             OnError(new ThreadExceptionEventArgs(ex));
 
             (Operations as IDisposable)?.Dispose();
-        }
-    }
 
-    private async void RunService()
-    {
+            return;
+        }
+
         try
         {
-            await Instance!.WaitForFileSystemClosedAsync().ConfigureAwait(false);
+            await Instance.WaitForFileSystemClosedAsync().ConfigureAwait(false);
 
             OnDismounted(EventArgs.Empty);
         }
@@ -79,7 +81,7 @@ public class DokanService : IDisposable
         }
         finally
         {
-            (Operations as IDisposable)?.Dispose();
+            Instance.Dispose();
         }
     }
 
@@ -121,7 +123,7 @@ public class DokanService : IDisposable
             if (disposing)
             {
                 // TODO: dispose managed state (managed objects).
-                if (Instance is not null && Instance.WaitForFileSystemClosed(0) != 0)
+                if (Instance is not null && Instance.IsFileSystemRunning())
                 {
                     Trace.WriteLine($"Requesting dismount for Dokan file system '{MountPoint}'");
 
@@ -133,14 +135,11 @@ public class DokanService : IDisposable
 
                     Trace.WriteLine($"Dokan file system '{MountPoint}' service thread stopped.");
                 }
-
-                (Operations as IDisposable)?.Dispose();
             }
 
             // TODO: free unmanaged resources (unmanaged objects) and override a finalizer below.
 
             // TODO: set large fields to null.
-            Instance = null;
         }
     }
 
@@ -159,5 +158,34 @@ public class DokanService : IDisposable
         // TODO: uncomment the following line if the finalizer is overridden above.
         GC.SuppressFinalize(this);
     }
-    #endregion
+
+#if NET461_OR_GREATER || NETSTANDARD || NETCOREAPP
+    public async ValueTask DisposeAsync()
+    {
+        if (Interlocked.Exchange(ref is_disposed, 1) == 0)
+        {
+            // TODO: dispose managed state (managed objects).
+            if (Instance is not null && Instance.IsFileSystemRunning())
+            {
+                Trace.WriteLine($"Requesting dismount for Dokan file system '{MountPoint}'");
+
+                Dokan.RemoveMountPoint(MountPoint);
+
+                Trace.WriteLine($"Waiting for Dokan file system '{MountPoint}' service thread to stop");
+
+                await Instance.WaitForFileSystemClosedAsync().ConfigureAwait(false);
+
+                Trace.WriteLine($"Dokan file system '{MountPoint}' service thread stopped.");
+            }
+
+            // TODO: free unmanaged resources (unmanaged objects) and override a finalizer below.
+
+            // TODO: set large fields to null.
+        }
+
+        // TODO: uncomment the following line if the finalizer is overridden above.
+        GC.SuppressFinalize(this);
+    }
+#endif
+#endregion
 }
