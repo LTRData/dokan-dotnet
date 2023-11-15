@@ -20,10 +20,19 @@ namespace DokanNet;
 /// <summary>
 /// The dokan operation proxy.
 /// </summary>
+/// <remarks>
+/// Initializes a new instance of the <see cref="DokanOperationProxy"/> class.
+/// </remarks>
+/// <param name="operations">
+/// A <see cref="IDokanOperations"/> that contains the custom implementation of the driver.
+/// </param>
+/// <param name="logger">
+/// A <see cref="ILogger"/> that handle all logging.
+/// </param>
 #if NET5_0_OR_GREATER
 [SupportedOSPlatform("windows")]
 #endif
-internal sealed class DokanOperationProxy
+internal sealed class DokanOperationProxy(IDokanOperations operations, ILogger logger)
 {
 #if NET6_0_OR_GREATER
     
@@ -47,11 +56,11 @@ internal sealed class DokanOperationProxy
 
 #endif
 
-    private readonly IDokanOperations operations;
+    private readonly IDokanOperations operations = operations;
 
-    private readonly ILogger logger;
+    private readonly ILogger logger = logger;
 
-    private uint serialNumber;
+    private uint serialNumber = (uint)operations.GetHashCode();
 
 #region Enum masks
     /// <summary>
@@ -100,23 +109,8 @@ internal sealed class DokanOperationProxy
     private const int FileShareMask =
         (int)
         (FileShare.ReadWrite | FileShare.Delete | FileShare.Inheritable);
-#endregion
 
-    /// <summary>
-    /// Initializes a new instance of the <see cref="DokanOperationProxy"/> class.
-    /// </summary>
-    /// <param name="operations">
-    /// A <see cref="IDokanOperations"/> that contains the custom implementation of the driver.
-    /// </param>
-    /// <param name="logger">
-    /// A <see cref="ILogger"/> that handle all logging.
-    /// </param>
-    public DokanOperationProxy(IDokanOperations operations, ILogger logger)
-    {
-        this.operations = operations;
-        this.logger = logger;
-        serialNumber = (uint)operations.GetHashCode();
-    }
+    #endregion
 
     /// <summary>
     /// CreateFile is called each time a request is made on a file system object.

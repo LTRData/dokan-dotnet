@@ -64,6 +64,9 @@ public class DokanException : Exception
     {
     }
 
+#if NET8_0_OR_GREATER
+    [Obsolete("Obsolete serialization API")]
+#endif
     protected DokanException(SerializationInfo serializationInfo, StreamingContext streamingContext)
         : base(serializationInfo, streamingContext)
     {

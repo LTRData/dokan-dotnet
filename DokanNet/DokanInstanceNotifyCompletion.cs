@@ -1,4 +1,10 @@
 ﻿using DokanNet.Native;
+using System;
+using System.ComponentModel;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
+using System.Runtime.Versioning;
+using System.Threading;
 
 namespace DokanNet;
 
@@ -8,16 +14,10 @@ namespace DokanNet;
 #if NET5_0_OR_GREATER
 [SupportedOSPlatform("windows")]
 #endif
-internal sealed class DokanInstanceNotifyCompletion : ICriticalNotifyCompletion
+internal sealed class DokanInstanceNotifyCompletion(DokanInstance dokanInstance, int milliSeconds) : ICriticalNotifyCompletion
 {
-    public DokanInstanceNotifyCompletion(DokanInstance dokanInstance, int milliSeconds)
-    {
-        DokanInstance = dokanInstance;
-        MilliSeconds = milliSeconds;
-    }
-
-    public DokanInstance DokanInstance { get; }
-    public int MilliSeconds { get; }
+    public DokanInstance DokanInstance { get; } = dokanInstance;
+    public int MilliSeconds { get; } = milliSeconds;
     public bool IsCompleted => !DokanInstance.IsFileSystemRunning();
     private nint waitHandle;
     private bool timedOut;

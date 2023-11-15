@@ -8,23 +8,18 @@ namespace DokanNet;
 /// Represents unmanaged memory managed by Dokan library
 /// </summary>
 /// <typeparam name="T">Type of elements in the memory</typeparam>
-public readonly struct DokanMemory<T> where T : unmanaged
+public readonly struct DokanMemory<T>(nint address, int length) where T : unmanaged
 {
-    public DokanMemory(nint address, int length)
-    {
-        Address = address;
-        Length = length;
-    }
 
     /// <summary>
     /// Unmanaged pointer to memory.
     /// </summary>
-    public nint Address { get; }
+    public nint Address { get; } = address;
 
     /// <summary>
     /// Number of elements at memory address.
     /// </summary>
-    public int Length { get; }
+    public int Length { get; } = length;
 
     /// <summary>
     /// Return value indicating whether this object represents an unmanaged NULL pointer.
@@ -81,26 +76,20 @@ public readonly struct DokanMemory<T> where T : unmanaged
 /// Represents read only unmanaged memory managed by Dokan library
 /// </summary>
 /// <typeparam name="T">Type of elements in the memory</typeparam>
-public readonly struct ReadOnlyDokanMemory<T> where T : unmanaged
+public readonly struct ReadOnlyDokanMemory<T>(nint address, int length) where T : unmanaged
 {
     public static implicit operator ReadOnlyDokanMemory<T>(DokanMemory<T> origin)
         => new(origin.Address, origin.Length);
 
-    public ReadOnlyDokanMemory(nint address, int length)
-    {
-        Address = address;
-        Length = length;
-    }
-
     /// <summary>
     /// Unmanaged pointer to memory.
     /// </summary>
-    public nint Address { get; }
+    public nint Address { get; } = address;
 
     /// <summary>
     /// Number of elements at memory address.
     /// </summary>
-    public int Length { get; }
+    public int Length { get; } = length;
 
     /// <summary>
     /// Return value indicating whether this object represents an unmanaged NULL pointer.
@@ -153,17 +142,9 @@ public readonly struct ReadOnlyDokanMemory<T> where T : unmanaged
     }
 }
 
-internal sealed class UnmanagedMemoryManager<T> : MemoryManager<T> where T : unmanaged
+internal sealed class UnmanagedMemoryManager<T>(nint address, int count) : MemoryManager<T> where T : unmanaged
 {
-    private nint _pointer;
-    private int _count;
     private bool _disposed;
-
-    public UnmanagedMemoryManager(nint ptr, int count)
-    {
-        _pointer = ptr;
-        _count = count;
-    }
 
     public override unsafe Span<T> GetSpan()
     {
@@ -172,7 +153,7 @@ internal sealed class UnmanagedMemoryManager<T> : MemoryManager<T> where T : unm
             throw new ObjectDisposedException(nameof(UnmanagedMemoryManager<T>));
         }
 
-        return new((T*)_pointer, _count);
+        return new((T*)address, count);
     }
 
     public override unsafe MemoryHandle Pin(int elementIndex = 0)
@@ -182,12 +163,12 @@ internal sealed class UnmanagedMemoryManager<T> : MemoryManager<T> where T : unm
             throw new ObjectDisposedException(nameof(UnmanagedMemoryManager<T>));
         }
 
-        if (elementIndex < 0 || elementIndex >= _count)
+        if (elementIndex < 0 || elementIndex >= count)
         {
             throw new ArgumentOutOfRangeException(nameof(elementIndex));
         }
 
-        var pointer = _pointer + elementIndex;
+        var pointer = address + elementIndex;
         return new MemoryHandle((T*)pointer, default, this);
     }
 
@@ -200,24 +181,24 @@ internal sealed class UnmanagedMemoryManager<T> : MemoryManager<T> where T : unm
     {
         if (!_disposed)
         {
-            _pointer = 0;
-            _count = 0;
+            address = 0;
+            count = 0;
             _disposed = true;
         }
     }
 
     public override unsafe string ToString()
     {
-        if (_pointer == 0)
+        if (address == 0)
         {
             return "<null>";
         }
 
         if (typeof(T) == typeof(char))
         {
-            return DokanHelper.GetStringFromSpan(new ReadOnlySpan<char>((char*)_pointer, _count));
+            return DokanHelper.GetStringFromSpan(new ReadOnlySpan<char>((char*)address, count));
         }
 
-        return $"{typeof(T).Name} 0x{_pointer:x}[{_count}]";
+        return $"{typeof(T).Name} 0x{address:x}[{count}]";
     }
 }

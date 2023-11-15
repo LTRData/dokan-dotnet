@@ -9,7 +9,9 @@ namespace DokanNet;
 #if NET5_0_OR_GREATER
 [SupportedOSPlatform("windows")]
 #endif
-public class DokanService
+public class DokanService(IDokanOperations operations, string mountPoint, DokanOptions mountOptions = 0,
+    bool singleThread = true, int version = Dokan.DOKAN_VERSION, TimeSpan? timeout = null, string? uncName = null,
+    int allocationUnitSize = 512, int sectorSize = 512)
 #if NET461_OR_GREATER || NETSTANDARD || NETCOREAPP
      : IDisposable, IAsyncDisposable
 #else
@@ -20,34 +22,19 @@ public class DokanService
 
     public event EventHandler<ThreadExceptionEventArgs>? Error;
 
-    public IDokanOperations Operations { get; }
-    public string MountPoint { get; }
-    public DokanOptions MountOptions { get; }
-    public bool SingleThread { get; }
-    public int Version { get; }
-    public TimeSpan Timeout { get; }
-    public string? UncName { get; }
-    public int AllocationUnitSize { get; }
-    public int SectorSize { get; }
+    public IDokanOperations Operations { get; } = operations;
+    public string MountPoint { get; } = mountPoint;
+    public DokanOptions MountOptions { get; } = mountOptions;
+    public bool SingleThread { get; } = singleThread;
+    public int Version { get; } = version;
+    public TimeSpan Timeout { get; } = timeout ?? TimeSpan.FromSeconds(20);
+    public string? UncName { get; } = uncName;
+    public int AllocationUnitSize { get; } = allocationUnitSize;
+    public int SectorSize { get; } = sectorSize;
     public bool Running => Instance is not null &&
         Instance.WaitForFileSystemClosed(0) != 0;
 
     protected DokanInstance? Instance { get; private set; }
-
-    public DokanService(IDokanOperations operations, string mountPoint, DokanOptions mountOptions = 0,
-        bool singleThread = true, int version = Dokan.DOKAN_VERSION, TimeSpan? timeout = null, string? uncName = null,
-        int allocationUnitSize = 512, int sectorSize = 512)
-    {
-        Operations = operations;
-        MountPoint = mountPoint;
-        MountOptions = mountOptions;
-        SingleThread = singleThread;
-        Version = version;
-        Timeout = timeout ?? TimeSpan.FromSeconds(20);
-        UncName = uncName;
-        AllocationUnitSize = allocationUnitSize;
-        SectorSize = sectorSize;
-    }
 
     public async void Start()
     {
