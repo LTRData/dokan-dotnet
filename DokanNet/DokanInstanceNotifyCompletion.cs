@@ -1,10 +1,4 @@
-﻿using System;
-using System.ComponentModel;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
-using System.Runtime.Versioning;
-using System.Threading;
-using DokanNet.Native;
+﻿using DokanNet.Native;
 
 namespace DokanNet;
 
