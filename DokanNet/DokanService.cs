@@ -69,6 +69,7 @@ public class DokanService(IDokanOperations operations, string mountPoint, DokanO
         finally
         {
             Instance.Dispose();
+            (Operations as IDisposable)?.Dispose();
         }
     }
 
