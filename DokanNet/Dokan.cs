@@ -474,7 +474,8 @@ public static partial class Dokan
     /// the function does not enter a wait state if the object is not signaled; it always returns immediately. If <paramref name="milliSeconds" /> is INFINITE, the function will return only when the object is signaled.</param>
     /// <returns>See <a href="https://docs.microsoft.com/en-us/windows/win32/api/synchapi/nf-synchapi-waitforsingleobject">WaitForSingleObject</a> for a description of return values.</returns>
     public static uint WaitForFileSystemClosed(this DokanInstance dokanInstance, int milliSeconds = -1)
-        => dokanInstance is not null ? NativeMethods.DokanWaitForFileSystemClosed(dokanInstance.DokanHandle, milliSeconds) : 0;
+        => dokanInstance is not null && dokanInstance.DokanHandle is not null && !dokanInstance.DokanHandle.IsInvalid
+        ? NativeMethods.DokanWaitForFileSystemClosed(dokanInstance.DokanHandle, milliSeconds) : 0;
 
     /// <summary>
     /// Wait asynchronously until the FileSystem is unmounted.
@@ -484,7 +485,8 @@ public static partial class Dokan
     /// the function does not enter a wait state if the object is not signaled; it always returns immediately. If <paramref name="milliSeconds" /> is INFINITE, the function will return only when the object is signaled.</param>
     /// <returns>True if instance was dismounted or false if time out occurred.</returns>
     public static async Task<bool> WaitForFileSystemClosedAsync(this DokanInstance dokanInstance, int milliSeconds = -1)
-        => dokanInstance is null || await new DokanInstanceNotifyCompletion(dokanInstance, milliSeconds);
+        => dokanInstance is null || dokanInstance.DokanHandle is null || dokanInstance.DokanHandle.IsInvalid
+        || await new DokanInstanceNotifyCompletion(dokanInstance, milliSeconds);
 
     /// <summary>
     /// Unmount a dokan device from a driver letter.

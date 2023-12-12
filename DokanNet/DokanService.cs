@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.Versioning;
 using System.Threading;
 using System.Threading.Tasks;
@@ -31,8 +32,25 @@ public class DokanService(IDokanOperations operations, string mountPoint, DokanO
     public string? UncName { get; } = uncName;
     public int AllocationUnitSize { get; } = allocationUnitSize;
     public int SectorSize { get; } = sectorSize;
-    public bool Running => Instance is not null &&
-        Instance.WaitForFileSystemClosed(0) != 0;
+
+#if NETCOREAPP
+    [MemberNotNullWhen(true, nameof(Instance), nameof(Operations))]
+#endif
+    public bool Running
+    {
+        get
+        {
+            if (Instance is null)
+            {
+                return false;
+            }
+
+            lock (Instance)
+            {
+                return Instance.WaitForFileSystemClosed(0) != 0;
+            }
+        }
+    }
 
     protected DokanInstance? Instance { get; private set; }
 
@@ -45,7 +63,14 @@ public class DokanService(IDokanOperations operations, string mountPoint, DokanO
 
         try
         {
-            Instance = Operations.CreateFileSystem(MountPoint, MountOptions, SingleThread, Version, Timeout, UncName, AllocationUnitSize, SectorSize);
+            Instance = Operations.CreateFileSystem(MountPoint,
+                                                   MountOptions,
+                                                   SingleThread,
+                                                   Version,
+                                                   Timeout,
+                                                   UncName,
+                                                   AllocationUnitSize,
+                                                   SectorSize);
         }
         catch (Exception ex)
         {
@@ -68,7 +93,11 @@ public class DokanService(IDokanOperations operations, string mountPoint, DokanO
         }
         finally
         {
-            Instance.Dispose();
+            lock (Instance)
+            {
+                Instance.Dispose();
+            }
+            
             (Operations as IDisposable)?.Dispose();
         }
     }
@@ -80,19 +109,30 @@ public class DokanService(IDokanOperations operations, string mountPoint, DokanO
             return true;
         }
 
-        return Instance.WaitForFileSystemClosed(millisecondsTimeout) == 0;
+        lock (Instance)
+        {
+            return Instance.WaitForFileSystemClosed(millisecondsTimeout) == 0;
+        }
     }
 
     private static readonly Task<bool> trueResult = Task.FromResult(true);
 
     public Task<bool> WaitExitAsync(int millisecondsTimeout = -1)
     {
-        if (Instance is null || Instance.WaitForFileSystemClosed(0) == 0)
+        if (Instance is null)
         {
             return trueResult;
         }
 
-        return Instance.WaitForFileSystemClosedAsync(millisecondsTimeout);
+        lock (Instance)
+        {
+            if (Instance.WaitForFileSystemClosed(0) == 0)
+            {
+                return trueResult;
+            }
+
+            return Instance.WaitForFileSystemClosedAsync(millisecondsTimeout);
+        }
     }
 
     protected virtual void OnError(ThreadExceptionEventArgs e) => Error?.Invoke(this, e);
@@ -111,7 +151,7 @@ public class DokanService(IDokanOperations operations, string mountPoint, DokanO
             if (disposing)
             {
                 // TODO: dispose managed state (managed objects).
-                if (Instance is not null && Instance.IsFileSystemRunning())
+                if (Running)
                 {
                     Trace.WriteLine($"Requesting dismount for Dokan file system '{MountPoint}'");
 
@@ -119,7 +159,7 @@ public class DokanService(IDokanOperations operations, string mountPoint, DokanO
 
                     Trace.WriteLine($"Waiting for Dokan file system '{MountPoint}' service thread to stop");
 
-                    Instance.WaitForFileSystemClosed();
+                    WaitExit();
 
                     Trace.WriteLine($"Dokan file system '{MountPoint}' service thread stopped.");
                 }
