@@ -17,11 +17,7 @@ namespace DokanNet;
 public struct FindFileInformation
 {
     // An empty array does not contain data and can be statically cached.
-#if NET46_OR_GREATER || NETSTANDARD || NETCOREAPP
-    public static readonly FindFileInformation[] Empty = Array.Empty<FindFileInformation>();
-#else
-    public static readonly FindFileInformation[] Empty = new FindFileInformation[0];
-#endif
+    public static readonly FindFileInformation[] Empty = [];
 
     /// <summary>
     /// Gets or sets the name of the file or directory.

@@ -5,6 +5,7 @@ using System.IO;
 using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
 using System.Security.AccessControl;
+using System.Security.Cryptography;
 using System.Text;
 
 using DokanNet.Logging;
@@ -358,22 +359,24 @@ internal sealed class DokanOperationProxy(IDokanOperations operations, ILogger l
         ref BY_HANDLE_FILE_INFORMATION rawHandleFileInformation,
         in DokanFileInfo rawFileInfo)
     {
+        var fileNamePtr = MemoryFromIntPtr(rawFileName);
+
         try
         {
             if (logger.DebugEnabled)
             {
-                logger.Debug($"GetFileInformationProxy : {rawFileName}");
+                logger.Debug($"GetFileInformationProxy : {fileNamePtr}");
                 logger.Debug($"\tContext\t{rawFileInfo}");
             }
 
-            var result = operations.GetFileInformation(MemoryFromIntPtr(rawFileName), out var fi, rawFileInfo);
+            var result = operations.GetFileInformation(fileNamePtr, out var fi, rawFileInfo);
 
             if (result == DokanResult.Success)
             {
                 //Debug.Assert(fi.FileName is not null, "FileName must not be null");
                 if (logger.DebugEnabled)
                 {
-                    logger.Debug($"\tFileName\t{rawFileName}");
+                    logger.Debug($"\tFileName\t{fileNamePtr}");
                     logger.Debug($"\tAttributes\t{fi.Attributes}");
                     logger.Debug($"\tCreationTime\t{fi.CreationTime}");
                     logger.Debug($"\tLastAccessTime\t{fi.LastAccessTime}");
@@ -406,7 +409,11 @@ internal sealed class DokanOperationProxy(IDokanOperations operations, ILogger l
                 
                 if (index == 0)
                 {
-#if NETCOREAPP || NETSTANDARD2_1_OR_GREATER
+#if NET5_0_OR_GREATER
+                    Span<byte> hash = stackalloc byte[sizeof(int)];
+                    SHA1.HashData(MemoryMarshal.AsBytes(fileNamePtr.Span), hash);
+                    index = MemoryMarshal.Read<int>(hash);
+#elif NETCOREAPP || NETSTANDARD2_1_OR_GREATER
                     index = rawFileName.ToString().GetHashCode(StringComparison.Ordinal);
 #else
                     index = rawFileName.ToString().GetHashCode();
@@ -419,14 +426,14 @@ internal sealed class DokanOperationProxy(IDokanOperations operations, ILogger l
 
             if (logger.DebugEnabled)
             {
-                logger.Debug($"GetFileInformationProxy : {rawFileName} Return : {result}");
+                logger.Debug($"GetFileInformationProxy : {fileNamePtr} Return : {result}");
             }
 
             return result;
         }
         catch (Exception ex)
         {
-            logger.Error($"GetFileInformationProxy : {rawFileName} Throw : {ex.Message}");
+            logger.Error($"GetFileInformationProxy : {fileNamePtr} Throw : {ex.Message}");
             return ex.ToNtStatus();
         }
     }

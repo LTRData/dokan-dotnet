@@ -45,7 +45,7 @@ public class DokanDiscUtils : IDokanOperations, IDisposable
 
     private readonly StringComparison _comparison = StringComparison.OrdinalIgnoreCase;
 
-    private readonly List<KeyValuePair<string, string>> _transl = new();
+    private readonly List<KeyValuePair<string, string>> _transl = [];
 
     public event EventHandler<AccessCheckEventArgs>? AccessCheck;
 
@@ -181,7 +181,16 @@ public class DokanDiscUtils : IDokanOperations, IDisposable
 
     public DokanDiscUtils(IFileSystem fileSystem, DokanDiscUtilsOptions options)
     {
-        FileSystem = fileSystem ?? throw new ArgumentNullException(nameof(fileSystem));
+#if NET7_0_OR_GREATER
+        ArgumentNullException.ThrowIfNull(fileSystem);
+#else
+        if (fileSystem is null)
+        {
+            throw new ArgumentNullException(nameof(fileSystem));
+        }
+#endif
+
+        FileSystem = fileSystem;
 
         if (!fileSystem.CanWrite)
         {
@@ -1246,7 +1255,7 @@ public class DokanDiscUtils : IDokanOperations, IDisposable
         }
         else
         {
-            streams = Enumerable.Empty<FindFileInformation>();
+            streams = [];
             return Trace(nameof(FindStreams), fileName, info, DokanResult.NotImplemented);
         }
     }
@@ -1280,7 +1289,7 @@ public class DokanDiscUtils : IDokanOperations, IDisposable
 
                     var info = new FindFileInformation
                     {
-                        Length = (dirEntry as DiscFileInfo)?.Length ?? 0,
+                        Length = dirEntry is DiscFileInfo fileEntry ? fileEntry.Length : 0,
                         FileName = SanitizePath(OSPath, path, dirEntry.Name).AsMemory(),
                         Attributes = FilterAttributes(dirEntry.Attributes),
                         CreationTime = wfsinfo.CreationTime,
@@ -1320,7 +1329,7 @@ public class DokanDiscUtils : IDokanOperations, IDisposable
                         CreationTime = dirEntry.CreationTime,
                         LastAccessTime = dirEntry.LastAccessTime,
                         LastWriteTime = dirEntry.LastWriteTime,
-                        Length = (dirEntry as DiscFileInfo)?.Length ?? 0,
+                        Length = dirEntry is DiscFileInfo fileEntry ? fileEntry.Length : 0,
                         FileName = SanitizePath(OSPath, path, dirEntry.Name).AsMemory()
                     };
 

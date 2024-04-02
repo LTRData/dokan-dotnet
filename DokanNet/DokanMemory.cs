@@ -148,25 +148,39 @@ internal sealed class UnmanagedMemoryManager<T>(nint address, int count) : Memor
 
     public override unsafe Span<T> GetSpan()
     {
+#if NET7_0_OR_GREATER
+        ObjectDisposedException.ThrowIf(_disposed, this);
+#else
         if (_disposed)
         {
             throw new ObjectDisposedException(nameof(UnmanagedMemoryManager<T>));
         }
+#endif
 
         return new((T*)address, count);
     }
 
     public override unsafe MemoryHandle Pin(int elementIndex = 0)
     {
+#if NET7_0_OR_GREATER
+        ObjectDisposedException.ThrowIf(_disposed, this);
+#else
         if (_disposed)
         {
             throw new ObjectDisposedException(nameof(UnmanagedMemoryManager<T>));
         }
+#endif
 
+#if NET8_0_OR_GREATER
+        ArgumentOutOfRangeException.ThrowIfLessThan(elementIndex, 0);
+
+        ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(elementIndex, count);
+#else
         if (elementIndex < 0 || elementIndex >= count)
         {
             throw new ArgumentOutOfRangeException(nameof(elementIndex));
         }
+#endif
 
         var pointer = address + elementIndex;
         return new MemoryHandle((T*)pointer, default, this);

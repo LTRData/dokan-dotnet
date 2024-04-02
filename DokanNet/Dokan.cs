@@ -155,10 +155,14 @@ public static partial class Dokan
         bool singleThread, int version, TimeSpan timeout, string? uncName = null, int allocationUnitSize = 512,
         int sectorSize = 512, ILogger? logger = null, byte[]? volumeSecurityDescriptor = null)
     {
+#if NET7_0_OR_GREATER
+        ArgumentNullException.ThrowIfNull(operations);
+#else
         if (operations is null)
         {
             throw new ArgumentNullException(nameof(operations));
         }
+#endif
 
         var logger_created = false;
 
@@ -367,10 +371,14 @@ public static partial class Dokan
         bool singleThread, int version, TimeSpan timeout, string? uncName = null, int allocationUnitSize = 512,
         int sectorSize = 512, ILogger? logger = null, byte[]? volumeSecurityDescriptor = null)
     {
+#if NET7_0_OR_GREATER
+        ArgumentNullException.ThrowIfNull(operations);
+#else
         if (operations is null)
         {
             throw new ArgumentNullException(nameof(operations));
         }
+#endif
 
         var logger_created = false;
 
@@ -547,10 +555,14 @@ public static partial class Dokan
         /// <returns>true if the notification succeeded.</returns>
         public static bool Create(DokanInstance dokanInstance, string filePath, bool isDirectory)
         {
+#if NET7_0_OR_GREATER
+            ArgumentNullException.ThrowIfNull(dokanInstance);
+#else
             if (dokanInstance is null)
             {
                 throw new ArgumentNullException(nameof(dokanInstance));
             }
+#endif
 
             return NativeMethods.DokanNotifyCreate(dokanInstance.DokanHandle, filePath, isDirectory);
         }
@@ -565,10 +577,14 @@ public static partial class Dokan
         /// <remarks><see cref="DokanOptions.EnableNotificationAPI"/> must be set in the mount options for this to succeed.</remarks>
         public static bool Delete(DokanInstance dokanInstance, string filePath, bool isDirectory)
         {
+#if NET7_0_OR_GREATER
+            ArgumentNullException.ThrowIfNull(dokanInstance);
+#else
             if (dokanInstance is null)
             {
                 throw new ArgumentNullException(nameof(dokanInstance));
             }
+#endif
 
             return NativeMethods.DokanNotifyDelete(dokanInstance.DokanHandle, filePath, isDirectory);
         }
@@ -582,10 +598,14 @@ public static partial class Dokan
         /// <remarks><see cref="DokanOptions.EnableNotificationAPI"/> must be set in the mount options for this to succeed.</remarks>
         public static bool Update(DokanInstance dokanInstance, string filePath)
         {
+#if NET7_0_OR_GREATER
+            ArgumentNullException.ThrowIfNull(dokanInstance);
+#else
             if (dokanInstance is null)
             {
                 throw new ArgumentNullException(nameof(dokanInstance));
             }
+#endif
 
             return NativeMethods.DokanNotifyUpdate(dokanInstance.DokanHandle, filePath);
         }
@@ -599,10 +619,14 @@ public static partial class Dokan
         /// <remarks><see cref="DokanOptions.EnableNotificationAPI"/> must be set in the mount options for this to succeed.</remarks>
         public static bool XAttrUpdate(DokanInstance dokanInstance, string filePath)
         {
+#if NET7_0_OR_GREATER
+            ArgumentNullException.ThrowIfNull(dokanInstance);
+#else
             if (dokanInstance is null)
             {
                 throw new ArgumentNullException(nameof(dokanInstance));
             }
+#endif
 
             return NativeMethods.DokanNotifyXAttrUpdate(dokanInstance.DokanHandle, filePath);
         }
@@ -620,10 +644,14 @@ public static partial class Dokan
         /// <remarks><see cref="DokanOptions.EnableNotificationAPI"/> must be set in the mount options for this to succeed.</remarks>
         public static bool Rename(DokanInstance dokanInstance, string oldPath, string newPath, bool isDirectory, bool isInSameDirectory)
         {
+#if NET7_0_OR_GREATER
+            ArgumentNullException.ThrowIfNull(dokanInstance);
+#else
             if (dokanInstance is null)
             {
                 throw new ArgumentNullException(nameof(dokanInstance));
             }
+#endif
 
             return NativeMethods.DokanNotifyRename(dokanInstance.DokanHandle, oldPath,
                 newPath,

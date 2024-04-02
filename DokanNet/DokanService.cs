@@ -56,10 +56,14 @@ public class DokanService(IDokanOperations operations, string mountPoint, DokanO
 
     public async void Start()
     {
+#if NET7_0_OR_GREATER
+        ObjectDisposedException.ThrowIf(IsDisposed, this);
+#else
         if (IsDisposed)
         {
             throw new ObjectDisposedException(GetType().Name);
         }
+#endif
 
         try
         {

@@ -10,7 +10,7 @@ namespace DokanNet.Logging;
 public class ConsoleLogger : ILogger, IDisposable
 {
     private readonly string _loggerName;
-    private readonly BlockingCollection<(string Message, ConsoleColor Color)> _PendingLogs = new();
+    private readonly BlockingCollection<(string Message, ConsoleColor Color)> _PendingLogs = [];
 
     private readonly Thread? _WriterTask = null;
     /// <summary>
