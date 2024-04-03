@@ -409,11 +409,9 @@ internal sealed class DokanOperationProxy(IDokanOperations operations, ILogger l
                 
                 if (index == 0)
                 {
-#if NET5_0_OR_GREATER
-                    Span<byte> hash = stackalloc byte[sizeof(int)];
-                    SHA1.HashData(MemoryMarshal.AsBytes(fileNamePtr.Span), hash);
-                    index = MemoryMarshal.Read<int>(hash);
-#elif NETCOREAPP || NETSTANDARD2_1_OR_GREATER
+#if NETCOREAPP
+                    index = string.GetHashCode(fileNamePtr.Span, StringComparison.Ordinal);
+#elif NETSTANDARD2_1_OR_GREATER
                     index = rawFileName.ToString().GetHashCode(StringComparison.Ordinal);
 #else
                     index = rawFileName.ToString().GetHashCode();
