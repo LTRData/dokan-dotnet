@@ -1052,7 +1052,7 @@ internal sealed class DokanOperationProxy(IDokanOperations operations, ILogger l
         uint rawVolumeNameSize,
         ref uint volumeSerialNumber,
         ref uint maximumComponentLength,
-        ref FileSystemFeatures rawFileSystemFlags,
+        ref FileSystemFeatures fileSystemFlags,
         nint rawFileSystemNameBuffer,
         uint rawFileSystemNameSize,
         in DokanFileInfo rawFileInfo)
@@ -1071,7 +1071,7 @@ internal sealed class DokanOperationProxy(IDokanOperations operations, ILogger l
             var fileSystemNameBuffer = new DokanMemory<char>(rawFileSystemNameBuffer, (int)rawFileSystemNameSize);
 
             var result = operations.GetVolumeInformation(volumeNameBuffer,
-                                                         out rawFileSystemFlags,
+                                                         out fileSystemFlags,
                                                          fileSystemNameBuffer,
                                                          out maximumComponentLength,
                                                          ref volumeSerialNumber,
@@ -1083,10 +1083,10 @@ internal sealed class DokanOperationProxy(IDokanOperations operations, ILogger l
 
                 if (logger.DebugEnabled)
                 {
-                    logger.Debug($"\tVolumeNameBuffer\t{rawVolumeNameBuffer}");
-                    logger.Debug($"\tFileSystemNameBuffer\t{rawFileSystemNameBuffer}");
-                    logger.Debug($"\tVolumeSerialNumber\t{volumeSerialNumber}");
-                    logger.Debug($"\tFileSystemFlags\t{rawFileSystemFlags}");
+                    logger.Debug($"\tVolumeNameBuffer\t{volumeNameBuffer}");
+                    logger.Debug($"\tFileSystemNameBuffer\t{fileSystemNameBuffer}");
+                    logger.Debug($"\tVolumeSerialNumber\t{volumeSerialNumber:X8}");
+                    logger.Debug($"\tFileSystemFlags\t{fileSystemFlags}");
                     logger.Debug($"\tMaximumComponentLength\t{maximumComponentLength}");
                 }
             }
