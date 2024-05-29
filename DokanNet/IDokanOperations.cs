@@ -343,9 +343,9 @@ public interface IDokanOperations
     /// <returns><see cref="NtStatus"/> or <see cref="DokanResult"/> appropriate to the request result.</returns>
     /// \see <a href="https://msdn.microsoft.com/en-us/library/windows/desktop/aa364993(v=vs.85).aspx"> GetVolumeInformation function (MSDN)</a>
     NtStatus GetVolumeInformation(
-        out string? volumeLabel,
+        DokanMemory<char> volumeLabel,
         out FileSystemFeatures features,
-        out string fileSystemName,
+        DokanMemory<char> fileSystemName,
         out uint maximumComponentLength,
         ref uint volumeSerialNumber,
         in DokanFileInfo info);

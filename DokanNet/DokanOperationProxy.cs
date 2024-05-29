@@ -1048,16 +1048,16 @@ internal sealed class DokanOperationProxy(IDokanOperations operations, ILogger l
     }
 
     public NtStatus GetVolumeInformationProxy(
-        StringBuilder rawVolumeNameBuffer,
+        nint rawVolumeNameBuffer,
         uint rawVolumeNameSize,
-        ref uint rawVolumeSerialNumber,
-        ref uint rawMaximumComponentLength,
+        ref uint volumeSerialNumber,
+        ref uint maximumComponentLength,
         ref FileSystemFeatures rawFileSystemFlags,
-        StringBuilder rawFileSystemNameBuffer,
+        nint rawFileSystemNameBuffer,
         uint rawFileSystemNameSize,
         in DokanFileInfo rawFileInfo)
     {
-        rawVolumeSerialNumber = serialNumber;
+        volumeSerialNumber = serialNumber;
 
         try
         {
@@ -1067,24 +1067,27 @@ internal sealed class DokanOperationProxy(IDokanOperations operations, ILogger l
                 logger.Debug($"\tContext\t{rawFileInfo}");
             }
 
-            var result = operations.GetVolumeInformation(out var volumeName, out rawFileSystemFlags, out var name, out var maximumComponentLength, ref rawVolumeSerialNumber, rawFileInfo);
+            var volumeNameBuffer = new DokanMemory<char>(rawVolumeNameBuffer, (int)rawVolumeNameSize);
+            var fileSystemNameBuffer = new DokanMemory<char>(rawFileSystemNameBuffer, (int)rawFileSystemNameSize);
+
+            var result = operations.GetVolumeInformation(volumeNameBuffer,
+                                                         out rawFileSystemFlags,
+                                                         fileSystemNameBuffer,
+                                                         out maximumComponentLength,
+                                                         ref volumeSerialNumber,
+                                                         rawFileInfo);
 
             if (result == DokanResult.Success)
             {
-                Debug.Assert(!string.IsNullOrEmpty(name), "name must not be null");
-                Debug.Assert(!string.IsNullOrEmpty(volumeName), "Label must not be null");
-                rawVolumeNameBuffer.Append(volumeName);
-                rawFileSystemNameBuffer.Append(name);
-                rawMaximumComponentLength = maximumComponentLength;
-                serialNumber = rawVolumeSerialNumber;
+                serialNumber = volumeSerialNumber;
 
                 if (logger.DebugEnabled)
                 {
                     logger.Debug($"\tVolumeNameBuffer\t{rawVolumeNameBuffer}");
                     logger.Debug($"\tFileSystemNameBuffer\t{rawFileSystemNameBuffer}");
-                    logger.Debug($"\tVolumeSerialNumber\t{rawVolumeSerialNumber}");
+                    logger.Debug($"\tVolumeSerialNumber\t{volumeSerialNumber}");
                     logger.Debug($"\tFileSystemFlags\t{rawFileSystemFlags}");
-                    logger.Debug($"\tMaximumComponentLength\t{rawMaximumComponentLength}");
+                    logger.Debug($"\tMaximumComponentLength\t{maximumComponentLength}");
                 }
             }
 

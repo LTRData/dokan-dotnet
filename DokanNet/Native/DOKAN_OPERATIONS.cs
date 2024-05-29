@@ -129,12 +129,12 @@ internal sealed class DOKAN_OPERATIONS
         in DokanFileInfo rawFileInfo);
 
     public delegate NtStatus GetVolumeInformationDelegate(
-        [MarshalAs(UnmanagedType.LPWStr)] StringBuilder rawVolumeNameBuffer,
+        nint rawVolumeNameBuffer,
         uint rawVolumeNameSize,
         ref uint rawVolumeSerialNumber,
         ref uint rawMaximumComponentLength,
         ref FileSystemFeatures rawFileSystemFlags,
-        [MarshalAs(UnmanagedType.LPWStr)] StringBuilder rawFileSystemNameBuffer,
+        nint rawFileSystemNameBuffer,
         uint rawFileSystemNameSize,
         in DokanFileInfo rawFileInfo);
 

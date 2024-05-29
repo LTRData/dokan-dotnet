@@ -9,6 +9,7 @@ using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
 using System.Security.AccessControl;
 using NativeFileAccess = DokanNet.NativeFileAccess;
@@ -1077,30 +1078,37 @@ public class DokanDiscUtils : IDokanOperations, IDisposable
             totalNumberOfBytes, totalNumberOfFreeBytes);
     }
 
-    public NtStatus GetVolumeInformation(out string? volumeLabel, out FileSystemFeatures features,
-        out string fileSystemName, out uint maximumComponentLength, ref uint volumeSerialNumber, in DokanFileInfo info)
+    public NtStatus GetVolumeInformation(DokanMemory<char> volumeLabel, out FileSystemFeatures features,
+        DokanMemory<char> fileSystemName, out uint maximumComponentLength, ref uint volumeSerialNumber, in DokanFileInfo info)
     {
-        volumeLabel = (FileSystem as DiscFileSystem)?.VolumeLabel;
+        var label = (FileSystem as DiscFileSystem)?.VolumeLabel;
 
-        if (string.IsNullOrWhiteSpace(volumeLabel))
+        if (string.IsNullOrWhiteSpace(label))
         {
-            volumeLabel = "NO NAME";
+            label = "NO NAME";
         }
 
-        fileSystemName = FileSystem.GetType().Name;
+        volumeLabel.SetString(label);
 
-        if (fileSystemName.EndsWith("FileSystem", StringComparison.Ordinal))
+        var fsName = FileSystem.GetType().Name.AsSpan();
+
+        if (fsName.EndsWith("FileSystem".AsSpan(), StringComparison.Ordinal))
         {
-            fileSystemName = fileSystemName.Remove(fileSystemName.Length - "FileSystem".Length);
+            fsName = fsName.Slice(0, fsName.Length - "FileSystem".Length);
         }
-        else if (fileSystemName.EndsWith("Reader", StringComparison.Ordinal))
+        else if (fsName.EndsWith("Reader".AsSpan(), StringComparison.Ordinal))
         {
-            fileSystemName = fileSystemName.Remove(fileSystemName.Length - "Reader".Length);
+            fsName = fsName.Slice(0, fsName.Length - "Reader".Length);
         }
 
-        if (fileSystemName.Length <= 5)
+        if (fsName.Length <= 5)
         {
-            fileSystemName = fileSystemName.ToUpperInvariant();
+            fsName.ToUpperInvariant(fileSystemName.Span);
+            fileSystemName.Span.Slice(fsName.Length).Clear();
+        }
+        else
+        {
+            fileSystemName.SetString(fsName);
         }
 
         maximumComponentLength = 260;

@@ -244,12 +244,12 @@ internal class RFS : IDokanOperations
         return DokanResult.Error;
     }
 
-    public NtStatus GetVolumeInformation(out string volumeLabel, out FileSystemFeatures features,
-        out string fileSystemName, out uint maximumComponentLength, ref uint volumeSerialNumber, in DokanFileInfo info)
+    public NtStatus GetVolumeInformation(DokanMemory<char> volumeLabel, out FileSystemFeatures features,
+        DokanMemory<char> fileSystemName, out uint maximumComponentLength, ref uint volumeSerialNumber, in DokanFileInfo info)
     {
-        volumeLabel = "RFS";
+        volumeLabel.SetString("RFS");
         features = FileSystemFeatures.None;
-        fileSystemName = string.Empty;
+        fileSystemName.Span.Clear();
         maximumComponentLength = 256;
         return DokanResult.Error;
     }

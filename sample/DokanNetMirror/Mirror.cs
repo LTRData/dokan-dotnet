@@ -637,11 +637,11 @@ internal class Mirror : IDokanOperations
             $"out {totalNumberOfBytes}", $"out {totalNumberOfFreeBytes}");
     }
 
-    public NtStatus GetVolumeInformation(out string volumeLabel, out FileSystemFeatures features,
-        out string fileSystemName, out uint maximumComponentLength, ref uint volumeSerialNumber, in DokanFileInfo info)
+    public NtStatus GetVolumeInformation(DokanMemory<char> volumeLabel, out FileSystemFeatures features,
+        DokanMemory<char> fileSystemName, out uint maximumComponentLength, ref uint volumeSerialNumber, in DokanFileInfo info)
     {
-        volumeLabel = "DOKAN";
-        fileSystemName = "NTFS";
+        volumeLabel.SetString("DOKAN");
+        fileSystemName.SetString("NTFS");
         maximumComponentLength = 256;
 
         features = FileSystemFeatures.CasePreservedNames | FileSystemFeatures.CaseSensitiveSearch |

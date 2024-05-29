@@ -71,6 +71,7 @@ public readonly struct DokanMemory<T>(nint address, int length) where T : unmana
     public ArraySegment<T> RentArray()
     {
         var array = ArrayPool<T>.Shared.Rent(Length);
+        Array.Clear(array, 0, Length);
         return new(array, 0, Length);
     }
 
@@ -87,6 +88,11 @@ public readonly struct DokanMemory<T>(nint address, int length) where T : unmana
         ArrayPool<T>.Shared.Return(array, clearArray);
     }
 
+    /// <summary>
+    /// Returns a string describing the native buffer. If element type is <see cref="char"/>,
+    /// a string with the same characters as in original buffer is returned.
+    /// </summary>
+    /// <returns>String describing the native buffer</returns>
     public override unsafe string ToString()
     {
         if (Address == 0)
@@ -183,6 +189,11 @@ public readonly struct ReadOnlyDokanMemory<T>(nint address, int length) where T 
     public void ReturnArray(T[] array, bool clearArray = false)
         => ArrayPool<T>.Shared.Return(array, clearArray);
 
+    /// <summary>
+    /// Returns a string describing the native buffer. If element type is <see cref="char"/>,
+    /// a string with the same characters as in original buffer is returned.
+    /// </summary>
+    /// <returns>String describing the native buffer</returns>
     public override unsafe string ToString()
     {
         if (Address == 0)
