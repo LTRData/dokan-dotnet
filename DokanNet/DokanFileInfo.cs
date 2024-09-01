@@ -61,23 +61,23 @@ public struct DokanFileInfo
     /// <summary>
     /// Read or write is paging IO.
     /// </summary>
-    [field: MarshalAs(UnmanagedType.U1)] public bool PagingIo { get; set; }
+    [field: MarshalAs(UnmanagedType.U1)] public bool PagingIo { get; }
 
     /// <summary>
     /// Read or write is synchronous IO.
     /// </summary>
-    [field: MarshalAs(UnmanagedType.U1)] public bool SynchronousIo { get; set; }
+    [field: MarshalAs(UnmanagedType.U1)] public bool SynchronousIo { get; }
 
     /// <summary>
     /// Read or write directly from data source without cache.
     /// </summary>
-    [field: MarshalAs(UnmanagedType.U1)] public bool NoCache { get; set; }
+    [field: MarshalAs(UnmanagedType.U1)] public bool NoCache { get; }
 
     /// <summary>
     /// If <c>true</c>, write to the current end of file instead 
     /// of using the <c>Offset</c> parameter.
     /// </summary>
-    [field: MarshalAs(UnmanagedType.U1)] public bool WriteToEndOfFile { get; set; }
+    [field: MarshalAs(UnmanagedType.U1)] public bool WriteToEndOfFile { get; }
 
     /// <summary>
     /// Gets or sets context that can be used to carry information between operation.
@@ -104,7 +104,7 @@ public struct DokanFileInfo
                 context = 0;
             }
 
-            if (value != null)
+            if (value is not null)
             {
                 context = (nint)GCHandle.Alloc(value);
             }

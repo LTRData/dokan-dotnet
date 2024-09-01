@@ -1364,6 +1364,8 @@ public class DokanDiscUtils : IDokanOperations, IDisposable
 #region IDisposable Support
     public bool IsDisposed { get; private set; } // To detect redundant calls
 
+    int IDokanOperations.DirectoryListingTimeoutResetIntervalMs => 0;
+
     protected virtual void Dispose(bool disposing)
     {
         if (!IsDisposed)

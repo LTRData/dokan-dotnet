@@ -18,6 +18,8 @@ internal class RFS : IDokanOperations
 
     private readonly Dictionary<string, RegistryKey> TopDirectory;
 
+    int IDokanOperations.DirectoryListingTimeoutResetIntervalMs => 0;
+
     public RFS()
     {
         TopDirectory = new Dictionary<string, RegistryKey>

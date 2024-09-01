@@ -23,6 +23,13 @@ namespace DokanNet;
 public interface IDokanOperations
 {
     /// <summary>
+    /// Number of milliseconds between each automatic reset of timeout timer during enumeration
+    /// of files returned from <see cref="FindFiles(ReadOnlyDokanMemory{char}, out IEnumerable{FindFileInformation}, in DokanFileInfo)"/> and <see cref="FindFilesWithPattern(ReadOnlyDokanMemory{char}, ReadOnlyDokanMemory{char}, out IEnumerable{FindFileInformation}, in DokanFileInfo)"/>.
+    /// Set to zero (default) to disable this behavior.
+    /// </summary>
+    int DirectoryListingTimeoutResetIntervalMs { get; }
+
+    /// <summary>
     /// CreateFile is called each time a request is made on a file system object.
     /// 
     /// In case <paramref name="mode"/> is <c><see cref="FileMode.OpenOrCreate"/></c> and

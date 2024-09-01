@@ -478,10 +478,12 @@ internal sealed class DokanOperationProxy(IDokanOperations operations, ILogger l
                 {
                     count++;
 
-                    if (unchecked(Environment.TickCount - startTime) >= 30000)
+                    if (operations.DirectoryListingTimeoutResetIntervalMs != 0
+                        && unchecked(Environment.TickCount - startTime) >= operations.DirectoryListingTimeoutResetIntervalMs)
                     {
-                        logger.Error($"FindFilesProxy : Timed out at {fileNamePtr} after {count} files");
-                        return NtStatus.IoTimeout;
+                        logger.Info($"FindFilesWithPatternProxy : Listing {fileNamePtr} takes more than {operations.DirectoryListingTimeoutResetIntervalMs}, {count} files");
+                        rawFileInfo.TryResetTimeout(operations.DirectoryListingTimeoutResetIntervalMs * 2);
+                        startTime = Environment.TickCount;
                     }
 
                     if (logger.DebugEnabled)
@@ -546,10 +548,12 @@ internal sealed class DokanOperationProxy(IDokanOperations operations, ILogger l
                 {
                     count++;
 
-                    if (unchecked(Environment.TickCount - startTime) >= 30000)
+                    if (operations.DirectoryListingTimeoutResetIntervalMs != 0
+                        && unchecked(Environment.TickCount - startTime) >= operations.DirectoryListingTimeoutResetIntervalMs)
                     {
-                        logger.Error($"FindFilesWithPatternProxy : Timed out at {fileNamePtr} with pattern {searchPatternPtr} after {count} files");
-                        return NtStatus.IoTimeout;
+                        logger.Info($"FindFilesWithPatternProxy : Listing {fileNamePtr} with pattern {searchPatternPtr} takes more than {operations.DirectoryListingTimeoutResetIntervalMs}, {count} files");
+                        rawFileInfo.TryResetTimeout(operations.DirectoryListingTimeoutResetIntervalMs * 2);
+                        startTime = Environment.TickCount;
                     }
 
                     if (logger.DebugEnabled)
@@ -647,10 +651,12 @@ internal sealed class DokanOperationProxy(IDokanOperations operations, ILogger l
                 {
                     count++;
 
-                    if (unchecked(Environment.TickCount - startTime) >= 30000)
+                    if (operations.DirectoryListingTimeoutResetIntervalMs != 0
+                        && unchecked(Environment.TickCount - startTime) >= operations.DirectoryListingTimeoutResetIntervalMs)
                     {
-                        logger.Error($"FindStreamsProxy : Timed out at {fileNamePtr} after {count} names");
-                        return NtStatus.IoTimeout;
+                        logger.Info($"FindFilesWithPatternProxy : Listing streams of {fileNamePtr} takes more than {operations.DirectoryListingTimeoutResetIntervalMs}, {count} files");
+                        rawFileInfo.TryResetTimeout(operations.DirectoryListingTimeoutResetIntervalMs * 2);
+                        startTime = Environment.TickCount;
                     }
 
                     if (logger.DebugEnabled)

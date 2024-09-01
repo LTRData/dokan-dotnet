@@ -31,6 +31,8 @@ internal class Mirror : IDokanOperations
 
     private readonly ConsoleLogger logger = new("[Mirror] ");
 
+    int IDokanOperations.DirectoryListingTimeoutResetIntervalMs => 0;
+
     public Mirror(string path)
     {
         if (!Directory.Exists(path))
