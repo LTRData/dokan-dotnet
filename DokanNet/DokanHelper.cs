@@ -234,6 +234,14 @@ public static class DokanHelper
         {
             return "?";
         }
+        else if (span.Equals(@"\Desktop.ini".AsSpan(), StringComparison.Ordinal))
+        {
+            return @"\Desktop.ini";
+        }
+        else if (span.Equals(@"\AutoRun.inf".AsSpan(), StringComparison.Ordinal))
+        {
+            return @"\AutoRun.inf";
+        }
         else
         {
             return span.ToString();
@@ -262,31 +270,25 @@ public static class DokanHelper
             return NativeMethods.DokanNtStatusFromWin32(win32Exception.NativeErrorCode);
         }
 
+        if ((unchecked((uint)ex.HResult) & 0xffff0000) == 0x80070000)
+        {
+            return NativeMethods.DokanNtStatusFromWin32(ex.HResult & 0xffff);
+        }
+
         // First try to match types directly, then normalize from hresult
         var status = ex switch
         {
-            FileNotFoundException => NtStatus.ObjectNameNotFound,
-            UnauthorizedAccessException => NtStatus.AccessDenied,
-            DirectoryNotFoundException => NtStatus.ObjectPathNotFound,
             InvalidOperationException => NtStatus.NotImplemented,
             NotSupportedException or NotImplementedException => NtStatus.NotImplemented,
-            PathTooLongException => NtStatus.ObjectPathInvalid,
-            OutOfMemoryException => NtStatus.NoMemory,
             ThreadAbortException or ThreadInterruptedException or OperationCanceledException => NtStatus.Cancelled,
-            ArgumentException or ArgumentOutOfRangeException or IndexOutOfRangeException or
-            ArgumentNullException or NullReferenceException => NtStatus.InvalidParameter,
-            _ => Marshal.GetExceptionForHR(ex.HResult) switch
-            {
-                FileNotFoundException => NtStatus.ObjectNameNotFound,
-                UnauthorizedAccessException => NtStatus.AccessDenied,
-                DirectoryNotFoundException => NtStatus.ObjectPathNotFound,
-                InvalidOperationException => NtStatus.NotImplemented,
-                NotSupportedException or NotImplementedException => NtStatus.NotImplemented,
-                PathTooLongException => NtStatus.ObjectPathInvalid,
-                OutOfMemoryException => NtStatus.NoMemory,
-                ThreadAbortException or ThreadInterruptedException or OperationCanceledException => NtStatus.Cancelled,
-                ArgumentException or ArgumentOutOfRangeException or IndexOutOfRangeException or
+            ArgumentOutOfRangeException or IndexOutOfRangeException or
                 ArgumentNullException or NullReferenceException => NtStatus.InvalidParameter,
+            _ => unchecked((uint)ex.HResult) switch
+            {
+                0x80131509 => NtStatus.NotImplemented,
+                0x80131515 or 0x80131509 => NtStatus.NotImplemented,
+                0x80131519 or 0x8013153B => NtStatus.Cancelled,
+                0x80131502 or 0x80131508 or 0x80004003 or 0x80004003 => NtStatus.InvalidParameter,
                 _ => NtStatus.Unsuccessful
             }
         };

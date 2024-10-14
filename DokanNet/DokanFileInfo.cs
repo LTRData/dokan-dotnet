@@ -138,5 +138,5 @@ public struct DokanFileInfo
     /// <summary>Returns a string that represents the current object.</summary>
     /// <returns>A string that represents the current object.</returns>
     public override readonly string ToString() => DokanFormat(
-        $"{{{Context}, {DeleteOnClose}, {IsDirectory}, {NoCache}, {PagingIo}, #{ProcessId}, {SynchronousIo}, {WriteToEndOfFile}}}")!;
+        $"{{{nameof(Context)}=0x{context:X}:'{Context}', {nameof(DeleteOnClose)}={DeleteOnClose}, {nameof(IsDirectory)}={IsDirectory}, {nameof(NoCache)}={NoCache}, {nameof(PagingIo)}={PagingIo}, {nameof(ProcessId)}={ProcessId}, {nameof(SynchronousIo)}={SynchronousIo}, {nameof(WriteToEndOfFile)}={WriteToEndOfFile}}}")!;
 }
