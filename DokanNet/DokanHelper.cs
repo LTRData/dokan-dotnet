@@ -238,6 +238,10 @@ public static class DokanHelper
         {
             return @"\Desktop.ini";
         }
+        else if (span.Equals(@"\desktop.ini".AsSpan(), StringComparison.Ordinal))
+        {
+            return @"\desktop.ini";
+        }
         else if (span.Equals(@"\AutoRun.inf".AsSpan(), StringComparison.Ordinal))
         {
             return @"\AutoRun.inf";
