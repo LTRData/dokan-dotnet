@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>netstandard2.0;netstandard2.1;net48;net46;net6.0;net7.0;net8.0</TargetFrameworks>
+    <TargetFrameworks>netstandard2.0;netstandard2.1;net48;net46;net8.0;net9.0</TargetFrameworks>
     <AssemblyName>DokanNet</AssemblyName>
     <RootNamespace>DokanNet</RootNamespace>
     <Description>A user mode file system for windows. 
@@ -30,13 +30,6 @@ This is a .NET wrapper over Dokan, and allows you to create your own file system
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="System.Memory" Version="4.5.*" />
-    <PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="5.*" />
-    <PackageReference Include="System.ValueTuple" Version="4.5.*" />
-    <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="*" Condition="'$(TargetFramework)' != 'net46'" />
-  </ItemGroup>
-
-  <ItemGroup>
     <Compile Update="Properties\Resources.Designer.cs">
       <DesignTime>True</DesignTime>
       <AutoGen>True</AutoGen>
@@ -52,10 +45,17 @@ This is a .NET wrapper over Dokan, and allows you to create your own file system
   </ItemGroup>
   
   <ItemGroup Condition="'$(TargetFramework.CompareTo(`net461`))' &gt;= 0">
-    <PackageReference Include="System.IO.FileSystem.AccessControl" Version="5.0.0" />
+    <PackageReference Include="System.Memory" Version="*" />
+    <PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="*" />
+    <PackageReference Include="System.ValueTuple" Version="*" />
+    <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="*" />
+    <PackageReference Include="System.IO.FileSystem.AccessControl" Version="*" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(TargetFramework.CompareTo(`net461`))' &lt; 0">
+    <PackageReference Include="System.Memory" Version="4.5.*" />
+    <PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="5.*" />
+    <PackageReference Include="System.ValueTuple" Version="4.*" />
     <PackageReference Include="StringInterpolationBridgeStrong" Version="0.9.1" />
   </ItemGroup>
 

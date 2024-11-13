@@ -3,19 +3,9 @@
     <!--
     Each target framework is testing against a specific target framework of Dokan.
     
-    To be able to test against netstandard1.3, .NET Core 1.X needs to be used, 
-    but unfortunately, too much functionality is missing for it to work (e.g. TestContext.DataRow). 
-    Maybe it will work with .NET Core 2.0 when launched.
-    
     To be able to test net4.0, we have to use net4.5 (the lowest supported framework by MSTest).
-    
-    DokanNet            Test
-    **************************
-    net4.0              net4.5
-    net4.6              net4.6
-    netstandard1.3      <missing>
     -->
-    <TargetFrameworks>net46;net48;net6.0-windows;net7.0-windows</TargetFrameworks>
+    <TargetFrameworks>net48;net9.0-windows</TargetFrameworks>
     
     <!--Add the Target Framework to the output file names. -->
     <AssemblyName>$(MSBuildProjectName).$(TargetFramework)</AssemblyName>
@@ -44,9 +34,9 @@
 
   <ItemGroup>
   <PackageReference Include="Microsoft.NET.Test.Sdk" Version="*" />
-    <PackageReference Include="Moq" Version="4.17.*" />
+    <PackageReference Include="Moq" Version="4.*" />
     <PackageReference Include="MSTest.TestAdapter" Version="*" />
-    <PackageReference Include="MSTest.TestFramework" Version="2.2.*" />
+    <PackageReference Include="MSTest.TestFramework" Version="2.*" />
   </ItemGroup>
 
   <ItemGroup>
