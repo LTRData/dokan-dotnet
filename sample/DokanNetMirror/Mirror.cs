@@ -44,7 +44,7 @@ internal class Mirror : IDokanOperations
     }
 
 #if NETCOREAPP
-    protected string GetPath(ReadOnlyDokanMemory<char> fileName) => string.Concat(path, fileName);
+    protected string GetPath(ReadOnlyDokanMemory<char> fileName) => string.Concat(path, fileName.Span);
 #else
     protected string GetPath(ReadOnlyDokanMemory<char> fileName) => path + fileName.ToString();
 #endif
