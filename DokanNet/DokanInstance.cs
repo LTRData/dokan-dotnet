@@ -1,5 +1,6 @@
 ﻿using System;
 using DokanNet.Native;
+using LTRData.Extensions.Native.Memory;
 
 namespace DokanNet;
 

@@ -43,6 +43,10 @@ This is a .NET wrapper over Dokan, and allows you to create your own file system
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
   </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="LTRData.Extensions.Native" Version="*" />
+  </ItemGroup>
   
   <ItemGroup Condition="'$(TargetFramework.CompareTo(`net461`))' &gt;= 0">
     <PackageReference Include="System.Memory" Version="*" />
@@ -58,24 +62,5 @@ This is a .NET wrapper over Dokan, and allows you to create your own file system
     <PackageReference Include="System.ValueTuple" Version="4.*" />
     <PackageReference Include="StringInterpolationBridgeStrong" Version="0.9.1" />
   </ItemGroup>
-
-  <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
-    <!--Set to True to run Code Analysis-->
-    <RunCodeAnalysis>False</RunCodeAnalysis>
-  </PropertyGroup>
-
-  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net46|AnyCPU'">
-    <DefineConstants />
-  </PropertyGroup>
-
-  <PropertyGroup Condition="'$(Configuration)'=='Release'">
-    <DefineTrace>false</DefineTrace>
-    <DefineDebug>false</DefineDebug>
-  </PropertyGroup>
-
-  <PropertyGroup Condition="'$(Configuration)'=='Debug'">
-    <DefineTrace>true</DefineTrace>
-    <DefineDebug>true</DefineDebug>
-  </PropertyGroup>
 
 </Project>

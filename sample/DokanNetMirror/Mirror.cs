@@ -7,6 +7,7 @@ using System.Runtime.InteropServices;
 using System.Security.AccessControl;
 using DokanNet;
 using DokanNet.Logging;
+using LTRData.Extensions.Native.Memory;
 using NativeFileAccess = DokanNet.NativeFileAccess;
 
 #pragma warning disable IDE0079 // Remove unnecessary suppression
@@ -44,12 +45,12 @@ internal class Mirror : IDokanOperations
     }
 
 #if NETCOREAPP
-    protected string GetPath(ReadOnlyDokanMemory<char> fileName) => string.Concat(path, fileName.Span);
+    protected string GetPath(ReadOnlyNativeMemory<char> fileName) => string.Concat(path, fileName.Span);
 #else
-    protected string GetPath(ReadOnlyDokanMemory<char> fileName) => path + fileName.ToString();
+    protected string GetPath(ReadOnlyNativeMemory<char> fileName) => path + fileName.ToString();
 #endif
 
-    protected NtStatus Trace(string method, ReadOnlyDokanMemory<char> fileName, in DokanFileInfo info, NtStatus result,
+    protected NtStatus Trace(string method, ReadOnlyNativeMemory<char> fileName, in DokanFileInfo info, NtStatus result,
         params object?[] parameters)
     {
 #if CONSOLE_LOGGING
@@ -63,7 +64,7 @@ internal class Mirror : IDokanOperations
         return result;
     }
 
-    private NtStatus Trace(string method, ReadOnlyDokanMemory<char> fileName, in DokanFileInfo info,
+    private NtStatus Trace(string method, ReadOnlyNativeMemory<char> fileName, in DokanFileInfo info,
         NativeFileAccess access, FileShare share, FileMode mode, FileOptions options, FileAttributes attributes,
         NtStatus result)
     {
@@ -78,7 +79,7 @@ internal class Mirror : IDokanOperations
 
 #region Implementation of IDokanOperations
 
-    public NtStatus CreateFile(ReadOnlyDokanMemory<char> fileName, NativeFileAccess access, FileShare share, FileMode mode,
+    public NtStatus CreateFile(ReadOnlyNativeMemory<char> fileName, NativeFileAccess access, FileShare share, FileMode mode,
         FileOptions options, FileAttributes attributes, ref DokanFileInfo info)
     {
         var result = DokanResult.Success;
@@ -267,7 +268,7 @@ internal class Mirror : IDokanOperations
             result);
     }
 
-    public void Cleanup(ReadOnlyDokanMemory<char> fileName, ref DokanFileInfo info)
+    public void Cleanup(ReadOnlyNativeMemory<char> fileName, ref DokanFileInfo info)
     {
         (info.Context as IDisposable)?.Dispose();
         info.Context = null;
@@ -287,7 +288,7 @@ internal class Mirror : IDokanOperations
         Trace(nameof(Cleanup), fileName, info, DokanResult.Success);
     }
 
-    public void CloseFile(ReadOnlyDokanMemory<char> fileName, ref DokanFileInfo info)
+    public void CloseFile(ReadOnlyNativeMemory<char> fileName, ref DokanFileInfo info)
     {
         (info.Context as IDisposable)?.Dispose();
         info.Context = null;
@@ -295,7 +296,7 @@ internal class Mirror : IDokanOperations
         // could recreate cleanup code here but this is not called sometimes
     }
 
-    public NtStatus ReadFile(ReadOnlyDokanMemory<char> fileName, DokanMemory<byte> buffer, out int bytesRead, long offset, in DokanFileInfo info)
+    public NtStatus ReadFile(ReadOnlyNativeMemory<char> fileName, NativeMemory<byte> buffer, out int bytesRead, long offset, in DokanFileInfo info)
     {
         if (info.Context is Stream stream) // normal read
         {
@@ -316,7 +317,7 @@ internal class Mirror : IDokanOperations
             offset.ToString(CultureInfo.InvariantCulture));
     }
 
-    public NtStatus WriteFile(ReadOnlyDokanMemory<char> fileName, ReadOnlyDokanMemory<byte> buffer, out int bytesWritten, long offset, in DokanFileInfo info)
+    public NtStatus WriteFile(ReadOnlyNativeMemory<char> fileName, ReadOnlyNativeMemory<byte> buffer, out int bytesWritten, long offset, in DokanFileInfo info)
     {
         var append = offset == -1;
         if (info.Context is Stream stream)
@@ -362,7 +363,7 @@ internal class Mirror : IDokanOperations
             offset.ToString(CultureInfo.InvariantCulture));
     }
 
-    public NtStatus FlushFileBuffers(ReadOnlyDokanMemory<char> fileName, in DokanFileInfo info)
+    public NtStatus FlushFileBuffers(ReadOnlyNativeMemory<char> fileName, in DokanFileInfo info)
     {
         try
         {
@@ -375,7 +376,7 @@ internal class Mirror : IDokanOperations
         }
     }
 
-    public NtStatus GetFileInformation(ReadOnlyDokanMemory<char> fileName, out ByHandleFileInformation fileInfo, in DokanFileInfo info)
+    public NtStatus GetFileInformation(ReadOnlyNativeMemory<char> fileName, out ByHandleFileInformation fileInfo, in DokanFileInfo info)
     {
         // may be called with info.Context == null, but usually it isn't
         var filePath = GetPath(fileName);
@@ -396,7 +397,7 @@ internal class Mirror : IDokanOperations
         return Trace(nameof(GetFileInformation), fileName, info, DokanResult.Success);
     }
 
-    public NtStatus FindFiles(ReadOnlyDokanMemory<char> fileName, out IEnumerable<FindFileInformation> files, in DokanFileInfo info)
+    public NtStatus FindFiles(ReadOnlyNativeMemory<char> fileName, out IEnumerable<FindFileInformation> files, in DokanFileInfo info)
     {
         // This function is not called because FindFilesWithPattern is implemented
         // Return DokanResult.NotImplemented in FindFilesWithPattern to make FindFiles called
@@ -405,7 +406,7 @@ internal class Mirror : IDokanOperations
         return Trace(nameof(FindFiles), fileName, info, DokanResult.Success);
     }
 
-    public NtStatus SetFileAttributes(ReadOnlyDokanMemory<char> fileName, FileAttributes attributes, in DokanFileInfo info)
+    public NtStatus SetFileAttributes(ReadOnlyNativeMemory<char> fileName, FileAttributes attributes, in DokanFileInfo info)
     {
         try
         {
@@ -432,7 +433,7 @@ internal class Mirror : IDokanOperations
         }
     }
 
-    public NtStatus SetFileTime(ReadOnlyDokanMemory<char> fileName, DateTime? creationTime, DateTime? lastAccessTime,
+    public NtStatus SetFileTime(ReadOnlyNativeMemory<char> fileName, DateTime? creationTime, DateTime? lastAccessTime,
         DateTime? lastWriteTime, in DokanFileInfo info)
     {
         try
@@ -482,7 +483,7 @@ internal class Mirror : IDokanOperations
         }
     }
 
-    public NtStatus DeleteFile(ReadOnlyDokanMemory<char> fileName, in DokanFileInfo info)
+    public NtStatus DeleteFile(ReadOnlyNativeMemory<char> fileName, in DokanFileInfo info)
     {
         var filePath = GetPath(fileName);
 
@@ -505,7 +506,7 @@ internal class Mirror : IDokanOperations
         // we just check here if we could delete the file - the true deletion is in Cleanup
     }
 
-    public NtStatus DeleteDirectory(ReadOnlyDokanMemory<char> fileName, in DokanFileInfo info)
+    public NtStatus DeleteDirectory(ReadOnlyNativeMemory<char> fileName, in DokanFileInfo info)
     {
         return Trace(nameof(DeleteDirectory), fileName, info,
             Directory.EnumerateFileSystemEntries(GetPath(fileName)).Any()
@@ -514,7 +515,7 @@ internal class Mirror : IDokanOperations
         // if dir is not empty it can't be deleted
     }
 
-    public NtStatus MoveFile(ReadOnlyDokanMemory<char> oldName, ReadOnlyDokanMemory<char> newName, bool replace, ref DokanFileInfo info)
+    public NtStatus MoveFile(ReadOnlyNativeMemory<char> oldName, ReadOnlyNativeMemory<char> newName, bool replace, ref DokanFileInfo info)
     {
         var oldpath = GetPath(oldName);
         var newpath = GetPath(newName);
@@ -568,7 +569,7 @@ internal class Mirror : IDokanOperations
             replace.ToString(CultureInfo.InvariantCulture));
     }
 
-    public NtStatus SetEndOfFile(ReadOnlyDokanMemory<char> fileName, long length, in DokanFileInfo info)
+    public NtStatus SetEndOfFile(ReadOnlyNativeMemory<char> fileName, long length, in DokanFileInfo info)
     {
         try
         {
@@ -583,7 +584,7 @@ internal class Mirror : IDokanOperations
         }
     }
 
-    public NtStatus SetAllocationSize(ReadOnlyDokanMemory<char> fileName, long length, in DokanFileInfo info)
+    public NtStatus SetAllocationSize(ReadOnlyNativeMemory<char> fileName, long length, in DokanFileInfo info)
     {
         try
         {
@@ -598,7 +599,7 @@ internal class Mirror : IDokanOperations
         }
     }
 
-    public NtStatus LockFile(ReadOnlyDokanMemory<char> fileName, long offset, long length, in DokanFileInfo info)
+    public NtStatus LockFile(ReadOnlyNativeMemory<char> fileName, long offset, long length, in DokanFileInfo info)
     {
         try
         {
@@ -613,7 +614,7 @@ internal class Mirror : IDokanOperations
         }
     }
 
-    public NtStatus UnlockFile(ReadOnlyDokanMemory<char> fileName, long offset, long length, in DokanFileInfo info)
+    public NtStatus UnlockFile(ReadOnlyNativeMemory<char> fileName, long offset, long length, in DokanFileInfo info)
     {
         try
         {
@@ -639,8 +640,8 @@ internal class Mirror : IDokanOperations
             $"out {totalNumberOfBytes}", $"out {totalNumberOfFreeBytes}");
     }
 
-    public NtStatus GetVolumeInformation(DokanMemory<char> volumeLabel, out FileSystemFeatures features,
-        DokanMemory<char> fileSystemName, out uint maximumComponentLength, ref uint volumeSerialNumber, in DokanFileInfo info)
+    public NtStatus GetVolumeInformation(NativeMemory<char> volumeLabel, out FileSystemFeatures features,
+        NativeMemory<char> fileSystemName, out uint maximumComponentLength, ref uint volumeSerialNumber, in DokanFileInfo info)
     {
         volumeLabel.SetString("DOKAN");
         fileSystemName.SetString("NTFS");
@@ -654,7 +655,7 @@ internal class Mirror : IDokanOperations
             $"out {features}", $"out {fileSystemName}");
     }
 
-    public NtStatus GetFileSecurity(ReadOnlyDokanMemory<char> fileName, out FileSystemSecurity? security, AccessControlSections sections,
+    public NtStatus GetFileSecurity(ReadOnlyNativeMemory<char> fileName, out FileSystemSecurity? security, AccessControlSections sections,
         in DokanFileInfo info)
     {
         try
@@ -671,7 +672,7 @@ internal class Mirror : IDokanOperations
         }
     }
 
-    public NtStatus SetFileSecurity(ReadOnlyDokanMemory<char> fileName, FileSystemSecurity security, AccessControlSections sections,
+    public NtStatus SetFileSecurity(ReadOnlyNativeMemory<char> fileName, FileSystemSecurity security, AccessControlSections sections,
         in DokanFileInfo info)
     {
         if (security is null)
@@ -698,7 +699,7 @@ internal class Mirror : IDokanOperations
         }
     }
 
-    public NtStatus Mounted(ReadOnlyDokanMemory<char> mountPoint, in DokanFileInfo info)
+    public NtStatus Mounted(ReadOnlyNativeMemory<char> mountPoint, in DokanFileInfo info)
     {
         return Trace(nameof(Mounted), default, info, DokanResult.Success);
     }
@@ -712,7 +713,7 @@ internal class Mirror : IDokanOperations
         return ntStatus;
     }
 
-    public NtStatus FindStreams(ReadOnlyDokanMemory<char> fileName, nint enumContext, out string streamName, out long streamSize,
+    public NtStatus FindStreams(ReadOnlyNativeMemory<char> fileName, nint enumContext, out string streamName, out long streamSize,
         DokanFileInfo info)
     {
         streamName = string.Empty;
@@ -721,13 +722,13 @@ internal class Mirror : IDokanOperations
             $"out {streamName}", $"out {streamSize}");
     }
 
-    public NtStatus FindStreams(ReadOnlyDokanMemory<char> fileName, out IEnumerable<FindFileInformation> streams, in DokanFileInfo info)
+    public NtStatus FindStreams(ReadOnlyNativeMemory<char> fileName, out IEnumerable<FindFileInformation> streams, in DokanFileInfo info)
     {
         streams = FindFileInformation.Empty;
         return Trace(nameof(FindStreams), fileName, info, DokanResult.NotImplemented);
     }
 
-    public IEnumerable<FindFileInformation> FindFilesHelper(ReadOnlyDokanMemory<char> fileName, string searchPattern)
+    public IEnumerable<FindFileInformation> FindFilesHelper(ReadOnlyNativeMemory<char> fileName, string searchPattern)
     {
         var files = new DirectoryInfo(GetPath(fileName))
             .EnumerateFileSystemInfos()
@@ -745,7 +746,7 @@ internal class Mirror : IDokanOperations
         return files;
     }
 
-    public NtStatus FindFilesWithPattern(ReadOnlyDokanMemory<char> fileName, ReadOnlyDokanMemory<char> searchPattern, out IEnumerable<FindFileInformation> files,
+    public NtStatus FindFilesWithPattern(ReadOnlyNativeMemory<char> fileName, ReadOnlyNativeMemory<char> searchPattern, out IEnumerable<FindFileInformation> files,
         in DokanFileInfo info)
     {
         files = FindFilesHelper(fileName, searchPattern.ToString());

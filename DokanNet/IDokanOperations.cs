@@ -1,3 +1,4 @@
+using LTRData.Extensions.Native.Memory;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -24,7 +25,7 @@ public interface IDokanOperations
 {
     /// <summary>
     /// Number of milliseconds between each automatic reset of timeout timer during enumeration
-    /// of files returned from <see cref="FindFiles(ReadOnlyDokanMemory{char}, out IEnumerable{FindFileInformation}, in DokanFileInfo)"/> and <see cref="FindFilesWithPattern(ReadOnlyDokanMemory{char}, ReadOnlyDokanMemory{char}, out IEnumerable{FindFileInformation}, in DokanFileInfo)"/>.
+    /// of files returned from <see cref="FindFiles(ReadOnlyNativeMemory{char}, out IEnumerable{FindFileInformation}, in DokanFileInfo)"/> and <see cref="FindFilesWithPattern(ReadOnlyNativeMemory{char}, ReadOnlyNativeMemory{char}, out IEnumerable{FindFileInformation}, in DokanFileInfo)"/>.
     /// Set to zero (default) to disable this behavior.
     /// </summary>
     int DirectoryListingTimeoutResetIntervalMs { get; }
@@ -58,7 +59,7 @@ public interface IDokanOperations
     /// <returns><see cref="NtStatus"/> or <see cref="DokanResult"/> appropriate to the request result.</returns>
     /// \see See <a href="https://msdn.microsoft.com/en-us/library/windows/hardware/ff566424(v=vs.85).aspx">ZwCreateFile (MSDN)</a> for more information about the parameters of this callback.
     NtStatus CreateFile(
-        ReadOnlyDokanMemory<char> fileNamePtr,
+        ReadOnlyNativeMemory<char> fileNamePtr,
         NativeFileAccess access,
         FileShare share,
         FileMode mode,
@@ -82,7 +83,7 @@ public interface IDokanOperations
     /// <seealso cref="DeleteFile"/>
     /// <seealso cref="DeleteDirectory"/>
     /// <seealso cref="CloseFile"/>
-    void Cleanup(ReadOnlyDokanMemory<char> fileNamePtr, ref DokanFileInfo info);
+    void Cleanup(ReadOnlyNativeMemory<char> fileNamePtr, ref DokanFileInfo info);
 
     /// <summary>
     /// CloseFile is called at the end of the life of the context.
@@ -98,7 +99,7 @@ public interface IDokanOperations
     /// <param name="fileNamePtr">File path requested by the Kernel on the FileSystem.</param>
     /// <param name="info">An <see cref="DokanFileInfo"/> with information about the file or directory.</param>
     /// <seealso cref="Cleanup"/>
-    void CloseFile(ReadOnlyDokanMemory<char> fileNamePtr, ref DokanFileInfo info);
+    void CloseFile(ReadOnlyNativeMemory<char> fileNamePtr, ref DokanFileInfo info);
 
     /// <summary>
     /// ReadFile callback on the file previously opened in <see cref="CreateFile"/>.
@@ -113,7 +114,7 @@ public interface IDokanOperations
     /// <param name="info">An <see cref="DokanFileInfo"/> with information about the file or directory.</param>
     /// <returns><see cref="NtStatus"/> or <see cref="DokanResult"/> appropriate to the request result.</returns>
     /// <seealso cref="WriteFile"/>
-    NtStatus ReadFile(ReadOnlyDokanMemory<char> fileNamePtr, DokanMemory<byte> buffer, out int bytesRead, long offset, in DokanFileInfo info);
+    NtStatus ReadFile(ReadOnlyNativeMemory<char> fileNamePtr, NativeMemory<byte> buffer, out int bytesRead, long offset, in DokanFileInfo info);
 
     /// <summary>
     /// WriteFile callback on the file previously opened in <see cref="CreateFile"/>
@@ -127,7 +128,7 @@ public interface IDokanOperations
     /// <param name="info">An <see cref="DokanFileInfo"/> with information about the file or directory.</param>
     /// <returns><see cref="NtStatus"/> or <see cref="DokanResult"/> appropriate to the request result.</returns>
     /// <seealso cref="ReadFile"/>
-    NtStatus WriteFile(ReadOnlyDokanMemory<char> fileNamePtr, ReadOnlyDokanMemory<byte> buffer, out int bytesWritten, long offset, in DokanFileInfo info);
+    NtStatus WriteFile(ReadOnlyNativeMemory<char> fileNamePtr, ReadOnlyNativeMemory<byte> buffer, out int bytesWritten, long offset, in DokanFileInfo info);
 
     /// <summary>
     /// Clears buffers for this context and causes any buffered data to be written to the file.
@@ -135,7 +136,7 @@ public interface IDokanOperations
     /// <param name="fileNamePtr">File path requested by the Kernel on the FileSystem.</param>
     /// <param name="info">An <see cref="DokanFileInfo"/> with information about the file or directory.</param>
     /// <returns><see cref="NtStatus"/> or <see cref="DokanResult"/> appropriate to the request result.</returns>
-    NtStatus FlushFileBuffers(ReadOnlyDokanMemory<char> fileNamePtr, in DokanFileInfo info);
+    NtStatus FlushFileBuffers(ReadOnlyNativeMemory<char> fileNamePtr, in DokanFileInfo info);
 
     /// <summary>
     /// Get specific informations on a file.
@@ -144,7 +145,7 @@ public interface IDokanOperations
     /// <param name="fileInfo"><see cref="ByHandleFileInformation"/> struct to fill</param>
     /// <param name="info">An <see cref="DokanFileInfo"/> with information about the file or directory.</param>
     /// <returns><see cref="NtStatus"/> or <see cref="DokanResult"/> appropriate to the request result.</returns>
-    NtStatus GetFileInformation(ReadOnlyDokanMemory<char> fileNamePtr, out ByHandleFileInformation fileInfo, in DokanFileInfo info);
+    NtStatus GetFileInformation(ReadOnlyNativeMemory<char> fileNamePtr, out ByHandleFileInformation fileInfo, in DokanFileInfo info);
 
     /// <summary>
     /// List all files in the path requested
@@ -157,7 +158,7 @@ public interface IDokanOperations
     /// <param name="info">An <see cref="DokanFileInfo"/> with information about the file or directory.</param>
     /// <returns><see cref="NtStatus"/> or <see cref="DokanResult"/> appropriate to the request result.</returns>
     /// <seealso cref="FindFilesWithPattern"/>
-    NtStatus FindFiles(ReadOnlyDokanMemory<char> fileNamePtr, out IEnumerable<FindFileInformation> files, in DokanFileInfo info);
+    NtStatus FindFiles(ReadOnlyNativeMemory<char> fileNamePtr, out IEnumerable<FindFileInformation> files, in DokanFileInfo info);
 
     /// <summary>
     /// Same as <see cref="FindFiles"/> but with a search pattern to filter the result.
@@ -169,8 +170,8 @@ public interface IDokanOperations
     /// <returns><see cref="NtStatus"/> or <see cref="DokanResult"/> appropriate to the request result.</returns>
     /// <seealso cref="FindFiles"/>
     NtStatus FindFilesWithPattern(
-        ReadOnlyDokanMemory<char> fileNamePtr,
-        ReadOnlyDokanMemory<char> searchPatternPtr,
+        ReadOnlyNativeMemory<char> fileNamePtr,
+        ReadOnlyNativeMemory<char> searchPatternPtr,
         out IEnumerable<FindFileInformation> files,
         in DokanFileInfo info);
 
@@ -182,7 +183,7 @@ public interface IDokanOperations
     /// <param name="attributes"><see cref="FileAttributes"/> to set on file</param>
     /// <param name="info">An <see cref="DokanFileInfo"/> with information about the file or directory.</param>
     /// <returns><see cref="NtStatus"/> or <see cref="DokanResult"/> appropriate to the request result.</returns>
-    NtStatus SetFileAttributes(ReadOnlyDokanMemory<char> fileNamePtr, FileAttributes attributes, in DokanFileInfo info);
+    NtStatus SetFileAttributes(ReadOnlyNativeMemory<char> fileNamePtr, FileAttributes attributes, in DokanFileInfo info);
 
     /// <summary>
     /// Set file times on a specific file.
@@ -196,7 +197,7 @@ public interface IDokanOperations
     /// <param name="info">An <see cref="DokanFileInfo"/> with information about the file or directory.</param>
     /// <returns><see cref="NtStatus"/> or <see cref="DokanResult"/> appropriate to the request result.</returns>
     NtStatus SetFileTime(
-        ReadOnlyDokanMemory<char> fileNamePtr,
+        ReadOnlyNativeMemory<char> fileNamePtr,
         DateTime? creationTime,
         DateTime? lastAccessTime,
         DateTime? lastWriteTime,
@@ -223,7 +224,7 @@ public interface IDokanOperations
     /// <returns>Return <see cref="DokanResult.Success"/> if file can be delete or <see cref="NtStatus"/> appropriate.</returns>
     /// <seealso cref="DeleteDirectory"/>
     /// <seealso cref="Cleanup"/>
-    NtStatus DeleteFile(ReadOnlyDokanMemory<char> fileNamePtr, in DokanFileInfo info);
+    NtStatus DeleteFile(ReadOnlyNativeMemory<char> fileNamePtr, in DokanFileInfo info);
 
     /// <summary>
     /// Check if it is possible to delete a directory.
@@ -247,7 +248,7 @@ public interface IDokanOperations
     /// <returns>Return <see cref="DokanResult.Success"/> if file can be delete or <see cref="NtStatus"/> appropriate.</returns>
     /// <seealso cref="DeleteFile"/>
     /// <seealso cref="Cleanup"/>
-    NtStatus DeleteDirectory(ReadOnlyDokanMemory<char> fileNamePtr, in DokanFileInfo info);
+    NtStatus DeleteDirectory(ReadOnlyNativeMemory<char> fileNamePtr, in DokanFileInfo info);
 
     /// <summary>
     /// Move a file or directory to a new location.
@@ -257,7 +258,7 @@ public interface IDokanOperations
     /// <param name="replace">If the file should be replaced if it already exist a file with path <paramref name="newNamePtr"/>.</param>
     /// <param name="info">An <see cref="DokanFileInfo"/> with information about the file or directory.</param>
     /// <returns><see cref="NtStatus"/> or <see cref="DokanResult"/> appropriate to the request result.</returns>
-    NtStatus MoveFile(ReadOnlyDokanMemory<char> oldNamePtr, ReadOnlyDokanMemory<char> newNamePtr, bool replace, ref DokanFileInfo info);
+    NtStatus MoveFile(ReadOnlyNativeMemory<char> oldNamePtr, ReadOnlyNativeMemory<char> newNamePtr, bool replace, ref DokanFileInfo info);
 
     /// <summary>
     /// SetEndOfFile is used to truncate or extend a file (physical file size).
@@ -266,7 +267,7 @@ public interface IDokanOperations
     /// <param name="length">File length to set</param>
     /// <param name="info">An <see cref="DokanFileInfo"/> with information about the file or directory.</param>
     /// <returns><see cref="NtStatus"/> or <see cref="DokanResult"/> appropriate to the request result.</returns>
-    NtStatus SetEndOfFile(ReadOnlyDokanMemory<char> fileNamePtr, long length, in DokanFileInfo info);
+    NtStatus SetEndOfFile(ReadOnlyNativeMemory<char> fileNamePtr, long length, in DokanFileInfo info);
 
     /// <summary>
     /// SetAllocationSize is used to truncate or extend a file.
@@ -275,7 +276,7 @@ public interface IDokanOperations
     /// <param name="length">File length to set</param>
     /// <param name="info">An <see cref="DokanFileInfo"/> with information about the file or directory.</param>
     /// <returns><see cref="NtStatus"/> or <see cref="DokanResult"/> appropriate to the request result.</returns>
-    NtStatus SetAllocationSize(ReadOnlyDokanMemory<char> fileNamePtr, long length, in DokanFileInfo info);
+    NtStatus SetAllocationSize(ReadOnlyNativeMemory<char> fileNamePtr, long length, in DokanFileInfo info);
 
     /// <summary>
     /// Lock file at a specific offset and data length.
@@ -287,7 +288,7 @@ public interface IDokanOperations
     /// <param name="info">An <see cref="DokanFileInfo"/> with information about the file or directory.</param>
     /// <returns><see cref="NtStatus"/> or <see cref="DokanResult"/> appropriate to the request result.</returns>
     /// <seealso cref="UnlockFile"/>
-    NtStatus LockFile(ReadOnlyDokanMemory<char> fileNamePtr, long offset, long length, in DokanFileInfo info);
+    NtStatus LockFile(ReadOnlyNativeMemory<char> fileNamePtr, long offset, long length, in DokanFileInfo info);
 
     /// <summary>
     /// Unlock file at a specific offset and data length.
@@ -299,7 +300,7 @@ public interface IDokanOperations
     /// <param name="info">An <see cref="DokanFileInfo"/> with information about the file or directory.</param>
     /// <returns><see cref="NtStatus"/> or <see cref="DokanResult"/> appropriate to the request result.</returns>
     /// <seealso cref="LockFile"/>
-    NtStatus UnlockFile(ReadOnlyDokanMemory<char> fileNamePtr, long offset, long length, in DokanFileInfo info);
+    NtStatus UnlockFile(ReadOnlyNativeMemory<char> fileNamePtr, long offset, long length, in DokanFileInfo info);
 
     /// <summary>
     /// Retrieves information about the amount of space that is available on a disk volume, which is the total amount of space, 
@@ -350,9 +351,9 @@ public interface IDokanOperations
     /// <returns><see cref="NtStatus"/> or <see cref="DokanResult"/> appropriate to the request result.</returns>
     /// \see <a href="https://msdn.microsoft.com/en-us/library/windows/desktop/aa364993(v=vs.85).aspx"> GetVolumeInformation function (MSDN)</a>
     NtStatus GetVolumeInformation(
-        DokanMemory<char> volumeLabel,
+        NativeMemory<char> volumeLabel,
         out FileSystemFeatures features,
-        DokanMemory<char> fileSystemName,
+        NativeMemory<char> fileSystemName,
         out uint maximumComponentLength,
         ref uint volumeSerialNumber,
         in DokanFileInfo info);
@@ -374,7 +375,7 @@ public interface IDokanOperations
     /// <seealso cref="SetFileSecurity"/>
     /// \see <a href="https://msdn.microsoft.com/en-us/library/windows/desktop/aa446639(v=vs.85).aspx">GetFileSecurity function (MSDN)</a>
     NtStatus GetFileSecurity(
-        ReadOnlyDokanMemory<char> fileNamePtr,
+        ReadOnlyNativeMemory<char> fileNamePtr,
         out FileSystemSecurity? security,
         AccessControlSections sections,
         in DokanFileInfo info);
@@ -392,7 +393,7 @@ public interface IDokanOperations
     /// <seealso cref="GetFileSecurity"/>
     /// \see <a href="https://msdn.microsoft.com/en-us/library/windows/desktop/aa379577(v=vs.85).aspx">SetFileSecurity function (MSDN)</a>
     NtStatus SetFileSecurity(
-        ReadOnlyDokanMemory<char> fileNamePtr,
+        ReadOnlyNativeMemory<char> fileNamePtr,
         FileSystemSecurity security,
         AccessControlSections sections,
         in DokanFileInfo info);
@@ -407,7 +408,7 @@ public interface IDokanOperations
     /// <param name="info">An <see cref="DokanFileInfo"/> with information about the file or directory.</param>
     /// <returns><see cref="NtStatus"/> or <see cref="DokanResult"/> appropriate to the request result.</returns>
     /// <see cref="Unmounted"/>
-    NtStatus Mounted(ReadOnlyDokanMemory<char> mountPoint, in DokanFileInfo info);
+    NtStatus Mounted(ReadOnlyNativeMemory<char> mountPoint, in DokanFileInfo info);
 
     /// <summary>
     /// Is called when %Dokan is unmounting the volume.
@@ -431,5 +432,5 @@ public interface IDokanOperations
     /// <returns>Return <see cref="NtStatus"/> or <see cref="DokanResult"/> appropriate to the request result.</returns>
     /// \see <a href="https://msdn.microsoft.com/en-us/library/windows/desktop/aa364424(v=vs.85).aspx">FindFirstStreamW function (MSDN)</a>
     /// \see <a href="https://msdn.microsoft.com/en-us/library/windows/desktop/aa365993(v=vs.85).aspx">About KTM (MSDN)</a>
-    NtStatus FindStreams(ReadOnlyDokanMemory<char> fileNamePtr, out IEnumerable<FindFileInformation> streams, in DokanFileInfo info);
+    NtStatus FindStreams(ReadOnlyNativeMemory<char> fileNamePtr, out IEnumerable<FindFileInformation> streams, in DokanFileInfo info);
 }

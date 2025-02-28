@@ -3,6 +3,7 @@ using System.Runtime.Versioning;
 using System.Threading.Tasks;
 using DokanNet.Logging;
 using DokanNet.Native;
+using LTRData.Extensions.Native.Memory;
 
 #pragma warning disable IDE0079 // Remove unnecessary suppression
 #pragma warning disable CA1707 // Identifiers should not contain underscores

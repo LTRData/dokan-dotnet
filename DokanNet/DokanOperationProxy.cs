@@ -10,7 +10,7 @@ using System.Text;
 
 using DokanNet.Logging;
 using DokanNet.Native;
-
+using LTRData.Extensions.Native.Memory;
 using FILETIME = System.Runtime.InteropServices.ComTypes.FILETIME;
 
 #pragma warning disable IDE0079 // Remove unnecessary suppression
@@ -37,7 +37,7 @@ internal sealed class DokanOperationProxy(IDokanOperations operations, ILogger l
 {
 #if NET6_0_OR_GREATER
     
-    private static unsafe ReadOnlyDokanMemory<char> MemoryFromIntPtr(nint ptr)
+    private static unsafe ReadOnlyNativeMemory<char> MemoryFromIntPtr(nint ptr)
         => new(ptr, MemoryMarshal.CreateReadOnlySpanFromNullTerminated((char*)ptr).Length);
 
 #else
@@ -45,7 +45,7 @@ internal sealed class DokanOperationProxy(IDokanOperations operations, ILogger l
     [DllImport("msvcrt", CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
     private static extern int wcslen(nint ptr);
 
-    private static ReadOnlyDokanMemory<char> MemoryFromIntPtr(nint ptr)
+    private static ReadOnlyNativeMemory<char> MemoryFromIntPtr(nint ptr)
     {
         if (ptr == 0)
         {
@@ -1073,8 +1073,8 @@ internal sealed class DokanOperationProxy(IDokanOperations operations, ILogger l
                 logger.Debug($"\tContext\t{rawFileInfo}");
             }
 
-            var volumeNameBuffer = new DokanMemory<char>(rawVolumeNameBuffer, (int)rawVolumeNameSize);
-            var fileSystemNameBuffer = new DokanMemory<char>(rawFileSystemNameBuffer, (int)rawFileSystemNameSize);
+            var volumeNameBuffer = new NativeMemory<char>(rawVolumeNameBuffer, (int)rawVolumeNameSize);
+            var fileSystemNameBuffer = new NativeMemory<char>(rawFileSystemNameBuffer, (int)rawFileSystemNameSize);
 
             var result = operations.GetVolumeInformation(volumeNameBuffer,
                                                          out fileSystemFlags,

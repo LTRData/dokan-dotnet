@@ -208,50 +208,6 @@ public static class DokanHelper
         return false;
     }
 
-    public static string GetStringFromSpan(ReadOnlySpan<char> span)
-    {
-        if (span.IsEmpty)
-        {
-            return "";
-        }
-        else if (span.Equals("/".AsSpan(), StringComparison.Ordinal))
-        {
-            return "/";
-        }
-        else if (span.Equals(@"\".AsSpan(), StringComparison.Ordinal))
-        {
-            return @"\";
-        }
-        else if (span.Equals("*".AsSpan(), StringComparison.Ordinal))
-        {
-            return "*";
-        }
-        else if (span.Equals("*.*".AsSpan(), StringComparison.Ordinal))
-        {
-            return "*.*";
-        }
-        else if (span.Equals("?".AsSpan(), StringComparison.Ordinal))
-        {
-            return "?";
-        }
-        else if (span.Equals(@"\Desktop.ini".AsSpan(), StringComparison.Ordinal))
-        {
-            return @"\Desktop.ini";
-        }
-        else if (span.Equals(@"\desktop.ini".AsSpan(), StringComparison.Ordinal))
-        {
-            return @"\desktop.ini";
-        }
-        else if (span.Equals(@"\AutoRun.inf".AsSpan(), StringComparison.Ordinal))
-        {
-            return @"\AutoRun.inf";
-        }
-        else
-        {
-            return span.ToString();
-        }
-    }
-
 #if NET5_0_OR_GREATER
     [SupportedOSPlatform("windows")]
 #endif
@@ -299,60 +255,6 @@ public static class DokanHelper
 
         return status;
     }
-
-    /// <summary>
-    /// Copies characters from a <see cref="string"/> to a <see cref="Span{Char}"/>,
-    /// clearing remainder of the target memory if larger than the source string. If source is
-    /// longer than target buffer size, target receives a truncated version of source string.
-    /// </summary>
-    /// <param name="buffer">Target buffer</param>
-    /// <param name="str">Source string to copy to buffer</param>
-    public static void SetString(this Span<char> buffer, string? str)
-        => SetString(buffer, str.AsSpan());
-
-    /// <summary>
-    /// Copies characters from a <see cref="ReadOnlySpan{Char}"/> to a <see cref="Span{Char}"/>,
-    /// clearing remainder of the target memory if larger than the source string. If source is
-    /// longer than target buffer size, target receives a truncated version of source string.
-    /// </summary>
-    /// <param name="buffer">Target buffer</param>
-    /// <param name="str">Source string to copy to buffer</param>
-    public static void SetString(this Span<char> buffer, ReadOnlySpan<char> str)
-    {
-        if (str.IsEmpty)
-        {
-            buffer.Clear();
-        }
-        else if (str.Length < buffer.Length)
-        {
-            str.CopyTo(buffer);
-            buffer.Slice(str.Length).Clear();
-        }
-        else
-        {
-            str.Slice(0, buffer.Length).CopyTo(buffer);
-        }
-    }
-
-    /// <summary>
-    /// Copies characters from a <see cref="string"/> to a <see cref="DokanMemory{Char}"/>,
-    /// clearing remainder of the target memory if larger than the source string. If source is
-    /// longer than target buffer size, target receives a truncated version of source string.
-    /// </summary>
-    /// <param name="buffer">Target buffer</param>
-    /// <param name="str">Source string to copy to buffer</param>
-    public static void SetString(this DokanMemory<char> buffer, string? str)
-        => SetString(buffer.Span, str.AsSpan());
-
-    /// <summary>
-    /// Copies characters from a <see cref="ReadOnlySpan{Char}"/> to a <see cref="DokanMemory{Char}"/>,
-    /// clearing remainder of the target memory if larger than the source string. If source is
-    /// longer than target buffer size, target receives a truncated version of source string.
-    /// </summary>
-    /// <param name="buffer">Target buffer</param>
-    /// <param name="str">Source string to copy to buffer</param>
-    public static void SetString(this DokanMemory<char> buffer, ReadOnlySpan<char> str)
-        => SetString(buffer.Span, str);
 
 #if NETFRAMEWORK || (NETSTANDARD && !NETSTANDARD2_1_OR_GREATER)
     public static int Read(this Stream stream, Span<byte> buffer)
