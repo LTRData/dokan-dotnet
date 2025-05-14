@@ -10,4 +10,6 @@ runtime versions.
 
 ## Important
 Modified features in this fork have now been merged into upstream repository and
-this fork is no longer maintained.
+this fork is no longer maintained. `IDokanOperations` interface from this fork
+is now available as `IDokanOperation2` interface in upstream repository:
+https://github.com/dokan-dev/dokan-dotnet/blob/master/DokanNet/IDokanOperations2.cs
